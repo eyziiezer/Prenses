@@ -1,854 +1,223 @@
 <!DOCTYPE html>
 <html lang="az">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Listening Practice (1-7)</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --bg-color: #f4f4f9;
-            --text-color: #333;
-            --panel-bg: #fff;
-            --primary-color: #4a90e2;
-            --border-color: #ddd;
-            --vocab-en-color: #2563eb;
-            --highlight-bg: rgba(74, 144, 226, 0.15);
-            
-            --success-color: #16a34a;
-            --success-bg: rgba(22, 163, 74, 0.1);
-            --error-color: #dc2626;
-            --error-bg: rgba(220, 38, 38, 0.1);
-            
-            --tooltip-bg: rgba(30, 41, 59, 0.95);
-            --tooltip-text: #f8fafc;
-            --tooltip-border: rgba(255, 255, 255, 0.2);
-        }
-
-        [data-theme="dark"] {
-            --bg-color: #1a1a2e;
-            --text-color: #e0e0e0;
-            --panel-bg: #16213e;
-            --primary-color: #0f3460;
-            --border-color: #2a2a4a;
-            --vocab-en-color: #60a5fa;
-            --highlight-bg: rgba(96, 165, 250, 0.2);
-            
-            --success-color: #4ade80;
-            --success-bg: rgba(74, 222, 128, 0.1);
-            --error-color: #f87171;
-            --error-bg: rgba(248, 113, 113, 0.1);
-            
-            --tooltip-bg: rgba(15, 23, 42, 0.95);
-            --tooltip-text: #f8fafc;
-            --tooltip-border: rgba(255, 255, 255, 0.1);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        #sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 90;
-            backdrop-filter: blur(2px);
-        }
-        #sidebar-overlay.active { display: block; }
-
-        #sidebar {
-            width: 250px;
-            background-color: var(--panel-bg);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            position: absolute;
-            height: 100%;
-            z-index: 100;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-        }
-
-        #sidebar.open { transform: translateX(0); }
-
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border-color);
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        #toc-list { overflow-y: auto; flex: 1; }
-
-        .toc-item {
-            padding: 15px 20px;
-            cursor: pointer;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .toc-item:hover, .toc-item.active {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        #main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            overflow-y: auto;
-            transition: margin-left 0.3s ease;
-            padding: 20px;
-        }
-
-        .centered #main-content { max-width: 900px; margin: 0 auto; width: 100%; }
-        .full-width #main-content { max-width: 100%; }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background-color: var(--panel-bg);
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-
-        .nav-left, .nav-right { display: flex; align-items: center; gap: 15px; }
-
-        .btn {
-            background: none; border: none; color: var(--text-color);
-            font-size: 1.2rem; cursor: pointer; padding: 8px; border-radius: 5px;
-        }
-        .btn:hover { background-color: var(--border-color); }
-
-        .audio-container {
-            background-color: var(--panel-bg);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
-        audio { width: 100%; margin-bottom: 10px; outline: none; }
-
-        .speed-controls { display: flex; gap: 10px; justify-content: center; }
-
-        .speed-btn {
-            background-color: var(--border-color); border: none;
-            padding: 5px 15px; border-radius: 15px; cursor: pointer; color: var(--text-color);
-            font-weight: bold;
-        }
-        .speed-btn.active { background-color: var(--primary-color); color: white; }
-
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-
-        .tab-btn {
-            padding: 10px 20px; background-color: var(--panel-bg);
-            border: 1px solid var(--border-color); border-radius: 8px;
-            cursor: pointer; color: var(--text-color); font-weight: 600;
-        }
-        .tab-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
-
-        .tab-content {
-            display: none; background-color: var(--panel-bg);
-            padding: 20px; border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); line-height: 1.6;
-        }
-        .tab-content.active { display: block; }
-
-        .question-card {
-            margin-bottom: 25px; padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .question-text { font-weight: bold; margin-bottom: 15px; font-size: 1.05rem; }
-        
-        .options-list { margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
-        .option-label { 
-            display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
-            padding: 8px; border-radius: 5px; transition: background 0.2s;
-        }
-        .option-label:hover { background-color: var(--highlight-bg); }
-        .option-label input[type="radio"] { cursor: pointer; width: 18px; height: 18px; margin-top: 3px; }
-
-        .result-box {
-            display: none; margin-top: 15px; padding: 15px;
-            border-radius: 8px; border-left: 5px solid;
-        }
-        .result-box.show { display: block; animation: fadeIn 0.3s; }
-        .result-box.correct { background-color: var(--success-bg); border-color: var(--success-color); }
-        .result-box.wrong { background-color: var(--error-bg); border-color: var(--error-color); }
-        
-        .feedback-title { font-weight: bold; margin-bottom: 5px; }
-        .feedback-title.correct { color: var(--success-color); }
-        .feedback-title.wrong { color: var(--error-color); }
-        
-        .correct-answer-text { font-weight: bold; color: var(--success-color); margin-bottom: 10px; }
-        .explanation-text { font-size: 0.95rem; color: var(--text-color); opacity: 0.9; font-style: italic;}
-
-        .check-all-btn {
-            display: block; width: 100%; padding: 15px;
-            background-color: var(--primary-color); color: white;
-            border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold;
-            cursor: pointer; margin-top: 20px; transition: opacity 0.2s;
-        }
-        .check-all-btn:hover { opacity: 0.9; }
-
-        .dialogue-container { display: flex; flex-direction: column; gap: 20px; }
-        
-        .dialogue-block { 
-            line-height: 1.8; 
-            padding: 10px;
-            border-radius: 8px;
-            background-color: rgba(0,0,0,0.02);
-        }
-        [data-theme="dark"] .dialogue-block {
-            background-color: rgba(255,255,255,0.02);
-        }
-        
-        .speaker-name { font-weight: bold; margin-right: 5px; }
-        
-        .sentence-wrapper {
-            position: relative; display: inline; cursor: pointer;
-            border-bottom: 1px dashed var(--border-color); 
-            padding: 2px 0; transition: background-color 0.2s;
-            border-radius: 3px;
-        }
-
-        .sentence-wrapper:hover {
-            background-color: var(--highlight-bg);
-            border-bottom-color: var(--primary-color);
-        }
-
-        .sentence-wrapper:hover .tooltip {
-            visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-10px);
-        }
-
-        .tooltip {
-            visibility: hidden; 
-            width: max-content; 
-            max-width: min(700px, 90vw); 
-            white-space: normal; 
-            background-color: var(--tooltip-bg); 
-            color: var(--tooltip-text);
-            text-align: center; 
-            border-radius: 8px; 
-            padding: 10px 16px;
-            position: absolute; 
-            z-index: 10; 
-            bottom: 100%; 
-            left: 50%;
-            transform: translateX(-50%) translateY(0); 
-            opacity: 0;
-            transition: opacity 0.2s, transform 0.2s; 
-            font-size: 0.95rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.1); 
-            pointer-events: none;
-            font-weight: normal; 
-            line-height: 1.5;
-            border: 1px solid var(--tooltip-border);
-            backdrop-filter: blur(4px);
-        }
-        
-        .tooltip::after {
-            content: ""; position: absolute; top: 100%; left: 50%;
-            margin-left: -6px; border-width: 6px; border-style: solid;
-            border-color: var(--tooltip-bg) transparent transparent transparent;
-        }
-
-        .vocab-list { list-style: none; }
-        .vocab-item {
-            display: flex; padding: 12px 10px;
-            border-bottom: 1px solid var(--border-color);
-            align-items: center;
-        }
-        .vocab-item:hover { background-color: var(--highlight-bg); }
-        
-        .vocab-en {
-            font-weight: bold; width: 50%; cursor: pointer;
-            color: var(--vocab-en-color);
-            display: flex; align-items: center; gap: 10px;
-        }
-        .vocab-en:hover { text-decoration: underline; }
-        .vocab-az { width: 50%; color: var(--text-color); }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-
-        @media (max-width: 768px) {
-            .tabs { flex-direction: column; }
-            .vocab-item { flex-direction: column; align-items: flex-start; gap: 5px; }
-            .vocab-en, .vocab-az { width: 100%; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Listening Practice (1-9)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{--bg-color:#f4f4f9;--text-color:#333;--panel-bg:#fff;--primary-color:#4a90e2;--border-color:#ddd;--vocab-en-color:#2563eb;--highlight-bg:rgba(74,144,226,.15);--success-color:#16a34a;--success-bg:rgba(22,163,74,.1);--error-color:#dc2626;--error-bg:rgba(220,38,38,.1);--tooltip-bg:rgba(30,41,59,.95);--tooltip-text:#f8fafc;--tooltip-border:rgba(255,255,255,.2)}
+[data-theme="dark"]{--bg-color:#1a1a2e;--text-color:#e0e0e0;--panel-bg:#16213e;--primary-color:#0f3460;--border-color:#2a2a4a;--vocab-en-color:#60a5fa;--highlight-bg:rgba(96,165,250,.2);--success-color:#4ade80;--success-bg:rgba(74,222,128,.1);--error-color:#f87171;--error-bg:rgba(248,113,113,.1);--tooltip-bg:rgba(15,23,42,.95);--tooltip-text:#f8fafc;--tooltip-border:rgba(255,255,255,.1)}
+*{box-sizing:border-box;margin:0;padding:0;transition:background-color .3s,color .3s}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg-color);color:var(--text-color);display:flex;height:100vh;height:100dvh;overflow:hidden}
+#sidebar-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:90}
+#sidebar-overlay.active{display:block}
+#sidebar{width:250px;background:var(--panel-bg);border-right:1px solid var(--border-color);display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .3s;position:absolute;height:100%;z-index:100;box-shadow:2px 0 10px rgba(0,0,0,.1)}
+#sidebar.open{transform:translateX(0)}
+.sidebar-header{padding:20px;border-bottom:1px solid var(--border-color);font-weight:bold;font-size:1.1rem;display:flex;justify-content:space-between;align-items:center}
+.toc-group-head{padding:15px 20px;cursor:pointer;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;font-weight:600}
+.toc-group-head:hover{background:var(--highlight-bg)}
+.toc-group-head i{transition:transform .3s;font-size:.8rem}
+.toc-group.open .toc-group-head i{transform:rotate(180deg)}
+.toc-sub{display:none;background:rgba(0,0,0,.03)}
+[data-theme="dark"] .toc-sub{background:rgba(255,255,255,.03)}
+.toc-group.open .toc-sub{display:block}
+.toc-sub .toc-item{padding:12px 20px 12px 40px}
+#toc-list{overflow-y:auto;flex:1}
+.toc-item{padding:15px 20px;cursor:pointer;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.toc-score{font-size:.85rem;font-weight:600;opacity:.9;white-space:nowrap}
+.lock-box{text-align:center;padding:40px 20px;opacity:.85}
+.lock-box i{font-size:2.2rem;margin-bottom:12px;display:block}
+.retry-btn{margin-top:15px;padding:10px 22px;background:var(--primary-color);color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:bold;cursor:pointer}
+.retry-btn:hover{opacity:.9}
+.score-note{margin-top:10px;font-size:.9rem;opacity:.8}
+.toc-item:hover,.toc-item.active{background:var(--primary-color);color:#fff}
+#main-content{flex:1;display:flex;flex-direction:column;height:100%;overflow-y:auto;padding:20px}
+.centered #main-content{max-width:900px;margin:0 auto;width:100%}
+.full-width #main-content{max-width:100%}
+nav{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:var(--panel-bg);border-bottom:1px solid var(--border-color);margin-bottom:20px;border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,.02)}
+.nav-left,.nav-right{display:flex;align-items:center;gap:15px}
+.btn{background:none;border:none;color:var(--text-color);font-size:1.2rem;cursor:pointer;padding:8px;border-radius:5px}
+.btn:hover{background:var(--border-color)}
+.audio-container{background:var(--panel-bg);padding:20px;border-radius:10px;margin-bottom:20px;box-shadow:0 4px 6px rgba(0,0,0,.05)}
+audio{width:100%;margin-bottom:10px;outline:none}
+.speed-controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.skip-btn{background:var(--border-color);border:none;padding:5px 15px;border-radius:15px;cursor:pointer;color:var(--text-color);font-weight:bold}
+.skip-btn:hover{background:var(--primary-color);color:#fff}
+.score-box{display:none;margin-top:20px;padding:20px;border-radius:10px;border:2px solid var(--primary-color);background:var(--panel-bg);text-align:center;animation:fadeIn .3s}
+.score-box.show{display:block}
+.score-main{font-size:1.4rem;font-weight:bold;margin-bottom:12px}
+.score-row{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;font-weight:600}
+.score-ok{color:var(--success-color)}.score-bad{color:var(--error-color)}.score-skip{opacity:.7}
+.speed-btn{background:var(--border-color);border:none;padding:5px 15px;border-radius:15px;cursor:pointer;color:var(--text-color);font-weight:bold}
+.speed-btn.active{background:var(--primary-color);color:#fff}
+.tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.tab-btn{padding:10px 20px;background:var(--panel-bg);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;color:var(--text-color);font-weight:600}
+.tab-btn.active{background:var(--primary-color);color:#fff;border-color:var(--primary-color)}
+.tab-content{display:none;background:var(--panel-bg);padding:20px;border-radius:10px;box-shadow:0 4px 6px rgba(0,0,0,.05);line-height:1.6}
+.tab-content.active{display:block}
+.question-card{margin-bottom:25px;padding-bottom:20px;border-bottom:1px solid var(--border-color)}
+.question-text{font-weight:bold;margin-bottom:15px;font-size:1.05rem}
+.options-list{margin-bottom:15px;display:flex;flex-direction:column;gap:8px}
+.option-label{display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:8px;border-radius:5px}
+.option-label:hover{background:var(--highlight-bg)}
+.option-label input[type="radio"]{cursor:pointer;width:18px;height:18px;margin-top:3px}
+.result-box{display:none;margin-top:15px;padding:15px;border-radius:8px;border-left:5px solid}
+.result-box.show{display:block;animation:fadeIn .3s}
+.result-box.correct{background:var(--success-bg);border-color:var(--success-color)}
+.result-box.wrong{background:var(--error-bg);border-color:var(--error-color)}
+.feedback-title{font-weight:bold;margin-bottom:5px}
+.feedback-title.correct{color:var(--success-color)}
+.feedback-title.wrong{color:var(--error-color)}
+.correct-answer-text{font-weight:bold;color:var(--success-color);margin-bottom:10px}
+.explanation-text{font-size:.95rem;opacity:.9;font-style:italic}
+.check-all-btn{display:block;width:100%;padding:15px;background:var(--primary-color);color:#fff;border:none;border-radius:8px;font-size:1.1rem;font-weight:bold;cursor:pointer;margin-top:20px}
+.check-all-btn:hover{opacity:.9}
+.dialogue-container{display:flex;flex-direction:column;gap:20px}
+.dialogue-block{line-height:1.8;padding:10px;border-radius:8px;background:rgba(0,0,0,.02)}
+[data-theme="dark"] .dialogue-block{background:rgba(255,255,255,.02)}
+.speaker-name{font-weight:bold;margin-right:5px}
+.sentence-wrapper{position:relative;display:inline;cursor:pointer;border-bottom:1px dashed var(--border-color);padding:2px 0;border-radius:3px}
+.sentence-wrapper.open{background:var(--highlight-bg);border-bottom-color:var(--primary-color)}
+.sentence-wrapper.open .tooltip{visibility:visible;opacity:1;transform:translateX(-50%) translateY(-10px)}
+@media(hover:hover){.sentence-wrapper:hover{background:var(--highlight-bg);border-bottom-color:var(--primary-color)}
+.sentence-wrapper:hover .tooltip{visibility:visible;opacity:1;transform:translateX(-50%) translateY(-10px)}}
+.tooltip{visibility:hidden;width:max-content;max-width:min(700px,90vw);white-space:normal;background:var(--tooltip-bg);color:var(--tooltip-text);text-align:center;border-radius:8px;padding:10px 16px;position:absolute;z-index:10;bottom:100%;left:50%;transform:translateX(-50%);opacity:0;transition:opacity .2s,transform .2s;font-size:.95rem;box-shadow:0 10px 25px -5px rgba(0,0,0,.3);pointer-events:none;line-height:1.5;border:1px solid var(--tooltip-border)}
+.tooltip::after{content:"";position:absolute;top:100%;left:50%;margin-left:-6px;border-width:6px;border-style:solid;border-color:var(--tooltip-bg) transparent transparent transparent}
+.vocab-list{list-style:none}
+.vocab-item{display:flex;padding:12px 10px;border-bottom:1px solid var(--border-color);align-items:center}
+.vocab-item:hover{background:var(--highlight-bg)}
+.vocab-en{font-weight:bold;width:50%;cursor:pointer;color:var(--vocab-en-color);display:flex;align-items:center;gap:10px}
+.vocab-en:hover{text-decoration:underline}
+.vocab-az{width:50%}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:768px){.tabs{flex-direction:column}.vocab-item{flex-direction:column;align-items:flex-start;gap:5px}.vocab-en,.vocab-az{width:100%}}
+</style>
 </head>
 <body class="centered">
-
-    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-    <div id="sidebar">
-        <div class="sidebar-header">Mündəricat</div>
-        <div id="toc-list"></div>
-    </div>
-
-    <div id="main-content">
-        <nav>
-            <div class="nav-left">
-                <button class="btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-                <strong id="current-title">Listening Practice</strong>
-            </div>
-            <div class="nav-right">
-                <button class="btn" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon"></i></button>
-                <button class="btn" onclick="toggleLayout()"><i class="fas fa-expand-arrows-alt"></i></button>
-            </div>
-        </nav>
-
-        <div class="audio-container">
-            <audio id="audio-player" src="" controls></audio>
-            <div class="speed-controls">
-                <button class="speed-btn" onclick="changeSpeed(0.75, this)">0.75x</button>
-                <button class="speed-btn active" onclick="changeSpeed(1, this)">1x</button>
-                <button class="speed-btn" onclick="changeSpeed(1.25, this)">1.25x</button>
-            </div>
-        </div>
-
-        <div class="tabs">
-            <button class="tab-btn active" onclick="openTab('questions', this)">1. Suallar</button>
-            <button class="tab-btn" onclick="openTab('text', this)">2. Mətn</button>
-            <button class="tab-btn" onclick="openTab('vocabulary', this)">3. Lüğət</button>
-        </div>
-
-        <div id="questions" class="tab-content active">
-            <div id="questions-container"></div>
-            <button class="check-all-btn" onclick="checkAllAnswers()">Cavabları Yoxla</button>
-        </div>
-
-        <div id="text" class="tab-content">
-            <div class="dialogue-container" id="dialogue-container"></div>
-        </div>
-
-        <div id="vocabulary" class="tab-content">
-            <ul class="vocab-list" id="vocab-list"></ul>
-        </div>
-    </div>
-
-    <script>
-        const appData = {
-            "listening1": {
-                title: "Listening 1",
-                audioSrc: "Listening 1.mp3",
-                questions: [
-                    { id: "l1q1", q: "1. Complete the sentence according to the dialogue.", options: ["A) writes books about theme parks", "B) travels to South Korea", "C) visits adventure parks all the time", "D) works at Magic Kingdom", "E) interviews people in Florida"], correct: "C) visits adventure parks all the time", correctText: "C) visits adventure parks all the time", explanation: "1. Bu sualda Martinin Endi Uellsin işini niyə 'arzu olunan iş' hesab etməsinin səbəbi soruşulur. Mətnə əsasən, Martin Endinin daim macəra parklarını ziyarət etməsini nəzərdə tutur." },
-                    { id: "l1q2", q: "2. Answer the question based on the dialogue: What is sold in the shops at the Wizarding World of Harry Potter in Florida?", options: ["A) magic books and clothes", "B) magic sweets and things", "C) roller coasters and rides", "D) marine animals", "E) tour guides"], correct: "B) magic sweets and things", correctText: "B) magic sweets and things", explanation: "2. Bu sual Floridadakı 'Harri Potterin Sehrbazlıq Dünyası'ndakı mağazalarda nəyin satıldığını soruşur. Dialoqda Endi bu mağazalarda sehirli şirniyyatlar və əşyaların olduğunu qeyd edir." },
-                    { id: "l1q3", q: "3. Answer the question based on the dialogue: Where is the world's biggest indoor theme park located?", options: ["A) in Lotte World, South Korea", "B) in Cedar Point, USA", "C) in Disneyland, Tokyo", "D) in Ocean Park, Hong Kong", "E) in Magic Kingdom, Florida"], correct: "A) in Lotte World, South Korea", correctText: "A) in Lotte World, South Korea", explanation: "3. Sualda dünyanın ən böyük qapalı əyləncə parkının harada yerləşdiyi soruşulur. Endi Cənubi Koreyadakı parkın dünyanın ən böyük qapalı əyləncə parkına sahib olduğunu deyir." },
-                    { id: "l1q4", q: "4. Which of the following questions is answered in the dialogue?", options: ["A) When was Cedar Point built?", "B) Where can you meet the characters from the books?", "C) How many water rides are there in Tokyo?", "D) Why is Martin's job hard?", "E) Who wrote the guide to theme parks?"], correct: "B) Where can you meet the characters from the books?", correctText: "B) Where can you meet the characters from the books?", explanation: "4. Verilən sual variantlarından yalnız birinin cavabı mətndə mövcuddur. Dialoqda 'Hovard Məktəbi' turunda kitablardakı personajlarla görüşə biləcəyiniz qeyd olunur." },
-                    { id: "l1q5", q: "5. Choose the correct statement based on the dialogue.", options: ["A) Cedar Point is the most famous theme park.", "B) Harry Potter world is in Ohio.", "C) Ocean Park has the biggest indoor park.", "D) Tokyo has no Disneyland.", "E) The most famous theme park in the world is Magic Kingdom."], correct: "E) The most famous theme park in the world is Magic Kingdom.", correctText: "E) The most famous theme park in the world is Magic Kingdom.", explanation: "5. Verilmiş cümlələrdən hansının dialoqdakı məlumata uyğun olduğunu tapmaq tələb olunur. Dialoqda deyilir ki, say baxımından dünyanın ən məşhur əyləncə parkı Floridadakı 'Magic Kingdom'dır." }
-                ],
-                text: [
-                    { speaker: "Martin", en: "Good morning.", az: "Sabahınız xeyir." },
-                    { speaker: "Martin", en: "Today we are going to talk about theme parks, and we are going to hear from Andy Wells, who has written a guide to theme parks around the world.", az: "Bu gün biz əyləncə parkları haqqında danışacağıq və bütün dünyadakı əyləncə parkları haqqında bələdçi kitab yazmış Endi Uellsi dinləyəcəyik." },
-                    { speaker: "Martin", en: "Welcome to the program, Andy.", az: "Proqrama xoş gəlmisiniz, Endi." },
-                    { speaker: "Andy", en: "Hi. It's good to be here, Martin.", az: "Salam. Burada olmaq xoşdur, Martin." },
-                    { speaker: "Martin", en: "You really have a dream job, don't you, Andy?", az: "Sizin həqiqətən də arzu olunan bir işiniz var, deyilmi, Endi?" },
-                    { speaker: "Martin", en: "Flying around the world all the time, visiting adventure parks.", az: "Hər zaman bütün dünyanı gəzirsiniz, macəra parklarını ziyarət edirsiniz." },
-                    { speaker: "Andy", en: "Well, yes, it's pretty exciting.", az: "Bəli, bu, olduqca həyəcanvericidir." },
-                    { speaker: "Andy", en: "But it's really hard work, too, you know.", az: "Amma bu, həm də çox çətin işdir, bilirsiniz." },
-                    { speaker: "Martin", en: "So, what's the number one theme park in the world?", az: "Bələdliklə, dünyada bir nömrəli əyləncə parkı hansıdır?" },
-                    { speaker: "Andy", en: "It all depends on what you are looking for.", az: "Bu, tamamilə sizin nə axtardığınızdan asılıdır." },
-                    { speaker: "Andy", en: "In terms of numbers, it has to be Magic Kingdom at Disney World in Florida, the most famous theme park.", az: "Say baxımından, bu, Floridadaki 'Disney World'də yerləşən 'Magic Kingdom' olmalıdır - ən məşhur əyləncə parkı." },
-                    { speaker: "Andy", en: "But the most popular park for people who like adventure rides is Cedar Point in Ohio, USA.", az: "Lakin macəra attraksionlarını sevən insanlar üçün ən populyar park ABŞ-ın Ohayo statındakı 'Cedar Point'dir." },
-                    { speaker: "Andy", en: "It has 17 big roller coasters in one park and 3 water rides.", az: "Bir parkda 17 böyük park qatarı və 3 su attraksionu var." },
-                    { speaker: "Martin", en: "What other attractions have you seen recently?", az: "Bu yaxınlarda başqa hansı attraksionları görmüsünüz?" },
-                    { speaker: "Andy", en: "I've just been to the Wizarding World of Harry Potter in Florida.", az: "Mən indicə Floridadaki 'Harri Potterin Sehrbazlıq Dünyası'nda olmuşam." },
-                    { speaker: "Andy", en: "It's great.", az: "Bu, əladır." },
-                    { speaker: "Andy", en: "You know those shops that sell magic sweets and things in Harry Potter books.", az: "Harri Potter kitablarındaki sehirli şirniyyatlar və əşyalar satan o mağazaları bilirsiniz." },
-                    { speaker: "Andy", en: "Well, they have everything that you have imagined.", az: "Onlarda təsəvvür etdiyiniz hər şey var." },
-                    { speaker: "Andy", en: "There is a fantastic tour of Howard School where you meet the characters from the books.", az: "“Hogwarts Məktəbi”nə fantastik bir tur var, orada kitablardaki personajlarla tanış olursunuz." },
-                    { speaker: "Martin", en: "Sounds interesting.", az: "Maraqlı səslənir." },
-                    { speaker: "Martin", en: "In your book, you have a lot of theme parks in Asia, too.", az: "Sizin kitabınızda Asiyada da bir çox əyləncə parkları var." },
-                    { speaker: "Martin", en: "Can you tell us about them?", az: "Onlar haqqında bizə danışa bilərsinizmi?" },
-                    { speaker: "Andy", en: "Sure.", az: "Əlbəttə." },
-                    { speaker: "Andy", en: "Tokyo has had a Disneyland for quite a long time, which attracts a lot of people.", az: "Tokioda kifayət qədər uzun müddətdir ki, bir “Disneyland” var və bu, bir çox insanları cəlb edir." },
-                    { speaker: "Andy", en: "Ocean Park in Hong Kong is also popular.", az: "Honq Konqdaki “Okean Parkı” da populyardır." },
-                    { speaker: "Andy", en: "It has a lot of marine animals as well as rides.", az: "Orada attraksionlarla yanaşı, bir çox dəniz heyvanları da var." },
-                    { speaker: "Andy", en: "Lotte World, a huge park in South Korea, has the world’s biggest indoor theme park.", az: "Cənubi Koreyadakı nəhəng bir park olan “Lotte World” dünyanın ən böyük qapalı əyləncə parkına sahibdir." }
-                ],
-                vocabulary: [
-                    { en: "Adventure", az: "macara" }, { en: "Attract", az: "cəlb etmək" }, { en: "Attraction", az: "cəlbedici yer, attraksion" }, { en: "Character", az: "personaj" }, { en: "Depend on", az: "asılı olmaq" }, { en: "Dream job", az: "arzu olunan iş" }, { en: "Exciting", az: "həyəcanverici" }, { en: "Famous", az: "məşhur" }, { en: "Guide", az: "bələdçi, bələdçi kitab" }, { en: "Hard work", az: "çətin iş" }, { en: "Huge", az: "nəhəng" }, { en: "Imagine", az: "təsəvvür etmək" }, { en: "Indoor", az: "qapalı (bina daxilində)" }, { en: "Magic", az: "sehirli" }, { en: "Marine animals", az: "dəniz heyvanları" }, { en: "Popular", az: "populyar" }, { en: "Recently", az: "bu yaxınlarda" }, { en: "Ride", az: "attraksion" }, { en: "Roller coaster", az: "park qatarı" }, { en: "Sweets", az: "şirniyyatlar" }, { en: "Theme park", az: "əyləncə parkı" }, { en: "Tour", az: "tur, səyahət" }, { en: "Wizarding", az: "sehrbazlıq" }
-                ]
-            },
-            "listening2": {
-                title: "Listening 2",
-                audioSrc: "Listening 2.mp3",
-                questions: [
-                    { id: "l2q1", q: "1. What is the passage mainly about?", options: ["A) the of the languages", "B) the Hungarian language", "C) the Chinese language", "D) the most difficult languages to learn", "E) ways of learning a second language"], correct: "D) the most difficult languages to learn", correctText: "D) the most difficult languages to learn", explanation: "1. Mətn əsasən nə haqqındadır? Mətndə əsas müzakirə mövzusu hansı dilin öyrənilməsinin daha çətin olduğunu müəyyən etməyin mürəkkəbliyi və buna təsir edən amillərdir." },
-                    { id: "l2q2", q: "2. Complete the sentence. If the second language differs greatly from the native tongue ...", options: ["A) people always avoid learning this language", "B) it is easier for everyone to learn it", "C) it is difficult for most people to learn it", "D) we never use it professionally", "E) people learn it faster than usual"], correct: "C) it is difficult for most people to learn it", correctText: "C) it is difficult for most people to learn it", explanation: "2. Cümləni tamamlayın. Əgər ikinci dil ana dilindən çox fərqlənirsə... Mətndə açıq şəkildə qeyd olunur ki, ikinci dil ilə birinci dil arasındakı fərqlər nə qədər çox olarsa, onu öyrənmək bir o qədər çətin olacaq." },
-                    { id: "l2q3", q: "3. Choose the correct statement according to the passage.", options: ["A) The first language cannot affect learning a second language.", "B) The languages belonging to the same family are easier to learn.", "C) People consider Chinese to be the hardest language because it has a difficult sound system.", "D) The only factor to be taken into consideration while learning a language is its writing system.", "E) People learn the language faster when they learn it independently."], correct: "B) The languages belonging to the same family are easier to learn.", correctText: "B) The languages belonging to the same family are easier to learn.", explanation: "3. Mətnə görə düzgün ifadəni seçin. Mətndə deyilir ki, ana dilimizlə əlaqəli olan dilləri öyrənmək daha asandır. Bu da eyni dil ailəsinə mənsub dillərin daha asan öyrənildiyi mənasını verir." },
-                    { id: "l2q4", q: "4. Complete the sentence. It is not easy to answer which the most difficult language is because ....", options: ["A) the languages have similar writing systems", "B) the first language influences the second one", "C) there are many factors to take into account", "D) this issue has not been fully researched yet", "E) it mostly depends on the structure of our first language"], correct: "C) there are many factors to take into account", correctText: "C) there are many factors to take into account", explanation: "4. Cümləni tamamlayın. Hansı dilin ən çətin olduğuna cavab vermək asan deyil, çünki... Mətnin ilk cümləsində bu sualın cavabı birbaşa verilir: “çünki nəzərə alınmalı bir çox amil var”." },
-                    { id: "l2q5", q: "5. How does the Chinese writing system affect learning this language?", options: ["A) It makes the language learning complicated.", "B) It makes the language easy to be learnt.", "C) The use of the language for professional purposes becomes necessary.", "D) People long for learning this language.", "E) The language learning process does not require much effort."], correct: "A) It makes the language learning complicated.", correctText: "A) It makes the language learning complicated.", explanation: "5. Çin yazı sistemi bu dili öyrənməyə necə təsir edir? Mətndə qeyd olunur ki, bir çox insan Çin dilini ən çətin dil hesab edir və bu, “Çin yazı sistemini öyrənməkdən təsirlənə bilər”. Bu, o deməkdir ki, yazı sistemi öyrənmə prosesini çətinləşdirir." }
-                ],
-                text: [
-                    { speaker: "Speaker", en: "It is not easy to answer which is the most difficult language to learn, because there are many factors that take into consideration.", az: "Hansı dilin öyrənilməsinin ən çətin olduğuna cavab vermək asan deyil, çünki nəzərə alınmalı bir çox amil var." },
-                    { speaker: "Speaker", en: "First language can affect learning a second language.", az: "Birinci dil (yəni ana dili) ikinci dilin öyrənilməsinə təsir edə bilər." },
-                    { speaker: "Speaker", en: "The greater the differences between the second language and the first, the harder it will be for most people to learn it.", az: "İkinci dil ilə birinci dil arasındakı fərqlər nə qədər böyük olarsa, əksər insanlar üçün onu öyrənmək bir o qədər çətin olacaq." },
-                    { speaker: "Speaker", en: "Many people answer that Chinese is the hardest language to learn, possibly influenced by learning the Chinese writing system.", az: "Bir çox insanlar Çin dilinin öyrənilməsi ən çətin dil olduğunu deyir, bu da ehtimal ki, Çin yazı sistemini öyrənməkdən təsirlənir." },
-                    { speaker: "Speaker", en: "If people learn a language because they need to use it professionally, they often learn it faster than people studying the language that has no direct use in their day-to-day life.", az: "Əgər insanlar bir dili peşəkar şəkildə istifadə etmək ehtiyacı olduğu üçün öyrənirlərsə, onlar çox vaxt bu dili gündəlik həyatlarında birbaşa istifadəsi olmayan bir dili öyrənən insanlardan daha sürətli öyrənirlər." },
-                    { speaker: "Speaker", en: "People have found that the second hardest language is Japanese, but the language that they have found to be the most problematic is Hungarian, which does not mean that Hungarian is the hardest language to learn for everyone.", az: "İnsanlar ikinci ən çətin dilin Yapon dili olduğunu müəyyən ediblər, lakin ən problemli hesab etdikləri dil Macar dilidir, bu isə o demək deyil ki, Macar dili hamı üçün öyrənilməsi ən çətin dildir." },
-                    { speaker: "Speaker", en: "No language is easy to learn well, though languages which are related to our first language are easier.", az: "Heç bir dili yaxşıca öyrənmək asan deyil, lakin ana dilimizlə əlaqəli olan dillər daha asandır." },
-                    { speaker: "Speaker", en: "In the end, it is impossible to say that there is one language that is the most difficult language in the world.", az: "Son olaraq, dünyada ən çətin dilin sadəcə müəyyən bir dil olduğunu söyləmək qeyri-mümkündür." }
-                ],
-                vocabulary: [
-                    { en: "Complicated", az: "çətin, mürəkkəb" }, { en: "Day-to-day life", az: "gündəlik həyat" }, { en: "Difference", az: "fərq" }, { en: "Difficult", az: "çətin" }, { en: "Direct", az: "birbaşa" }, { en: "Effort", az: "cəhd, səy" }, { en: "Factor", az: "amil" }, { en: "First language", az: "birinci dil (ana dili)" }, { en: "Hard", az: "çətin" }, { en: "Impossible", az: "qeyri-mümkün" }, { en: "Issue", az: "problem, məsələ" }, { en: "Native tongue", az: "ana dili" }, { en: "Possibly", az: "ehtimal ki, ola bilsin ki" }, { en: "Problematic", az: "problemli" }, { en: "Professionally", az: "peşəkar şəkildə" }, { en: "Related to", az: "əlaqəli" }, { en: "Require", az: "tələb etmək" }, { en: "Second language", az: "ikinci dil (xarici dil)" }, { en: "Similar", az: "bənzər, oxşar" }, { en: "Sound system", az: "səs sistemi" }, { en: "Statement", az: "ifadə, bəyanat" }, { en: "To affect", az: "təsir etmək" }, { en: "To avoid", az: "çəkinmək, uzaq durmaq" }, { en: "To consider", az: "hesab etmək, nəzərə almaq" }, { en: "To find", az: "tapmaq, müəyyən etmək" }, { en: "To influence", az: "təsir etmək" }, { en: "To research", az: "tədqiq etmək, araşdırmaq" }, { en: "To study", az: "təhsil almaq, öyrənmək" }, { en: "To take into account", az: "nəzərə almaq" }, { en: "To take into consideration", az: "nəzərə almaq" }, { en: "Usual", az: "adi, normal" }, { en: "Way", az: "yol, metod" }, { en: "Writing system", az: "yazı sistemi" }
-                ]
-            },
-            "listening3": {
-                title: "Listening 3",
-                audioSrc: "Listening 3.mp3",
-                questions: [
-                    { id: "l3q1", q: "1. Which of the following questions does the dialogue answer?", options: ["A) How many days does Ted plan to stay at his parents?", "B) Which famous paintings is Kate planning to see?", "C) What does Kate want to buy in the shops?", "D) Which part of Oklahoma do Ted's parents live?", "E) Who is Kate planning to go to Paris with?"], correct: "E) Who is Kate planning to go to Paris with?", correctText: "E) Who is Kate planning to go to Paris with?", explanation: "1. Bu sualda dialoqda verilən məlumatlar əsasında hansı sualın cavablandığı soruşulur. Dialoqun sonunda Ted Keytdən kiminlə getdiyini soruşur və Keyt “Ceyn” cavabını verir." },
-                    { id: "l3q2", q: "2. Complete the sentence according to the dialogue. Kate wants to see old parts of the city because ...", options: ["A) there are restaurants serving French food", "B) she went there when she was in the college", "C) she wants to do some shopping", "D) they look beautiful in the photos", "E) she has a lot of time to go there"], correct: "D) they look beautiful in the photos", correctText: "D) they look beautiful in the photos", explanation: "2. Keyt şəhərin köhnə hissələrini görmək istəyir, çünki... Dialoqda Keyt şəhərin köhnə hissəsini görmək istədiyini deyir və səbəbini belə izah edir: “Şəkillərdə çox gözəl görünür”." },
-                    { id: "l3q3", q: "3. Choose the correct statement according to the dialogue.", options: ["A) Ted is going to visit art galleries in Oklahoma.", "B) Kate's parents live in Paris next to the art gallery.", "C) Kate plans to go to the Rodin Museum to see the statue.", "D) Kate is going to spend two days in Paris.", "E) Ted has the same plans with Kate."], correct: "C) Kate plans to go to the Rodin Museum to see the statue.", correctText: "C) Kate plans to go to the Rodin Museum to see the statue.", explanation: "3. Verilmiş variantlar arasında dialoqdakı məlumatlara uyğun olanı tapmaq tələb olunur. Keyt planlarını sadalayarkən deyir ki, o, Rodin muzeyinə gedib məşhur heykəli görmək istəyir." },
-                    { id: "l3q4", q: "4. Complete the sentence according to the dialogue. Kate decided to go to D'Orsay to see ...", options: ["A) some modern paintings", "B) the famous statues", "C) old parts of the city", "D) her parents", "E) traditional kinds of art"], correct: "A) some modern paintings", correctText: "A) some modern paintings", explanation: "4. Dialoqda Keyt məşhur müasir rəsm əsərlərinin başqa bir yerdə olduğunu təsdiqləyir və: “Onlar D’orsey Muzeyindədir. Biz ora da gedəcəyik”, - deyir." },
-                    { id: "l3q5", q: "5. What is Kate's first plan in Paris?", options: ["A) to go round the Louvre", "B) to take a boat along the River Seine", "C) to try traditional French food", "D) to see the famous statue", "E) to visit art galleries"], correct: "B) to take a boat along the River Seine", correctText: "B) to take a boat along the River Seine", explanation: "5. Keyt planlarını danışmağa başlayanda ilk olaraq: “Səyahətimizə başlayan kimi, mən Sena çayı boyunca qayıqla gəzintiyə çıxmaq... istəyirəm”, - deyir." }
-                ],
-                text: [
-                    { speaker: "Ted", en: "Do you have any plans for the weekend, Kate?", az: "Həftəsonu üçün hər hansısa bir planın varmı, Keyt?" },
-                    { speaker: "Kate", en: "Yeah, Ted. I’m going to visit my parents in Oklahoma.", az: "Bəli, Ted. Oklahomadakı valideynlərimə baş çəkəcəyəm." },
-                    { speaker: "Ted", en: "Would you like to come with me, if you don’t have any plans?", az: "Əgər heç bir planın yoxdursa, mənimlə gəlmək istərdin?" },
-                    { speaker: "Kate", en: "I’m going away at the weekend, too.", az: "Mən də həftəsonu uzağa gedirəm." },
-                    { speaker: "Ted", en: "Thank you for asking.", az: "Soruşduğun üçün təşəkkür edirəm." },
-                    { speaker: "Kate", en: "I was going to ask. So, where are you going?", az: "Mən də soruşacaqdım. Yaxşı, sən hara gedirsən?" },
-                    { speaker: "Ted", en: "Paris. I’m so excited.", az: "Parisə. Çox həyəcanlıyam." },
-                    { speaker: "Kate", en: "Paris? Wow.", az: "Paris? Vau." },
-                    { speaker: "Ted", en: "Yeah, it’ll be brilliant. We’re going to do all the sights.", az: "Bəli, əla olacaq. Biz bütün görməli yerləri gəzəcəyik." },
-                    { speaker: "Kate", en: "As soon as we start our trip, I want to take a boat along the River Seine and see the old part of the city.", az: "Səyahətimizə başlayan kimi, mən Sena çayı boyunca qayıqla gəzintiyə çıxmaq və şəhərin qədim hissəsini görmək istəyirəm." },
-                    { speaker: "Kate", en: "It looks so beautiful in the photos.", az: "O, şəkillərdə çox gözəl görünür." },
-                    { speaker: "Kate", en: "And then there are all the art galleries. You know how much I like art.", az: "Və sonra bütün incəsənət qalereyaları var. İncəsənəti nə qədər sevdiyimi bilirsən." },
-                    { speaker: "Kate", en: "I’m looking forward to going around Uluva and see all those famous paintings.", az: "Mən Luvru gəzməyi və bütün o məşhur rəsm əsərlərini görməyi səbirsizliklə gözləyirəm." },
-                    { speaker: "Ted", en: "I think the famous modern paintings are somewhere else.", az: "Düşünürəm ki, məşhur müasir rəsm əsərləri başqa yerdədir." },
-                    { speaker: "Kate", en: "Yeah, I know. They are in the D’orsay Museum. We are going there, too.", az: "Bəli, bilirəm. Onlar D’orsey muzeyindədir. Biz ora da gedəcəyik." },
-                    { speaker: "Kate", en: "And then I want to go to the Rodin Museum and see that famous statue you know, the Thinker.", az: "Və sonra mən Rodin Muzeyinə getmək və o məşhur heykəli – “Düşünən Adam”ı görmək istəyirəm." },
-                    { speaker: "Kate", en: "And of course, if we are in Paris, we’ll have to go shopping. Or look at the shops, at least.", az: "Və əlbəttə, əgər Parisdəyiksə, alış-verişə getməliyik. Yaxud ən azından mağazalara baxmalıyıq." },
-                    { speaker: "Kate", en: "And then there are the restaurants. Just think, I’ll try all the traditional French foods.", az: "Və sonra restoranlar var. Sadəcə düşün, mən bütün ənənəvi fransız yeməklərini dadacağam." },
-                    { speaker: "Ted", en: "You have planned a lot for one weekend.", az: "Bir həftəsonu üçün çox şey planlamısan." },
-                    { speaker: "Kate", en: "We are going for five days, actually.", az: "Əslində, biz beş günlük gedirik." },
-                    { speaker: "Ted", en: "Oh, five days. Very nice. And who are you going with?", az: "Oh, beş gün. Çox gözəl. Bəs kiminlə gedirsən?" },
-                    { speaker: "Kate", en: "Jane. We started together in the college.", az: "Ceyn ilə. Biz kollecdə birlikdə başlamışdıq." }
-                ],
-                vocabulary: [
-                    { en: "Actually", az: "əslində" }, { en: "Art", az: "incəsənət" }, { en: "As soon as", az: "...kimi, dərhal" }, { en: "At least", az: "ən azından" }, { en: "Brilliant", az: "əla, möhtəşəm" }, { en: "Boat", az: "qayıq" }, { en: "Excited", az: "həyəcanlı" }, { en: "Famous", az: "məşhur" }, { en: "Gallery", az: "qalereya" }, { en: "Look forward to", az: "səbirsizliklə gözləmək" }, { en: "Painting", az: "rəsm əsəri" }, { en: "Parent", az: "valideyn" }, { en: "Plan", az: "plan" }, { en: "Sights", az: "görməli yerlər" }, { en: "Statue", az: "heykəl" }, { en: "To go shopping", az: "alış-verişə getmək" }, { en: "Traditional", az: "ənənəvi" }, { en: "Trip", az: "səyahət" }, { en: "To visit", az: "baş çəkmək, ziyarət etmək" }, { en: "Weekend", az: "həftəsonu" }
-                ]
-            },
-            "listening4": {
-                title: "Listening 4",
-                audioSrc: "Listening 4.mp3",
-                questions: [
-                    { id: "l4q1", q: "1. Which of the following questions does the dialogue answer?", options: ["A) Where will Caroline start to work?", "B) What cities does 'Summer Work Round Britain' recommend?", "C) Where are the music festivals mainly held?", "D) Which places will Caroline visit in Scotland?", "E) How much does a reduced price for dinner cost?"], correct: "A) Where will Caroline start to work?", correctText: "A) Where will Caroline start to work?", explanation: "1. Dialoqda Karolin Şotlandiyadakı dağlarda yerləşən bir gənclər yataqxanasında işləyəcəyini deyir. Bu, onun harada işləməyə başlayacağı sualına birbaşa cavabdır." },
-                    { id: "l4q2", q: "2. Choose the correct statement according to the dialogue.", options: ["A) Caroline hasn't arranged any work for summer.", "B) Caroline's work will allow her to have free time during the day.", "C) Caroline found out about the job on the Internet.", "D) Caroline says that work at music festivals is wellpaid.", "E) Caroline does not have to pay for her lunch."], correct: "B) Caroline's work will allow her to have free time during the day.", correctText: "B) Caroline's work will allow her to have free time during the day.", explanation: "2. Karolin iş saatlarının səhər 7-dən 10-a və axşam 5-dən 9-a qədər olduğunu deyir. Bu, gün ərzində gəzintiyə çıxmaq üçün ona çoxlu boş vaxt verəcək." },
-                    { id: "l4q3", q: "3. Complete the sentence according to the dialogue. Steve asks Caroline ....", options: ["A) how long she is going to stay in Scotland", "B) how many guests she will have for breakfast", "C) if she will stay with her parents or sister", "D) when she will return from her holiday", "E) if she has to pay for her accommodation in Scotland"], correct: "E) if she has to pay for her accommodation in Scotland", correctText: "E) if she has to pay for her accommodation in Scotland", explanation: "3. Dialoqda Karolin qalacağı yer və yemək xərclərindən danışarkən Stiv ona birbaşa sual verir: “Şotlandiyada qalmaq üçün pul ödəməlisən?”" },
-                    { id: "l4q4", q: "4. Answer the question according to the dialogue. What is the problem with working at music festivals?", options: ["A) One will be made to cook breakfast for guests.", "B) While working at festivals one does not have time during the day.", "C) Music festivals last for a short period of time, only a few days.", "D) Everything is very expensive and costs much money at festivals.", "E) Work schedule is unstable and it mainly occurs during the evenings."], correct: "C) Music festivals last for a short period of time, only a few days.", correctText: "C) Music festivals last for a short period of time, only a few days.", explanation: "4. Karolin musiqi festivallarında işləməyin probleminin onların yalnız bir neçə gün davam etməsi olduğunu izah edir." },
-                    { id: "l4q5", q: "5. Complete the sentence according to the dialogue. Caroline will have to pay ....", options: ["A) 55 pounds for a week", "B) 15 pounds for a week", "C) 15 pounds for a month", "D) 50 pounds for a fortnight", "E) 50 pounds for a month"], correct: "B) 15 pounds for a week", correctText: "B) 15 pounds for a week", explanation: "5. Karolin qalacağı yer üçün maaşından həftədə 15 funt sterlinq tutulacağını deyir." }
-                ],
-                text: [
-                    { speaker: "Caroline", en: "Hi Steve, what are you going to do this summer?", az: "Salam Stiv, bu yay nə edəcəksən?" },
-                    { speaker: "Steve", en: "Hi Caroline, I’m going on holiday with my parents and my sister for a week, but I should get a summer job.", az: "Salam Karolayn, mən bir həftəlik valideynlərim və bacımla tətilə gedirəm, amma bir yay işi tapmalıyam." },
-                    { speaker: "Steve", en: "I haven’t planned anything yet and I need to get some money. What about you?", az: "Hələ heç nə planlaşdırmamışam və bir az pul qazanmalıyam. Bəs sən?" },
-                    { speaker: "Caroline", en: "I’m going to Scotland for 7 weeks and work in youth hostel in the mountains.", az: "Mən 7 həftəliyinə Şotlandiyaya gedirəm və dağlardakı gənclər yataqxanasında işləyəcəyəm." },
-                    { speaker: "Steve", en: "That sounds great.", az: "Əla səslənir." },
-                    { speaker: "Caroline", en: "The work won’t be very interesting, but my hours are 7 till 10 in the morning and 5 till 9 in the evening, so I’ll have plenty of time during the day to go walking.", az: "İş çox maraqlı olmayacaq, amma iş saatlarım səhər 7-dən 10-a və axşam 5-dən 9-a qədərdir, ona görə də gün ərzində gəzintiyə çıxmaq üçün çoxlu vaxtım olacaq." },
-                    { speaker: "Steve", en: "It’ll be like a holiday, but you’ll be earning money, too. How did you find out about it?", az: "Bu, tətil kimi olacaq, amma eyni zamanda pul da qazanacaqsan. Bu barədə haradan məlumat aldın?" },
-                    { speaker: "Caroline", en: "I read about it in a book called Summer Work Round Britain. It tells you about all kinds of different jobs in different places.", az: "Bu barədə “Britaniya ətrafında yay işi” adlı bir kitabda oxudum. O (kitab) sənə fərqli yerlərdəki hər cür fərqli işlər haqqında məlumat verir." },
-                    { speaker: "Caroline", en: "You can even get work at music festivals.", az: "Sən hətta musiqi festivallarında da iş tapa bilərsən." },
-                    { speaker: "Steve", en: "Oh, I like that.", az: "Ou, bu xoşuma gəldi." },
-                    { speaker: "Caroline", en: "The problem with working at music festivals is that it lasts only a few days. You have to pay for your accommodation and food, so you won’t have much money left.", az: "Musiqi festivallarında işləməyin problemi odur ki, bu, yalnız bir neçə gün davam edir. Sən qalacağın yer və yemək üçün pul ödəməlisən, buna görə də çox pulun qalmayacaq." },
-                    { speaker: "Steve", en: "I would spend all my extra money on music. Do you have to pay for your accommodation and food in Scotland?", az: "Mən bütün əlavə pulumu musiqiyə xərcləyərdim. Şotlandiyada qalacağın yer və yemək üçün pul ödəməlisən?" },
-                    { speaker: "Caroline", en: "I’ll be staying in a shared bedroom and they’ll take £15 a week out of my wages to pay for that.", az: "Mən ortaq bir yataq otağında qalacağam və bunun üçün maaşımdan həftədə 15 funt sterlinq tutacaqlar." },
-                    { speaker: "Caroline", en: "My breakfast will be free because I’ll be cooking breakfast for the guests.", az: "Səhər yeməyim pulsuz olacaq, çünki qonaqlar üçün səhər yeməyini mən hazırlayacağam." },
-                    { speaker: "Caroline", en: "I can get dinner in the evening at a reduced price, so I only have to worry about lunch.", az: "Axşam yeməyini axşamlar endirimli qiymətə əldə edə bilərəm, buna görə də yalnız nahar barədə narahat olmalıyam." },
-                    { speaker: "Steve", en: "I hope you will have a great time.", az: "Ümid edirəm ki, əla vaxt keçirəcəksən." }
-                ],
-                vocabulary: [
-                    { en: "Accommodation", az: "qalacaq yer" }, { en: "Allow", az: "icazə vermək, imkan vermək" }, { en: "Arrange", az: "təşkil etmək, planlaşdırmaq" }, { en: "Bedroom", az: "yataq otağı" }, { en: "Earn", az: "qazanmaq" }, { en: "Extra", az: "əlavə" }, { en: "Find out", az: "ortaya çıxarmaq, müəyyən etmək, məlumat almaq" }, { en: "Fortnight", az: "2 həftə" }, { en: "Guest", az: "qonaq" }, { en: "Holiday", az: "tətil" }, { en: "Hostel", az: "yataqxana" }, { en: "Money", az: "pul" }, { en: "Pay for", az: "ödəmək" }, { en: "Plenty of", az: "çoxlu" }, { en: "Price", az: "qiymət" }, { en: "Reduce", az: "azaltmaq" }, { en: "Shared", az: "ortaq, paylaşılan" }, { en: "Summer job", az: "yay işi" }, { en: "Wages", az: "maaş (adətən həftəlik və ya saatlıq)" }, { en: "Worry about", az: "narahat olmaq" }, { en: "Youth", az: "gənclik" }
-                ]
-            },
-            "listening5": {
-                title: "Listening 5",
-                audioSrc: "Listening 5.mp3",
-                questions: [
-                    { id: "l5q1", q: "1. How often does Charlie read about fiction books?", options: ["A) He rarely reads fiction books.", "B) He usually reads about one book a month, sometimes less if he is busy.", "C) Charlie reads about one book a week, sometimes more if he is on holiday.", "D) He prefers reading three books a week.", "E) He reads more books a week."], correct: "C) Charlie reads about one book a week, sometimes more if he is on holiday.", correctText: "C) Charlie reads about one book a week, sometimes more if he is on holiday.", explanation: "1. Bu sual Çarlinin oxuma vərdişlərinin tezliyi haqqındadır. Dialoqda o, “Adətən həftədə bir kitab oxuyuram, bəzən tətildə olanda daha çox” deyir." },
-                    { id: "l5q2", q: "2. Choose the correct variant according to the passage.", options: ["A) Sarah's first question is about what type of books Charlie likes reading.", "B) Sarah asks Charlie to name three types of books that he likes.", "C) Charlie likes science fiction, romance and western.", "D) Charlie also buys books from his friends.", "E) Charlie went to the Regal Bookstore last week."], correct: "B) Sarah asks Charlie to name three types of books that he likes.", correctText: "B) Sarah asks Charlie to name three types of books that he likes.", explanation: "2. Bu sual dialoqdakı faktlara əsaslanan doğru cümləni tapmağı tələb edir. Sorğu aparan şəxs Çarlidən hansı üç kitab kateqoriyasına üstünlük verdiyini soruşur." },
-                    { id: "l5q3", q: "3. What three categories of books does Charlie prefer to read? (1: Romance, 2: Crime, 3: Eastern, 4: Western, 5: Science fiction)", options: ["A) 1, 2, 4", "B) 2, 4, 5", "C) 1, 4, 5", "D) 2, 3, 4", "E) 2, 3, 5"], correct: "B) 2, 4, 5", correctText: "B) 2, 4, 5 (Cinayət, Vestern, Elmi fantastika)", explanation: "3. Çarli sevdiyi üç növü sadalayır: cinayət kitabları (2), elmi fantastika (5) və vesternlər (4)." },
-                    { id: "l5q4", q: "4. Which question has no answer according to the passage?", options: ["A) How much money does Charlie spend on fiction books?", "B) Has Charlie ever been in Regal Store?", "C) What three categories does he like to read?", "D) Which western books has Charlie read?", "E) Has Charlie bought a book from Regal Store?"], correct: "D) Which western books has Charlie read?", correctText: "D) Which western books has Charlie read?", explanation: "4. Verilən suallardan hansının cavabının mətndə olmadığını tapmaq lazımdır. Çarli vesternlər oxuduğunu desə də, hansı konkret vestern kitablarını oxuduğunu qeyd etmir." },
-                    { id: "l5q5", q: "5. Complete the sentence according to the sentence. I buy books online or sometimes I go to a book store if I see ...", options: ["A) special offers", "B) the right prices", "C) something interesting in the window", "D) sale in it", "E) interesting covers"], correct: "C) something interesting in the window", correctText: "C) something interesting in the window", explanation: "5. Çarli kitabları haradan aldığını izah edərkən bu cümləni işlədir: “...bəzən vitrində maraqlı bir şey görsəm, kitab mağazasına gedirəm”." }
-                ],
-                text: [
-                    { speaker: "Sarah", en: "Excuse me, do you have a few minutes?", az: "Bağışlayın, bir neçə dəqiqəniz var?" },
-                    { speaker: "Sarah", en: "I want to ask you a couple of questions.", az: "Sizə bir neçə sual vermək istəyirəm." },
-                    { speaker: "Charlie", en: "Yes, all right. What would you like to know?", az: "Bəli, əlbəttə. Nə bilmək istərdiniz?" },
-                    { speaker: "Sarah", en: "Well, I work for the Regal Bookstore and we are doing a survey about people’s reading habits.", az: "Mən “Regal” kitab mağazasında işləyirəm və biz insanların oxu vərdişləri haqqında sorğu keçiririk." },
-                    { speaker: "Sarah", en: "Can I ask you how often you read fiction books?", az: "Sizdən bədii kitabları nə qədər vaxtdan bir oxuduğunuzu soruşa bilərəm?" },
-                    { speaker: "Charlie", en: "Very often. I usually read about one book a week, sometimes more if I’m away on vacation.", az: "Çox tez-tez. Adətən həftədə bir kitab oxuyuram, bəzən tətildə olanda daha çox." },
-                    { speaker: "Sarah", en: "Now then, next question. What three categories of books do you prefer to read?", az: "Yaxşı, növbəti sual. Hansı üç kitab kateqoriyasını oxumağa üstünlük verirsiniz?" },
-                    { speaker: "Charlie", en: "Hmm, let me think. I absolutely love crime books. You know, Agatha Christie, a good whodunit.", az: "Hmm, qoy fikirləşim. Mən cinayət kitablarını çox sevirəm. Bilirsiniz də, Aqata Kristi, yaxşı bir detektiv hekayə." },
-                    { speaker: "Charlie", en: "I’m also keen on science fiction books such as Arthur C. Clarke and Asimov.", az: "Mən həmçinin Artur Klark və Azimov kimi elmi fantastika kitablarına həvəsliyəm." },
-                    { speaker: "Charlie", en: "And then recently, I’ve read a lot of westerns.", az: "Və bu yaxınlarda çoxlu vesternlər oxumuşam." },
-                    { speaker: "Sarah", en: "Fine. How much do you think you spend on fiction books every month?", az: "Əla. Sizcə, hər ay bədii kitablara nə qədər pul xərcləyirsiniz?" },
-                    { speaker: "Charlie", en: "Not very much, because I get a lot of my books from friends when they finish reading them, probably around $50.", az: "Çox pul xərcləmirəm, çünki kitablarımın çoxunu dostlarım oxuyub bitirdikdən sonra onlardan alıram, yəqin ki, təxminən 50 dollar xərcləyirəm." },
-                    { speaker: "Sarah", en: "Okay. Now the next question is about where you buy your books, if you don’t get them from your friends, of course. Do you spend most of your money on books in stores or on the Internet?", az: "Yaxşı. İndi növbəti sual, əlbəttə ki, əgər dostlarınızdan almırsınızsa, kitablarınızı haradan aldığınızla bağlıdır. Kitab almaq üçün pulunuzun çoxunu mağazalarda, yoxsa internetdə xərcləyirsiniz?" },
-                    { speaker: "Charlie", en: "As I said, I don’t buy books very often, but when I do, I buy them online, or sometimes I go to a bookstore if I see something interesting in the window.", az: "Dediyim kimi, mən çox tez-tez kitab almıram, amma alanda onlayn alıram və ya bəzən vitrində maraqlı bir şey görsəm, kitab mağazasına gedirəm." },
-                    { speaker: "Sarah", en: "And have you ever been to the Regal Bookstore before to buy books?", az: "Bəs siz əvvəllər kitab almaq üçün “Regal” kitab mağazasında olmusunuz?" },
-                    { speaker: "Charlie", en: "Yes. I bought something from that store only two weeks ago. It was a new book by Grisham.", az: "Bəli. Cəmi iki həftə əvvəl o mağazadan bir şey aldım. Bu, Qrişemin yeni kitabı idi." },
-                    { speaker: "Charlie", en: "I saw that it was on special offer, so I came in.", az: "Gördüm ki, o (kitab), xüsusi təklifdədir, ona görə də içəri girdim." },
-                    { speaker: "Sarah", en: "Now my final question. Would you buy a book from the Regal Bookstore website? We have a new site, did you know?", az: "İndi isə sonuncu sualım. “Regal” kitab mağazasının veb-saytından kitab alardınız? Bizim yeni saytımız var, bilirdinizmi?" },
-                    { speaker: "Charlie", en: "No, I didn’t know. I’ll go and have a look at it. It’s got some good prices. I would like to buy something from the site, if the price is right, of course.", az: "Xeyr, bilmirdim. Gedib ona bir nəzər salaram. Orada bəzi yaxşı qiymətlər var. Əlbəttə, qiymət uyğun olsa, saytdan bir şey almaq istərdim." },
-                    { speaker: "Sarah", en: "Okay, sir. Thank you for your time. Have a nice day.", az: "Yaxşı, cənab. Vaxt ayırdığınız üçün təşəkkür edirəm. Gününüz xeyirli keçsin." },
-                    { speaker: "Charlie", en: "Thanks. Good day to you!", az: "Sağ olun. Gününüz uğurlu olsun!" }
-                ],
-                vocabulary: [
-                    { en: "A couple of", az: "bir neçə" }, { en: "Bookstore", az: "kitab mağazası" }, { en: "Category", az: "kateqoriya" }, { en: "Crime book", az: "cinayət/detektiv kitabı" }, { en: "Fiction", az: "bədii ədəbiyyat" }, { en: "Final", az: "son, sonuncu" }, { en: "Habit", az: "vərdiş" }, { en: "Keen on", az: "həvəsli olmaq" }, { en: "Offer", az: "təklif" }, { en: "Online", az: "onlayn, internet üzərindən" }, { en: "Prefer", az: "üstünlük vermək" }, { en: "Price", az: "qiymət" }, { en: "Question", az: "sual" }, { en: "Recently", az: "bu yaxınlarda" }, { en: "Science fiction", az: "elmi fantastika" }, { en: "Special", az: "xüsusi" }, { en: "Spend money on", az: "nəyəsə pul xərcləmək" }, { en: "Survey", az: "sorğu" }, { en: "Vacation", az: "tətil" }, { en: "Website", az: "veb-sayt" }, { en: "Western", az: "vestern (janr)" }, { en: "Whodunit", az: "detektiv hekayə" }
-                ]
-            },
-            "listening6": {
-                title: "Listening 6",
-                audioSrc: "Listening 6.mp3",
-                questions: [
-                    { id: "l6q1", q: "1. How will they take their families for a cruise?", options: ["A) There is a 60-minute boat trip that takes passengers out seven times a day.", "B) There is a 90-minute steamship trip that only takes families out several times a day.", "C) There is a 90-minute boat trip that takes passengers out several times a day.", "D) There is a 90-minute steamship trip that only takes families out seven times a day.", "E) There is a 60-minute visitor boat trip that takes families out several times a day."], correct: "C) There is a 90-minute boat trip that takes passengers out several times a day.", correctText: "C) There is a 90-minute boat trip that takes passengers out several times a day.", explanation: "1. Dialoqda turizm işçisi sərnişinləri gündə bir neçə dəfə gəzintiyə çıxaran bir buxar gəmisi olduğunu və səfərin təxminən bir saat yarım (90 dəqiqə) davam etdiyini söyləyir." },
-                    { id: "l6q2", q: "2. Which activity does the visitor mention that his son has not tried before?", options: ["A) visiting the farm", "B) feeding the animals", "C) riding around on a horse", "D) exploring the farm on his own", "E) walking along the side of the lake"], correct: "C) riding around on a horse", correctText: "C) riding around on a horse", explanation: "2. İşçi fermada atla 40 dəqiqəlik gəzinti təklif etdikdə, ziyarətçi oğlunun bunu bacarıb-bacarmayacağını soruşur və “O, bunu əvvəllər etməyib” deyə əlavə edir." },
-                    { id: "l6q3", q: "3. ........... is available at an additional cost.", options: ["A) Taking a cruise trip", "B) Buying anything on board", "C) Visiting the Country Farm", "D) Riding a horse", "E) Having lunch"], correct: "E) Having lunch", correctText: "E) Having lunch", explanation: "3. Ziyarətçi nahar etmək imkanının olubolmadığını soruşduqda, işçi bunun mümkün olduğunu, lakin “əsas xərcə daxil olmadığını” və ora çatanda ödəniş edildiyini bildirir." },
-                    { id: "l6q4", q: "4. Visitors will not prepay for lunch because .....", options: ["A) they pay while on the cruise trip", "B) they pay before crossing the lake", "C) the farmer will cover the cost for them", "D) it is included in the basic cost", "E) they pay upon reaching the farm"], correct: "E) they pay upon reaching the farm", correctText: "E) they pay upon reaching the farm", explanation: "4. Əvvəlki sualın davamı olaraq, işçi nahar üçün ödənişin “ora çatanda” yəni fermaya çatdıqda edildiyini aydın şəkildə ifadə edir." },
-                    { id: "l6q5", q: "5. Which of the following questions does the dialogue not answer?", options: ["A) Are there any excursions suitable for families?", "B) Is there information about the duration of the trips?", "C) Does the employee provide information about any services during the cruise?", "D) Did the visitor inquire about the scenery around the farm?", "E) Did they discuss the payment requirements for any meals?"], correct: "D) Did the visitor inquire about the scenery around the farm?", correctText: "D) Did the visitor inquire about the scenery around the farm?", explanation: "5. Bu testdə A, B, C və E variantlarındakı sualların cavabı “Yes” (bəli) şəklindədir. Lakin ziyarətçi heç bir zaman ferma ətrafındakı mənzərə haqqında sual vermir. Mənzərə haqqında məlumatı (dağlar, bağlar) işçi özü verir." }
-                ],
-                text: [
-                    { speaker: "Employee", en: "Hi. Can I help you?", az: "Salam. Sizə kömək edə bilərəm?" },
-                    { speaker: "Visitor", en: "I’d like to find out if you have any excursions suitable for families.", az: "Ailələr üçün uyğun ekskursiyalarınızın olub-olmadığını öyrənmək istərdim." },
-                    { speaker: "Employee", en: "Sure. How about taking your family for a cruise?", az: "Əlbəttə. Ailənizi bir gəmi səyahətinə çıxarmağa necə baxırsınız?" },
-                    { speaker: "Employee", en: "We have a steamship that takes passengers out several times a day. It’s over a hundred years old.", az: "Bizim sərnişinləri gündə bir neçə dəfə gəzintiyə çıxaran bir buxar gəmimiz var. Onun yüz ildən çox yaşı var." },
-                    { speaker: "Visitor", en: "That sounds interesting. How long is the trip?", az: "Maraqlı səslənir. Səfər nə qədər davam edir?" },
-                    { speaker: "Employee", en: "About an hour and a half. And don’t forget to take pictures of the mountains. They’re all around you when you’re on the boat and they look fantastic.", az: "Təxminən bir saat yarım. Dağların şəkillərini çəkməyi unutmayın. Siz qayıqda olanda onlar hər tərəfinizdə olur və möhtəşəm görünür." },
-                    { speaker: "Visitor", en: "Okay. And I assume there’s a café or something on board?", az: "Yaxşı. Və güman edirəm ki, gəmidə bir kafe və ya buna bənzər bir şey var?" },
-                    { speaker: "Employee", en: "Sure. How old are your children?", az: "Əlbəttə. Uşaqlarınızın neçə yaşı var?" },
-                    { speaker: "Visitor", en: "My daughter’s 15 and my son’s 7.", az: "Qızımın 15, oğlumun isə 7 yaşı var." },
-                    { speaker: "Employee", en: "Right. Well, there are various things you can do once you’ve crossed the lake to make a day of it. One thing that’s very popular is a visit to the country farm.", az: "Aydındır. Gölün o tayına keçdikdən sonra bütün günü orada keçirmək üçün edə biləcəyiniz müxtəlif şeylər var. Çox populyar olan bir şey kənd fermasına baş çəkməkdir." },
-                    { speaker: "Employee", en: "You’re met off the boat by the farmer and he’ll take you to the holding pens where the sheep are kept. Children love feeding them.", az: "Gəmidən düşəndə sizi fermer qarşılayır və o, sizi qoyunların saxlandığı ağıllara aparacaq. Uşaqlar onları yemləməyi sevirlər." },
-                    { speaker: "Visitor", en: "My son would love that. He really likes animals.", az: "Oğlum bunu çox sevər. O, heyvanları həqiqətən sevir." },
-                    { speaker: "Employee", en: "Well, there’s also a 40-minute trek around the farm on a horse if he wants.", az: "Əgər istəsə, ferma ətrafında atla 40 dəqiqəlik bir gəzinti də var." },
-                    { speaker: "Visitor", en: "Do you think he’d manage it? He hasn’t done that before.", az: "Sizcə, o, bunu bacarar? O, bunu əvvəllər etməyib." },
-                    { speaker: "Employee", en: "Sure. It’s suitable for complete beginners.", az: "Əlbəttə. Bu, tamamilə yeni başlayanlar üçün uyğundur." },
-                    { speaker: "Visitor", en: "Good. And again, visitors are welcome to explore the farm on their own as long as they take care to close gates and so on.", az: "Yaxşı. Və yenə də, ziyarətçilər darvazaları bağlamağa və s. diqqət etdikləri müddətcə fermanı özləri araşdıra (yəni, gəzib-dolaşa) bilərlər." },
-                    { speaker: "Employee", en: "There are some very beautiful gardens along the side of the lake which also belong to the farm. They’ll be just at their best now. You could easily spend an hour or two there.", az: "Gölün kənarında fermaya məxsus olan çox gözəl bağlar da var. Onlar indi ən gözəl vaxtlarında olacaqlar. Siz orada asanlıqla bir və ya iki saat keçirə bilərsiniz." },
-                    { speaker: "Visitor", en: "Okay. Well, that all sounds good. And can we get lunch there?", az: "Yaxşı. Bütün bunlar yaxşı səslənir. Bəs biz orada nahar edə bilərik?" },
-                    { speaker: "Employee", en: "You can. And it’s very good, though it’s not included in the basic cost. You pay when you get there.", az: "Edə bilərsiniz. Və o, çox yaxşıdır, lakin bu, əsas qiymətə daxil deyil. Ora çatanda ödəyirsiniz." },
-                    { speaker: "Visitor", en: "Right.", az: "Aydındır." }
-                ],
-                vocabulary: [
-                    { en: "Additional", az: "əlavə" }, { en: "Assume", az: "güman etmək, fərz etmək" }, { en: "Basic", az: "əsas, ilkin" }, { en: "Beginner", az: "yeni başlayan" }, { en: "Belong to", az: "məxsus olmaq" }, { en: "Cost", az: "qiymət, xərc" }, { en: "Cruise", az: "gəmi səyahəti (istirahət məqsədli)" }, { en: "Duration", az: "müddət" }, { en: "Excursion", az: "ekskursiya" }, { en: "Explore", az: "kəşf etmək, araşdırmaq" }, { en: "Holding pen", az: "ağıl (heyvanların saxlandığı yer)" }, { en: "Inquire", az: "maraqlanmaq, soruşmaq" }, { en: "Manage", az: "öhdəsindən gəlmək, bacarmaq" }, { en: "On board", az: "gəmidə, göyərtədə" }, { en: "Passenger", az: "sərnişin" }, { en: "Scenery", az: "mənzərə" }, { en: "Steamship", az: "buxar gəmisi" }, { en: "Suitable (for)", az: "(...üçün) uyğun" }, { en: "Trek", az: "(uzun və çətin olan) gəzinti" }, { en: "Various", az: "müxtəlif" }
-                ]
-            },
-            "listening7": {
-                title: "Listening 7",
-                audioSrc: "Listening 7.mp3",
-                questions: [
-                    { id: "l7q1", q: "1. Answer the question according to the passage. Where is Louise from?", options: ["A) She is French though her mother was Scottish.", "B) She is English though her mother was Irish.", "C) She is Canadian but her father was English.", "D) She is French but her sister was Australian.", "E) She is Canadian though her mother was British."], correct: "E) She is Canadian though her mother was British.", correctText: "E) She is Canadian though her mother was British.", explanation: "1. Dialoqda Luiza “Xeyr, mən əslində kanadalıyam, amma anam britaniyalı idi” deyir. Bu məlumata uyğun gələn variantı tapmaq lazımdır." },
-                    { id: "l7q2", q: "2. Complete the sentence according to the passage. Louise says she is an interior designer and she comes over ...", options: ["A) to sell antiques.", "B) to draw pictures.", "C) to buy old furniture.", "D) to construct buildings.", "E) to build houses."], correct: "C) to buy old furniture.", correctText: "C) to buy old furniture.", explanation: "2. Luiza peşəsi haqqında danışarkən deyir: “Mən interyer dizayneriyəm və köhnə mebel almaq üçün gəlirəm”." },
-                    { id: "l7q3", q: "3. Choose the correct statement according to the passage.", options: ["A) Louise had nothing stolen out of his bag.", "B) Louise has got a place at Park Apartments. It is on King Street.", "C) Louise bought some houses at the Riverside.", "D) Louise wants to come back in three months.", "E) Officer didn't ask Louise's name."], correct: "B) Louise has got a place at Park Apartments. It is on King Street.", correctText: "B) Louise has got a place at Park Apartments. It is on King Street.", explanation: "3. Luiza hazırda harada qaldığını deyərkən qeyd edir: “hazırda mən “Park mənzilləri”ndə bir yerdə qalıram. Bu, Kral küçəsindədir”." },
-                    { id: "l7q4", q: "4. According to passage, all of the following statements are true Except:", options: ["A) Louise's date of birth is December 14th, 1977.", "B) Louise wants to report a theft.", "C) Officer wants to take a few details about stolen things.", "D) Louise's apartment number is fifty.", "E) Officer asks where Louise is staying."], correct: "D) Louise's apartment number is fifty.", correctText: "D) Louise's apartment number is fifty.", explanation: "4. Bu sualda yanlış olan ifadəni tapmaq tələb olunur. Luiza mənzil nömrəsini soruşduqda “On beş” (Fifteen) cavabını verir, lakin variantda “əlli” (fifty) yazılıb." },
-                    { id: "l7q5", q: "5. What is the main idea of dialogue?", options: ["A) Louise's visit to the U.S.A", "B) the best way to visit", "C) to get information in order to investigate theft", "D) interior designer's works", "E) an apartment where a visitor stayed"], correct: "C) to get information in order to investigate theft", correctText: "C) to get information in order to investigate theft", explanation: "5. Bütün dialoq bir polis əməkdaşının oğurluq hadisəsini araşdırmaq üçün zərərçəkmişdən (Luizadan) məlumat toplamasından ibarətdir." }
-                ],
-                text: [
-                    { speaker: "Officer", en: "Good morning. What can I do for you?", az: "Sabahınız xeyir. Sizin üçün nə edə bilərəm? (Sizə necə kömək edə bilərəm?)" },
-                    { speaker: "Louise", en: "I want to report a theft. I had some things stolen out of my bag yesterday.", az: "Mən bir oğurluq barədə məlumat vermək istəyirəm. Dünən çantamdan bəzi əşyalarım oğurlanıb." },
-                    { speaker: "Officer", en: "I’m sorry to hear that. Right, so I’ll need to take a few details. Can I start with your name?", az: "Bunu eşitdiyim üçün təəssüf edirəm. Yaxşı, mən bir neçə detal qeyd etməliyəm. Adınızla başlaya bilərəm?" },
-                    { speaker: "Louise", en: "Louise Taylor.", az: "Luiza Teylor." },
-                    { speaker: "Officer", en: "Okay, thank you. And are you resident in the UK?", az: "Yaxşı, təşəkkür edirəm. Siz Birləşmiş Krallıq sakininizsiniz?" },
-                    { speaker: "Louise", en: "No, I’m actually Canadian, though my mother was British.", az: "Xeyr, mən əslində kanadalıyam, amma anam britaniyalı idi." },
-                    { speaker: "Officer", en: "And your date of birth?", az: "Bəs doğum tarixiniz?" },
-                    { speaker: "Louise", en: "December 14th, 1977.", az: "14 dekabr, 1977-ci il." },
-                    { speaker: "Officer", en: "So you’re just visiting this country?", az: "Deməli, siz bu ölkəyə sadəcə səfərə gəlmisiniz?" },
-                    { speaker: "Louise", en: "That’s right. I come over most summers on business.", az: "Düzdür. Mən əksər yay aylarında işgüzar səfərə gəlirəm." },
-                    { speaker: "Louise", en: "I’m an interior designer, and I come over to buy old furniture. Antiques, you know?", az: "Mən interyer dizayneriyəm və köhnə mebel almaq üçün gəlirəm. Antik əşyalar, bilirsiniz?" },
-                    { speaker: "Louise", en: "There are some really lovely things around here, but you need to get out to small towns.", az: "Buralarda həqiqətən də çox gözəl əşyalar var, amma bunun üçün kiçik şəhərlərə getməyiniz lazımdır." },
-                    { speaker: "Louise", en: "I’ve had a really good trip this year, until this happened.", az: "Bu hadisə (oğurluq) baş verənə qədər, bu il həqiqətən də yaxşı bir səfər keçirmişdim." },
-                    { speaker: "Officer", en: "Okay. So you’ve been here quite a while?", az: "Yaxşı. Deməli, siz xeyli müddətdir buradasınız?" },
-                    { speaker: "Louise", en: "Yes. I’m here for two months. I go back next week.", az: "Bəli. Mən iki aydır buradayam. Gələn həftə geri qayıdıram." },
-                    { speaker: "Officer", en: "So may I ask where you’re staying now?", az: "Soruşa bilərəmmi, hazırda harada qalırsınız?" },
-                    { speaker: "Louise", en: "Well, at present I’ve got a place at Park Apartments. That’s on King Street.", az: "Hazırda mən “Park mənzilləri”ndə bir yerdə qalıram. O, Kral küçəsindədir." },
-                    { speaker: "Louise", en: "I was staying at the Riverside Apartments on the same street, but the apartment there was only available for six weeks, so I had to find another one.", az: "Mən eyni küçədəki “Riverside mənzilləri”ndə qalırdım, lakin oradakı mənzil yalnız altı həftə üçün əlçatan (yəni boş) idi, buna görə də başqasını tapmalı oldum." },
-                    { speaker: "Officer", en: "Okay. And the apartment number?", az: "Yaxşı. Bəs mənzil nömrəsi?" },
-                    { speaker: "Louise", en: "Fifteen.", az: "On beş." },
-                    { speaker: "Officer", en: "Right.", az: "Aydındır." }
-                ],
-                vocabulary: [
-                    { en: "Antique", az: "antik əşya" }, { en: "Apartment", az: "mənzil" }, { en: "At present", az: "hal-hazırda" }, { en: "Available", az: "mövcud, əlçatan" }, { en: "Construct", az: "qurmaq, tikmək" }, { en: "Date of birth", az: "doğum tarixi" }, { en: "Detail", az: "detal" }, { en: "Except", az: "istisna" }, { en: "Furniture", az: "mebel" }, { en: "In order to", az: "(nəsə etmək) məqsədilə" }, { en: "Interior designer", az: "interyer dizayneri" }, { en: "On business", az: "işgüzar səfərdə" }, { en: "Resident", az: "sakin" }, { en: "Stolen", az: "oğurlanmış" }, { en: "Theft", az: "oğurluq" }, { en: "To report", az: "məlumat vermək, raport vermək" }, { en: "To steal", az: "oğurlamaq" }, { en: "Trip", az: "səfər, səyahət" }, { en: "While", az: "müddət, zaman kəsiyi" }
-                ]
-            }
-        };
-
-        let currentListeningId = "listening1";
-        
-        const speakerColors = [
-            '#3b82f6', // Mavi
-            '#ef4444', // Qırmızı
-            '#10b981', // Yaşıl
-            '#f59e0b', // Narıncı-sarı
-            '#8b5cf6', // Bənövşəyi
-            '#ec4899', // Çəhrayı
-            '#06b6d4', // Firuzəyi
-            '#f97316', // Narıncı
-            '#14b8a6', // Yaşıl-göy
-            '#6366f1'  // Tünd mavi
-        ];
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('sidebar-overlay').classList.toggle('active');
-        }
-
-        function closeSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar.classList.contains('open')) {
-                sidebar.classList.remove('open');
-                overlay.classList.remove('active');
-            }
-        }
-
-        function toggleTheme() {
-            const body = document.body;
-            const icon = document.getElementById('theme-icon');
-            if (body.getAttribute('data-theme') === 'dark') {
-                body.removeAttribute('data-theme');
-                icon.classList.replace('fa-sun', 'fa-moon');
-                localStorage.setItem('theme', 'light');
-            } else {
-                body.setAttribute('data-theme', 'dark');
-                icon.classList.replace('fa-moon', 'fa-sun');
-                localStorage.setItem('theme', 'dark');
-            }
-        }
-
-        function toggleLayout() {
-            const body = document.body;
-            if (body.classList.contains('centered')) {
-                body.classList.replace('centered', 'full-width');
-                localStorage.setItem('layout', 'full-width');
-            } else {
-                body.classList.replace('full-width', 'centered');
-                localStorage.setItem('layout', 'centered');
-            }
-        }
-
-        function openTab(tabName, btn) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-            if(btn) btn.classList.add('active');
-        }
-
-        function changeSpeed(speed, btn) {
-            document.getElementById('audio-player').playbackRate = speed;
-            document.querySelectorAll('.speed-btn').forEach(el => el.classList.remove('active'));
-            btn.classList.add('active');
-        }
-
-        function speakWord(word) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(word);
-                utterance.lang = 'en-US';
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        function checkAllAnswers() {
-            const data = appData[currentListeningId];
-            data.questions.forEach(q => {
-                const selectedOption = document.querySelector(`input[name="${q.id}"]:checked`);
-                const resultBox = document.getElementById(`result-${q.id}`);
-                const feedbackTitle = document.getElementById(`feedback-${q.id}`);
-                
-                if (!selectedOption) {
-                    feedbackTitle.innerText = "Cavab seçilməyib!";
-                    feedbackTitle.className = "feedback-title";
-                    resultBox.className = "result-box show";
-                    document.getElementById(`correct-text-${q.id}`).style.display = "block";
-                    return;
-                }
-
-                const selectedValue = selectedOption.value;
-
-                if (selectedValue === q.correct) {
-                    feedbackTitle.innerText = "Düzdür!";
-                    feedbackTitle.className = "feedback-title correct";
-                    resultBox.className = "result-box show correct";
-                } else {
-                    feedbackTitle.innerText = "Səhvdir!";
-                    feedbackTitle.className = "feedback-title wrong";
-                    resultBox.className = "result-box show wrong";
-                }
-                
-                document.getElementById(`correct-text-${q.id}`).style.display = "block";
-            });
-        }
-
-        function adjustTooltip(element) {
-            const tooltip = element.querySelector('.tooltip');
-            if (!tooltip) return;
-
-            tooltip.style.left = '50%';
-            tooltip.style.right = 'auto';
-            tooltip.style.transform = 'translateX(-50%) translateY(-10px)';
-
-            const rect = tooltip.getBoundingClientRect();
-            const windowWidth = window.innerWidth;
-
-            if (rect.left < 10) {
-                const shift = 10 - rect.left;
-                tooltip.style.left = `calc(50% + ${shift}px)`;
-            } else if (rect.right > windowWidth - 10) {
-                const shift = rect.right - (windowWidth - 10);
-                tooltip.style.left = `calc(50% - ${shift}px)`;
-            }
-        }
-
-        function loadListening(id) {
-            currentListeningId = id;
-            const data = appData[id];
-
-            document.getElementById('current-title').innerText = data.title;
-            const audioPlayer = document.getElementById('audio-player');
-            audioPlayer.src = data.audioSrc;
-            audioPlayer.load(); 
-            
-            document.querySelectorAll('.tab-btn').forEach((btn, index) => {
-                if(index === 0) btn.classList.add('active');
-                else btn.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-content').forEach((el, index) => {
-                if(index === 0) el.classList.add('active');
-                else el.classList.remove('active');
-            });
-
-            const qContainer = document.getElementById('questions-container');
-            qContainer.innerHTML = ''; 
-            data.questions.forEach(q => {
-                let optionsHtml = q.options.map(o => `
-                    <label class="option-label">
-                        <input type="radio" name="${q.id}" value="${o}">
-                        <span>${o}</span>
-                    </label>
-                `).join('');
-                
-                qContainer.innerHTML += `
-                    <div class="question-card">
-                        <div class="question-text">${q.q}</div>
-                        <div class="options-list">${optionsHtml}</div>
-                        
-                        <div class="result-box" id="result-${q.id}">
-                            <div class="feedback-title" id="feedback-${q.id}"></div>
-                            <div class="correct-answer-text" id="correct-text-${q.id}" style="display:none;">
-                                Düzgün cavab: ${q.correctText}
-                            </div>
-                            <div class="explanation-text" style="display:none;">
-                                <strong>İzah:</strong> ${q.explanation}
-                            </div>
-                        </div>
-                    </div>
-                `;
-                setTimeout(() => {
-                    const expDiv = qContainer.querySelector(`#result-${q.id} .explanation-text`);
-                    if(expDiv) expDiv.style.display = "block";
-                }, 0);
-            });
-
-            const vContainer = document.getElementById('vocab-list');
-            vContainer.innerHTML = ''; 
-            data.vocabulary.forEach(v => {
-                vContainer.innerHTML += `
-                    <li class="vocab-item">
-                        <div class="vocab-en" onclick="speakWord('${v.en}')"><i class="fas fa-volume-up"></i> ${v.en}</div>
-                        <div class="vocab-az">${v.az}</div>
-                    </li>
-                `;
-            });
-
-            const tContainer = document.getElementById('dialogue-container');
-            tContainer.innerHTML = ''; 
-            
-            const uniqueSpeakers = [...new Set(data.text.map(item => item.speaker))];
-            const speakerColorMap = {};
-            uniqueSpeakers.forEach((speaker, index) => {
-                speakerColorMap[speaker] = speakerColors[index % speakerColors.length];
-            });
-
-            const groupedText = [];
-            data.text.forEach(item => {
-                if (groupedText.length > 0 && groupedText[groupedText.length - 1].speaker === item.speaker) {
-                    groupedText[groupedText.length - 1].sentences.push(item);
-                } else {
-                    groupedText.push({ speaker: item.speaker, sentences: [item] });
-                }
-            });
-
-            groupedText.forEach(group => {
-                const color = speakerColorMap[group.speaker]; 
-                
-                let sentencesHtml = group.sentences.map(s => `
-                    <span class="sentence-wrapper" onmouseenter="adjustTooltip(this)">
-                        ${s.en}
-                        <span class="tooltip">${s.az}</span>
-                    </span>
-                `).join(' ');
-
-                tContainer.innerHTML += `
-                    <div class="dialogue-block">
-                        <span class="speaker-name" style="color: ${color};">${group.speaker}:</span>
-                        <span class="speaker-text">${sentencesHtml}</span>
-                    </div>
-                `;
-            });
-
-            document.querySelectorAll('.toc-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`toc-${id}`).classList.add('active');
-
-            closeSidebar();
-        }
-
-        window.onload = () => {
-            if (localStorage.getItem('theme') === 'dark') {
-                document.body.setAttribute('data-theme', 'dark');
-                document.getElementById('theme-icon').classList.replace('fa-moon', 'fa-sun');
-            }
-            if (localStorage.getItem('layout') === 'full-width') {
-                document.body.classList.replace('centered', 'full-width');
-            }
-
-            const tocList = document.getElementById('toc-list');
-            Object.keys(appData).forEach(key => {
-                tocList.innerHTML += `
-                    <div class="toc-item" id="toc-${key}" onclick="loadListening('${key}')">
-                        ${appData[key].title}
-                    </div>
-                `;
-            });
-
-            loadListening('listening1');
-        };
-    </script>
+<div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div id="sidebar"><div class="sidebar-header"><span>Mündəricat</span><button class="btn" onclick="toggleSidebar()" aria-label="Bağla"><i class="fas fa-xmark"></i></button></div><div id="toc-list"></div></div>
+<div id="main-content">
+<nav><div class="nav-left"><button class="btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button><strong id="current-title">Listening Practice</strong></div><div class="nav-right"><button class="btn" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon"></i></button><button class="btn" onclick="toggleLayout()"><i class="fas fa-expand-arrows-alt"></i></button></div></nav>
+<div class="audio-container"><audio id="audio-player" src="" controls></audio><div class="speed-controls"><button class="skip-btn" onclick="skipAudio(-5)" title="5 saniyə geri (←)"><i class="fas fa-rotate-left"></i> 5s</button><button class="speed-btn" onclick="changeSpeed(0.75)">0.75x</button><button class="speed-btn active" onclick="changeSpeed(1)">1x</button><button class="speed-btn" onclick="changeSpeed(1.25)">1.25x</button><button class="skip-btn" onclick="skipAudio(5)" title="5 saniyə irəli (→)">5s <i class="fas fa-rotate-right"></i></button></div></div>
+<div class="tabs"><button class="tab-btn active" onclick="openTab('questions',this)">1. Suallar</button><button class="tab-btn" id="tab-text-btn" onclick="openTab('text',this)">2. Mətn</button><button class="tab-btn" onclick="openTab('vocabulary',this)">3. Lüğət</button></div>
+<div id="questions" class="tab-content active"><div id="questions-container"></div><button class="check-all-btn" onclick="checkAllAnswers()">Cavabları Yoxla</button><div class="score-box" id="score-box"></div></div>
+<div id="text" class="tab-content"><div class="lock-box" id="text-lock"><i class="fas fa-lock"></i>Mətn bölməsi suallara cavab verib “Cavabları Yoxla” düyməsinə basdıqdan sonra açılacaq.</div><div class="dialogue-container" id="dialogue-container"></div></div>
+<div id="vocabulary" class="tab-content"><ul class="vocab-list" id="vocab-list"></ul></div>
+</div>
+<script>
+const appData={
+listening1:{title:"Listening 1",audioSrc:"Listening 1.mp3",questions:[
+{id:"l1q1",q:"1. Complete the sentence according to the dialogue. Martin thinks Andy Wells has a dream job because he ...",options:["A) went to Disneyworld in Florida", "B) has written a guide to theme parks", "C) visits adventure parks all the time", "D) he visits all the adventure parks", "E) could meet the characters from the books"],correct:"C) visits adventure parks all the time",correctText:"C) visits adventure parks all the time",explanation:"Dialoqda Martin deyir ki, Endi hər zaman bütün dünyanı gəzərək macəra parklarını ziyarət edir. Buna görə də onun işi “arzu olunan iş”dir."},
+{id:"l1q2",q:"2. Answer the question according to the dialogue. What can you find in the shops in Florida?",options:["A) interesting books", "B) magic sweets and things", "C) marine animals", "D) a guide to theme parks", "E) characters from the books"],correct:"B) magic sweets and things",correctText:"B) magic sweets and things",explanation:"Endi Floridadakı “Harri Potterin Sehrbazlıq Dünyası”ndan danışarkən deyir ki, orada Harri Potter kitablarındakı sehirli şirniyyatlar və əşyalar satan mağazalar var."},
+{id:"l1q3",q:"3. Answer the question according to the dialogue. Where is the world's biggest indoor theme park?",options:["A) in Lotte World, South Korea", "B) in Disneyland, Tokyo", "C) in Wizarding World of Harry Potter, Florida", "D) in Cedar Point, Ohio", "E) in Disney World, Florida"],correct:"A) in Lotte World, South Korea",correctText:"A) in Lotte World, South Korea",explanation:"Endi deyir ki, Cənubi Koreyadakı nəhəng park olan “Lotte World” dünyanın ən böyük qapalı əyləncə parkına sahibdir."},
+{id:"l1q4",q:"4. Which of the following questions does the dialogue answer?",options:["A) How many rollercoasters are there in the Wizarding World of Harry Potter?", "B) Where can you meet the characters from the books?", "C) How often does Andy Wells visit adventure parks?", "D) How many magic sweets are there in Ocean Park?", "E) When did a Disneyland open in Tokyo?"],correct:"B) Where can you meet the characters from the books?",correctText:"B) Where can you meet the characters from the books?",explanation:"Endi deyir ki, Floridadakı Harri Potter dünyasında fantastik bir tur var və orada kitablardakı personajlarla tanış olmaq olar. Digər variantların cavabı dialoqda yoxdur."},
+{id:"l1q5",q:"5. Choose the correct statement according to the dialogue.",options:["A) There are 70 big rollercoasters in Cedar Point in Ohio.", "B) Cedar Point in Ohio is popular with its characters from the books.", "C) Ocean Park in Hong Kong is the number one theme park.", "D) There are three water rides in Lotte World in South Korea.", "E) The most famous theme park in the world is Magic Kingdom."],correct:"E) The most famous theme park in the world is Magic Kingdom.",correctText:"E) The most famous theme park in the world is Magic Kingdom.",explanation:"Endi deyir ki, say baxımından dünyanın ən məşhur əyləncə parkı Floridadakı Disney World-də yerləşən “Magic Kingdom”dur. Digər variantlarda səhv məlumat var, məsələn Cedar Point-də 70 yox, 17 böyük park qatarı var."}],
+text:[{speaker:"Martin",en:"Good morning.",az:"Sabahınız xeyir."},{speaker:"Martin",en:"Today we are going to talk about theme parks, and we are going to hear from Andy Wells, who has written a guide to theme parks around the world.",az:"Bu gün biz əyləncə parkları haqqında danışacağıq və bütün dünyadakı əyləncə parkları haqqında bələdçi kitab yazmış Endi Uellsi dinləyəcəyik."},{speaker:"Martin",en:"Welcome to the program, Andy.",az:"Proqrama xoş gəlmisiniz, Endi."},{speaker:"Andy",en:"Hi. It's good to be here, Martin.",az:"Salam. Burada olmaq xoşdur, Martin."},{speaker:"Martin",en:"You really have a dream job, don't you, Andy?",az:"Sizin həqiqətən də arzu olunan bir işiniz var, deyilmi, Endi?"},{speaker:"Martin",en:"Flying around the world all the time, visiting adventure parks.",az:"Hər zaman bütün dünyanı gəzirsiniz, macəra parklarını ziyarət edirsiniz."},{speaker:"Andy",en:"Well, yes, it's pretty exciting.",az:"Bəli, bu, olduqca həyəcanvericidir."},{speaker:"Andy",en:"But it's really hard work, too, you know.",az:"Amma bu, həm də çox çətin işdir, bilirsiniz."},{speaker:"Martin",en:"So, what's the number one theme park in the world?",az:"Bələdliklə, dünyada bir nömrəli əyləncə parkı hansıdır?"},{speaker:"Andy",en:"It all depends on what you are looking for.",az:"Bu, tamamilə sizin nə axtardığınızdan asılıdır."},{speaker:"Andy",en:"In terms of numbers, it has to be Magic Kingdom at Disney World in Florida, the most famous theme park.",az:"Say baxımından, bu, Floridadaki 'Disney World'də yerləşən 'Magic Kingdom' olmalıdır - ən məşhur əyləncə parkı."},{speaker:"Andy",en:"But the most popular park for people who like adventure rides is Cedar Point in Ohio, USA.",az:"Lakin macəra attraksionlarını sevən insanlar üçün ən populyar park ABŞ-ın Ohayo statındakı 'Cedar Point'dir."},{speaker:"Andy",en:"It has 17 big roller coasters in one park and 3 water rides.",az:"Bir parkda 17 böyük park qatarı və 3 su attraksionu var."},{speaker:"Martin",en:"What other attractions have you seen recently?",az:"Bu yaxınlarda başqa hansı attraksionları görmüsünüz?"},{speaker:"Andy",en:"I've just been to the Wizarding World of Harry Potter in Florida.",az:"Mən indicə Floridadaki 'Harri Potterin Sehrbazlıq Dünyası'nda olmuşam."},{speaker:"Andy",en:"It's great.",az:"Bu, əladır."},{speaker:"Andy",en:"You know those shops that sell magic sweets and things in Harry Potter books.",az:"Harri Potter kitablarındakı sehirli şirniyyatlar və əşyalar satan o mağazaları bilirsiniz."},{speaker:"Andy",en:"Well, they have everything that you have imagined.",az:"Onlarda təsəvvür etdiyiniz hər şey var."},{speaker:"Andy",en:"There is a fantastic tour of Howard School where you meet the characters from the books.",az:"\"Hogwarts Məktəbi\"nə fantastik bir tur var, orada kitablardakı personajlarla tanış olursunuz."},{speaker:"Martin",en:"Sounds interesting.",az:"Maraqlı səslənir."},{speaker:"Martin",en:"In your book, you have a lot of theme parks in Asia, too.",az:"Sizin kitabınızda Asiyada da bir çox əyləncə parkları var."},{speaker:"Martin",en:"Can you tell us about them?",az:"Onlar haqqında bizə danışa bilərsinizmi?"},{speaker:"Andy",en:"Sure.",az:"Əlbəttə."},{speaker:"Andy",en:"Tokyo has had a Disneyland for quite a long time, which attracts a lot of people.",az:"Tokioda kifayət qədər uzun müddətdir ki, bir \"Disneyland\" var və bu, bir çox insanları cəlb edir."},{speaker:"Andy",en:"Ocean Park in Hong Kong is also popular.",az:"Honq Konqdakı \"Okean Parkı\" da populyardır."},{speaker:"Andy",en:"It has a lot of marine animals as well as rides.",az:"Orada attraksionlarla yanaşı, bir çox dəniz heyvanları da var."},{speaker:"Andy",en:"Lotte World, a huge park in South Korea, has the world's biggest indoor theme park.",az:"Cənubi Koreyadakı nəhəng bir park olan \"Lotte World\" dünyanın ən böyük qapalı əyləncə parkına sahibdir."}],
+vocabulary:[{en:"Adventure",az:"macəra"},{en:"Attract",az:"cəlb etmək"},{en:"Attraction",az:"cəlbedici yer, attraksion"},{en:"Character",az:"personaj"},{en:"Depend on",az:"asılı olmaq"},{en:"Dream job",az:"arzu olunan iş"},{en:"Exciting",az:"həyəcanverici"},{en:"Famous",az:"məşhur"},{en:"Guide",az:"bələdçi, bələdçi kitab"},{en:"Hard work",az:"çətin iş"},{en:"Huge",az:"nəhəng"},{en:"Imagine",az:"təsəvvür etmək"},{en:"Indoor",az:"qapalı (bina daxilində)"},{en:"Magic",az:"sehirli"},{en:"Marine animals",az:"dəniz heyvanları"},{en:"Popular",az:"populyar"},{en:"Recently",az:"bu yaxınlarda"},{en:"Ride",az:"attraksion"},{en:"Roller coaster",az:"park qatarı"},{en:"Sweets",az:"şirniyyatlar"},{en:"Theme park",az:"əyləncə parkı"},{en:"Tour",az:"tur, səyahət"},{en:"Wizarding",az:"sehrbazlıq"}]},
+listening2:{title:"Listening 2",audioSrc:"Listening 2.mp3",questions:[
+{id:"l2q1",q:"1. What is the passage mainly about?",options:["A) the of the languages","B) the Hungarian language","C) the Chinese language","D) the most difficult languages to learn","E) ways of learning a second language"],correct:"D) the most difficult languages to learn",correctText:"D) the most difficult languages to learn",explanation:"1. Mətn əsasən nə haqqındadır? Mətndə əsas müzakirə mövzusu hansı dilin öyrənilməsinin daha çətin olduğunu müəyyən etməyin mürəkkəbliyi və buna təsir edən amillərdir."},
+{id:"l2q2",q:"2. Complete the sentence. If the second language differs greatly from the native tongue ...",options:["A) people always avoid learning this language","B) it is easier for everyone to learn it","C) it is difficult for most people to learn it","D) we never use it professionally","E) people learn it faster than usual"],correct:"C) it is difficult for most people to learn it",correctText:"C) it is difficult for most people to learn it",explanation:"2. Cümləni tamamlayın. Əgər ikinci dil ana dilindən çox fərqlənirsə... Mətndə açıq şəkildə qeyd olunur ki, ikinci dil ilə birinci dil arasındakı fərqlər nə qədər çox olarsa, onu öyrənmək bir o qədər çətin olacaq."},
+{id:"l2q3",q:"3. Choose the correct statement according to the passage.",options:["A) The first language cannot affect learning a second language.","B) The languages belonging to the same family are easier to learn.","C) People consider Chinese to be the hardest language because it has a difficult sound system.","D) The only factor to be taken into consideration while learning a language is its writing system.","E) People learn the language faster when they learn it independently."],correct:"B) The languages belonging to the same family are easier to learn.",correctText:"B) The languages belonging to the same family are easier to learn.",explanation:"3. Mətnə görə düzgün ifadəni seçin. Mətndə deyilir ki, ana dilimizlə əlaqəli olan dilləri öyrənmək daha asandır. Bu da eyni dil ailəsinə mənsub dillərin daha asan öyrənildiyi mənasını verir."},
+{id:"l2q4",q:"4. Complete the sentence. It is not easy to answer which the most difficult language is because ....",options:["A) the languages have similar writing systems","B) the first language influences the second one","C) there are many factors to take into account","D) this issue has not been fully researched yet","E) it mostly depends on the structure of our first language"],correct:"C) there are many factors to take into account",correctText:"C) there are many factors to take into account",explanation:"4. Cümləni tamamlayın. Hansı dilin ən çətin olduğuna cavab vermək asan deyil, çünki... Mətnin ilk cümləsində bu sualın cavabı birbaşa verilir: \"çünki nəzərə alınmalı bir çox amil var\"."},
+{id:"l2q5",q:"5. How does the Chinese writing system affect learning this language?",options:["A) It makes the language learning complicated.","B) It makes the language easy to be learnt.","C) The use of the language for professional purposes becomes necessary.","D) People long for learning this language.","E) The language learning process does not require much effort."],correct:"A) It makes the language learning complicated.",correctText:"A) It makes the language learning complicated.",explanation:"5. Çin yazı sistemi bu dili öyrənməyə necə təsir edir? Mətndə qeyd olunur ki, bir çox insan Çin dilini ən çətin dil hesab edir və bu, \"Çin yazı sistemini öyrənməkdən təsirlənə bilər\". Bu, o deməkdir ki, yazı sistemi öyrənmə prosesini çətinləşdirir."}],
+text:[{speaker:"Speaker",en:"It is not easy to answer which is the most difficult language to learn, because there are many factors that take into consideration.",az:"Hansı dilin öyrənilməsinin ən çətin olduğuna cavab vermək asan deyil, çünki nəzərə alınmalı bir çox amil var."},{speaker:"Speaker",en:"First language can affect learning a second language.",az:"Birinci dil (yəni ana dili) ikinci dilin öyrənilməsinə təsir edə bilər."},{speaker:"Speaker",en:"The greater the differences between the second language and the first, the harder it will be for most people to learn it.",az:"İkinci dil ilə birinci dil arasındakı fərqlər nə qədər böyük olarsa, əksər insanlar üçün onu öyrənmək bir o qədər çətin olacaq."},{speaker:"Speaker",en:"Many people answer that Chinese is the hardest language to learn, possibly influenced by learning the Chinese writing system.",az:"Bir çox insanlar Çin dilinin öyrənilməsi ən çətin dil olduğunu deyir, bu da ehtimal ki, Çin yazı sistemini öyrənməkdən təsirlənir."},{speaker:"Speaker",en:"If people learn a language because they need to use it professionally, they often learn it faster than people studying the language that has no direct use in their day-to-day life.",az:"Əgər insanlar bir dili peşəkar şəkildə istifadə etmək ehtiyacı olduğu üçün öyrənirlərsə, onlar çox vaxt bu dili gündəlik həyatlarında birbaşa istifadəsi olmayan bir dili öyrənən insanlardan daha sürətli öyrənirlər."},{speaker:"Speaker",en:"People have found that the second hardest language is Japanese, but the language that they have found to be the most problematic is Hungarian, which does not mean that Hungarian is the hardest language to learn for everyone.",az:"İnsanlar ikinci ən çətin dilin Yapon dili olduğunu müəyyən ediblər, lakin ən problemli hesab etdikləri dil Macar dilidir, bu isə o demək deyil ki, Macar dili hamı üçün öyrənilməsi ən çətin dildir."},{speaker:"Speaker",en:"No language is easy to learn well, though languages which are related to our first language are easier.",az:"Heç bir dili yaxşıca öyrənmək asan deyil, lakin ana dilimizlə əlaqəli olan dillər daha asandır."},{speaker:"Speaker",en:"In the end, it is impossible to say that there is one language that is the most difficult language in the world.",az:"Son olaraq, dünyada ən çətin dilin sadəcə müəyyən bir dil olduğunu söyləmək qeyri-mümkündür."}],
+vocabulary:[{en:"Complicated",az:"çətin, mürəkkəb"},{en:"Day-to-day life",az:"gündəlik həyat"},{en:"Difference",az:"fərq"},{en:"Difficult",az:"çətin"},{en:"Direct",az:"birbaşa"},{en:"Effort",az:"cəhd, səy"},{en:"Factor",az:"amil"},{en:"First language",az:"birinci dil (ana dili)"},{en:"Hard",az:"çətin"},{en:"Impossible",az:"qeyri-mümkün"},{en:"Issue",az:"problem, məsələ"},{en:"Native tongue",az:"ana dili"},{en:"Possibly",az:"ehtimal ki, ola bilsin ki"},{en:"Problematic",az:"problemli"},{en:"Professionally",az:"peşəkar şəkildə"},{en:"Related to",az:"əlaqəli"},{en:"Require",az:"tələb etmək"},{en:"Second language",az:"ikinci dil (xarici dil)"},{en:"Similar",az:"bənzər, oxşar"},{en:"Sound system",az:"səs sistemi"},{en:"Statement",az:"ifadə, bəyanat"},{en:"To affect",az:"təsir etmək"},{en:"To avoid",az:"çəkinmək, uzaq durmaq"},{en:"To consider",az:"hesab etmək, nəzərə almaq"},{en:"To find",az:"tapmaq, müəyyən etmək"},{en:"To influence",az:"təsir etmək"},{en:"To research",az:"tədqiq etmək, araşdırmaq"},{en:"To study",az:"təhsil almaq, öyrənmək"},{en:"To take into account",az:"nəzərə almaq"},{en:"To take into consideration",az:"nəzərə almaq"},{en:"Usual",az:"adi, normal"},{en:"Way",az:"yol, metod"},{en:"Writing system",az:"yazı sistemi"}]},
+listening3:{title:"Listening 3",audioSrc:"Listening 3.mp3",questions:[
+{id:"l3q1",q:"1. Which of the following questions does the dialogue answer?",options:["A) How many days does Ted plan to stay at his parents?","B) Which famous paintings is Kate planning to see?","C) What does Kate want to buy in the shops?","D) Which part of Oklahoma do Ted's parents live?","E) Who is Kate planning to go to Paris with?"],correct:"E) Who is Kate planning to go to Paris with?",correctText:"E) Who is Kate planning to go to Paris with?",explanation:"1. Bu sualda dialoqda verilən məlumatlar əsasında hansı sualın cavablandığı soruşulur. Dialoqun sonunda Ted Keytdən kiminlə getdiyini soruşur və Keyt \"Ceyn\" cavabını verir."},
+{id:"l3q2",q:"2. Complete the sentence according to the dialogue. Kate wants to see old parts of the city because ...",options:["A) there are restaurants serving French food","B) she went there when she was in the college","C) she wants to do some shopping","D) they look beautiful in the photos","E) she has a lot of time to go there"],correct:"D) they look beautiful in the photos",correctText:"D) they look beautiful in the photos",explanation:"2. Keyt şəhərin köhnə hissələrini görmək istəyir, çünki... Dialoqda Keyt şəhərin köhnə hissəsini görmək istədiyini deyir və səbəbini belə izah edir: \"Şəkillərdə çox gözəl görünür\"."},
+{id:"l3q3",q:"3. Choose the correct statement according to the dialogue.",options:["A) Ted is going to visit art galleries in Oklahoma.","B) Kate's parents live in Paris next to the art gallery.","C) Kate plans to go to the Rodin Museum to see the statue.","D) Kate is going to spend two days in Paris.","E) Ted has the same plans with Kate."],correct:"C) Kate plans to go to the Rodin Museum to see the statue.",correctText:"C) Kate plans to go to the Rodin Museum to see the statue.",explanation:"3. Verilmiş variantlar arasında dialoqdakı məlumatlara uyğun olanı tapmaq tələb olunur. Keyt planlarını sadalayarkən deyir ki, o, Rodin muzeyinə gedib məşhur heykəli görmək istəyir."},
+{id:"l3q4",q:"4. Complete the sentence according to the dialogue. Kate decided to go to D'Orsay to see ...",options:["A) some modern paintings","B) the famous statues","C) old parts of the city","D) her parents","E) traditional kinds of art"],correct:"A) some modern paintings",correctText:"A) some modern paintings",explanation:"4. Dialoqda Keyt məşhur müasir rəsm əsərlərinin başqa bir yerdə olduğunu təsdiqləyir və: \"Onlar D'Orsey Muzeyindədir. Biz ora da gedəcəyik\", - deyir."},
+{id:"l3q5",q:"5. What is Kate's first plan in Paris?",options:["A) to go round the Louvre","B) to take a boat along the River Seine","C) to try traditional French food","D) to see the famous statue","E) to visit art galleries"],correct:"B) to take a boat along the River Seine",correctText:"B) to take a boat along the River Seine",explanation:"5. Keyt planlarını danışmağa başlayanda ilk olaraq: \"Səyahətimizə başlayan kimi, mən Sena çayı boyunca qayıqla gəzintiyə çıxmaq... istəyirəm\", - deyir."}],
+text:[{speaker:"Ted",en:"Do you have any plans for the weekend, Kate?",az:"Həftəsonu üçün hər hansısa bir planın varmı, Keyt?"},{speaker:"Kate",en:"Yeah, Ted. I'm going to visit my parents in Oklahoma.",az:"Bəli, Ted. Oklahomadakı valideynlərimə baş çəkəcəyəm."},{speaker:"Ted",en:"Would you like to come with me, if you don't have any plans?",az:"Əgər heç bir planın yoxdursa, mənimlə gəlmək istərdin?"},{speaker:"Kate",en:"I'm going away at the weekend, too.",az:"Mən də həftəsonu uzağa gedirəm."},{speaker:"Ted",en:"Thank you for asking.",az:"Soruşduğun üçün təşəkkür edirəm."},{speaker:"Kate",en:"I was going to ask. So, where are you going?",az:"Mən də soruşacaqdım. Yaxşı, sən hara gedirsən?"},{speaker:"Ted",en:"Paris. I'm so excited.",az:"Parisə. Çox həyəcanlıyam."},{speaker:"Kate",en:"Paris? Wow.",az:"Paris? Vau."},{speaker:"Ted",en:"Yeah, it'll be brilliant. We're going to do all the sights.",az:"Bəli, əla olacaq. Biz bütün görməli yerləri gəzəcəyik."},{speaker:"Kate",en:"As soon as we start our trip, I want to take a boat along the River Seine and see the old part of the city.",az:"Səyahətimizə başlayan kimi, mən Sena çayı boyunca qayıqla gəzintiyə çıxmaq və şəhərin qədim hissəsini görmək istəyirəm."},{speaker:"Kate",en:"It looks so beautiful in the photos.",az:"O, şəkillərdə çox gözəl görünür."},{speaker:"Kate",en:"And then there are all the art galleries. You know how much I like art.",az:"Və sonra bütün incəsənət qalereyaları var. İncəsənəti nə qədər sevdiyimi bilirsən."},{speaker:"Kate",en:"I'm looking forward to going around Uluva and see all those famous paintings.",az:"Mən Luvru gəzməyi və bütün o məşhur rəsm əsərlərini görməyi səbirsizliklə gözləyirəm."},{speaker:"Ted",en:"I think the famous modern paintings are somewhere else.",az:"Düşünürəm ki, məşhur müasir rəsm əsərləri başqa yerdədir."},{speaker:"Kate",en:"Yeah, I know. They are in the D'orsay Museum. We are going there, too.",az:"Bəli, bilirəm. Onlar D'Orsey muzeyindədir. Biz ora da gedəcəyik."},{speaker:"Kate",en:"And then I want to go to the Rodin Museum and see that famous statue you know, the Thinker.",az:"Və sonra mən Rodin Muzeyinə getmək və o məşhur heykəli - \"Düşünən Adam\"ı görmək istəyirəm."},{speaker:"Kate",en:"And of course, if we are in Paris, we'll have to go shopping. Or look at the shops, at least.",az:"Və əlbəttə, əgər Parisdəyiksə, alış-verişə getməliyik. Yaxud ən azından mağazalara baxmalıyıq."},{speaker:"Kate",en:"And then there are the restaurants. Just think, I'll try all the traditional French foods.",az:"Və sonra restoranlar var. Sadəcə düşün, mən bütün ənənəvi fransız yeməklərini dadacağam."},{speaker:"Ted",en:"You have planned a lot for one weekend.",az:"Bir həftəsonu üçün çox şey planlamısan."},{speaker:"Kate",en:"We are going for five days, actually.",az:"Əslində, biz beş günlük gedirik."},{speaker:"Ted",en:"Oh, five days. Very nice. And who are you going with?",az:"Oh, beş gün. Çox gözəl. Bəs kiminlə gedirsən?"},{speaker:"Kate",en:"Jane. We started together in the college.",az:"Ceyn ilə. Biz kollecdə birlikdə başlamışdıq."}],
+vocabulary:[{en:"Actually",az:"əslində"},{en:"Art",az:"incəsənət"},{en:"As soon as",az:"...kimi, dərhal"},{en:"At least",az:"ən azından"},{en:"Brilliant",az:"əla, möhtəşəm"},{en:"Boat",az:"qayıq"},{en:"Excited",az:"həyəcanlı"},{en:"Famous",az:"məşhur"},{en:"Gallery",az:"qalereya"},{en:"Look forward to",az:"səbirsizliklə gözləmək"},{en:"Painting",az:"rəsm əsəri"},{en:"Parent",az:"valideyn"},{en:"Plan",az:"plan"},{en:"Sights",az:"görməli yerlər"},{en:"Statue",az:"heykəl"},{en:"To go shopping",az:"alış-verişə getmək"},{en:"Traditional",az:"ənənəvi"},{en:"Trip",az:"səyahət"},{en:"To visit",az:"baş çəkmək, ziyarət etmək"},{en:"Weekend",az:"həftəsonu"}]},
+listening4:{title:"Listening 4",audioSrc:"Listening 4.mp3",questions:[
+{id:"l4q1",q:"1. Which of the following questions does the dialogue answer?",options:["A) Where will Caroline start to work?","B) What cities does 'Summer Work Round Britain' recommend?","C) Where are the music festivals mainly held?","D) Which places will Caroline visit in Scotland?","E) How much does a reduced price for dinner cost?"],correct:"A) Where will Caroline start to work?",correctText:"A) Where will Caroline start to work?",explanation:"1. Dialoqda Karolin Şotlandiyadakı dağlarda yerləşən bir gənclər yataqxanasında işləyəcəyini deyir. Bu, onun harada işləməyə başlayacağı sualına birbaşa cavabdır."},
+{id:"l4q2",q:"2. Choose the correct statement according to the dialogue.",options:["A) Caroline hasn't arranged any work for summer.","B) Caroline's work will allow her to have free time during the day.","C) Caroline found out about the job on the Internet.","D) Caroline says that work at music festivals is wellpaid.","E) Caroline does not have to pay for her lunch."],correct:"B) Caroline's work will allow her to have free time during the day.",correctText:"B) Caroline's work will allow her to have free time during the day.",explanation:"2. Karolin iş saatlarının səhər 7-dən 10-a və axşam 5-dən 9-a qədər olduğunu deyir. Bu, gün ərzində gəzintiyə çıxmaq üçün ona çoxlu boş vaxt verəcək."},
+{id:"l4q3",q:"3. Complete the sentence according to the dialogue. Steve asks Caroline ....",options:["A) how long she is going to stay in Scotland","B) how many guests she will have for breakfast","C) if she will stay with her parents or sister","D) when she will return from her holiday","E) if she has to pay for her accommodation in Scotland"],correct:"E) if she has to pay for her accommodation in Scotland",correctText:"E) if she has to pay for her accommodation in Scotland",explanation:"3. Dialoqda Karolin qalacağı yer və yemək xərclərindən danışarkən Stiv ona birbaşa sual verir: \"Şotlandiyada qalmaq üçün pul ödəməlisən?\""},
+{id:"l4q4",q:"4. Answer the question according to the dialogue. What is the problem with working at music festivals?",options:["A) One will be made to cook breakfast for guests.","B) While working at festivals one does not have time during the day.","C) Music festivals last for a short period of time, only a few days.","D) Everything is very expensive and costs much money at festivals.","E) Work schedule is unstable and it mainly occurs during the evenings."],correct:"C) Music festivals last for a short period of time, only a few days.",correctText:"C) Music festivals last for a short period of time, only a few days.",explanation:"4. Karolin musiqi festivallarında işləməyin probleminin onların yalnız bir neçə gün davam etməsi olduğunu izah edir."},
+{id:"l4q5",q:"5. Complete the sentence according to the dialogue. Caroline will have to pay ....",options:["A) 55 pounds for a week","B) 15 pounds for a week","C) 15 pounds for a month","D) 50 pounds for a fortnight","E) 50 pounds for a month"],correct:"B) 15 pounds for a week",correctText:"B) 15 pounds for a week",explanation:"5. Karolin qalacağı yer üçün maaşından həftədə 15 funt sterlinq tutulacağını deyir."}],
+text:[{speaker:"Caroline",en:"Hi Steve, what are you going to do this summer?",az:"Salam Stiv, bu yay nə edəcəksən?"},{speaker:"Steve",en:"Hi Caroline, I'm going on holiday with my parents and my sister for a week, but I should get a summer job.",az:"Salam Karolayn, mən bir həftəlik valideynlərim və bacımla tətilə gedirəm, amma bir yay işi tapmalıyam."},{speaker:"Steve",en:"I haven't planned anything yet and I need to get some money. What about you?",az:"Hələ heç nə planlaşdırmamışam və bir az pul qazanmalıyam. Bəs sən?"},{speaker:"Caroline",en:"I'm going to Scotland for 7 weeks and work in youth hostel in the mountains.",az:"Mən 7 həftəliyinə Şotlandiyaya gedirəm və dağlardakı gənclər yataqxanasında işləyəcəyəm."},{speaker:"Steve",en:"That sounds great.",az:"Əla səslənir."},{speaker:"Caroline",en:"The work won't be very interesting, but my hours are 7 till 10 in the morning and 5 till 9 in the evening, so I'll have plenty of time during the day to go walking.",az:"İş çox maraqlı olmayacaq, amma iş saatlarım səhər 7-dən 10-a və axşam 5-dən 9-a qədərdir, ona görə də gün ərzində gəzintiyə çıxmaq üçün çoxlu vaxtım olacaq."},{speaker:"Steve",en:"It'll be like a holiday, but you'll be earning money, too. How did you find out about it?",az:"Bu, tətil kimi olacaq, amma eyni zamanda pul da qazanacaqsan. Bu barədə haradan məlumat aldın?"},{speaker:"Caroline",en:"I read about it in a book called Summer Work Round Britain. It tells you about all kinds of different jobs in different places.",az:"Bu barədə \"Britaniya ətrafında yay işi\" adlı bir kitabda oxudum. O (kitab) sənə fərqli yerlərdəki hər cür fərqli işlər haqqında məlumat verir."},{speaker:"Caroline",en:"You can even get work at music festivals.",az:"Sən hətta musiqi festivallarında da iş tapa bilərsən."},{speaker:"Steve",en:"Oh, I like that.",az:"Ou, bu xoşuma gəldi."},{speaker:"Caroline",en:"The problem with working at music festivals is that it lasts only a few days. You have to pay for your accommodation and food, so you won't have much money left.",az:"Musiqi festivallarında işləməyin problemi odur ki, bu, yalnız bir neçə gün davam edir. Sən qalacağın yer və yemək üçün pul ödəməlisən, buna görə də çox pulun qalmayacaq."},{speaker:"Steve",en:"I would spend all my extra money on music. Do you have to pay for your accommodation and food in Scotland?",az:"Mən bütün əlavə pulumu musiqiyə xərcləyərdim. Şotlandiyada qalacağın yer və yemək üçün pul ödəməlisən?"},{speaker:"Caroline",en:"I'll be staying in a shared bedroom and they'll take £15 a week out of my wages to pay for that.",az:"Mən ortaq bir yataq otağında qalacağam və bunun üçün maaşımdan həftədə 15 funt sterlinq tutacaqlar."},{speaker:"Caroline",en:"My breakfast will be free because I'll be cooking breakfast for the guests.",az:"Səhər yeməyim pulsuz olacaq, çünki qonaqlar üçün səhər yeməyini mən hazırlayacağam."},{speaker:"Caroline",en:"I can get dinner in the evening at a reduced price, so I only have to worry about lunch.",az:"Axşam yeməyini axşamlar endirimli qiymətə əldə edə bilərəm, buna görə də yalnız nahar barədə narahat olmalıyam."},{speaker:"Steve",en:"I hope you will have a great time.",az:"Ümid edirəm ki, əla vaxt keçirəcəksən."}],
+vocabulary:[{en:"Accommodation",az:"qalacaq yer"},{en:"Allow",az:"icazə vermək, imkan vermək"},{en:"Arrange",az:"təşkil etmək, planlaşdırmaq"},{en:"Bedroom",az:"yataq otağı"},{en:"Earn",az:"qazanmaq"},{en:"Extra",az:"əlavə"},{en:"Find out",az:"ortaya çıxarmaq, müəyyən etmək, məlumat almaq"},{en:"Fortnight",az:"2 həftə"},{en:"Guest",az:"qonaq"},{en:"Holiday",az:"tətil"},{en:"Hostel",az:"yataqxana"},{en:"Money",az:"pul"},{en:"Pay for",az:"ödəmək"},{en:"Plenty of",az:"çoxlu"},{en:"Price",az:"qiymət"},{en:"Reduce",az:"azaltmaq"},{en:"Shared",az:"ortaq, paylaşılan"},{en:"Summer job",az:"yay işi"},{en:"Wages",az:"maaş (adətən həftəlik və ya saatlıq)"},{en:"Worry about",az:"narahat olmaq"},{en:"Youth",az:"gənclik"}]},
+listening5:{title:"Listening 5",audioSrc:"Listening 5.mp3",questions:[
+{id:"l5q1",q:"1. How often does Charlie read about fiction books?",options:["A) He rarely reads fiction books.","B) He usually reads about one book a month, sometimes less if he is busy.","C) Charlie reads about one book a week, sometimes more if he is on holiday.","D) He prefers reading three books a week.","E) He reads more books a week."],correct:"C) Charlie reads about one book a week, sometimes more if he is on holiday.",correctText:"C) Charlie reads about one book a week, sometimes more if he is on holiday.",explanation:"1. Bu sual Çarlinin oxuma vərdişlərinin tezliyi haqqındadır. Dialoqda o, \"Adətən həftədə bir kitab oxuyuram, bəzən tətildə olanda daha çox\" deyir."},
+{id:"l5q2",q:"2. Choose the correct variant according to the passage.",options:["A) Sarah's first question is about what type of books Charlie likes reading.","B) Sarah asks Charlie to name three types of books that he likes.","C) Charlie likes science fiction, romance and western.","D) Charlie also buys books from his friends.","E) Charlie went to the Regal Bookstore last week."],correct:"B) Sarah asks Charlie to name three types of books that he likes.",correctText:"B) Sarah asks Charlie to name three types of books that he likes.",explanation:"2. Bu sual dialoqdakı faktlara əsaslanan doğru cümləni tapmağı tələb edir. Sorğu aparan şəxs Çarlidən hansı üç kitab kateqoriyasına üstünlük verdiyini soruşur."},
+{id:"l5q3",q:"3. What three categories of books does Charlie prefer to read? (1: Romance, 2: Crime, 3: Eastern, 4: Western, 5: Science fiction)",options:["A) 1, 2, 4","B) 2, 4, 5","C) 1, 4, 5","D) 2, 3, 4","E) 2, 3, 5"],correct:"B) 2, 4, 5",correctText:"B) 2, 4, 5 (Cinayət, Vestern, Elmi fantastika)",explanation:"3. Çarli sevdiyi üç növü sadalayır: cinayət kitabları (2), elmi fantastika (5) və vesternlər (4)."},
+{id:"l5q4",q:"4. Which question has no answer according to the passage?",options:["A) How much money does Charlie spend on fiction books?","B) Has Charlie ever been in Regal Store?","C) What three categories does he like to read?","D) Which western books has Charlie read?","E) Has Charlie bought a book from Regal Store?"],correct:"D) Which western books has Charlie read?",correctText:"D) Which western books has Charlie read?",explanation:"4. Verilən suallardan hansının cavabının mətndə olmadığını tapmaq lazımdır. Çarli vesternlər oxuduğunu desə də, hansı konkret vestern kitablarını oxuduğunu qeyd etmir."},
+{id:"l5q5",q:"5. Complete the sentence according to the sentence. I buy books online or sometimes I go to a book store if I see ...",options:["A) special offers","B) the right prices","C) something interesting in the window","D) sale in it","E) interesting covers"],correct:"C) something interesting in the window",correctText:"C) something interesting in the window",explanation:"5. Çarli kitabları haradan aldığını izah edərkən bu cümləni işlədir: \"...bəzən vitrində maraqlı bir şey görsəm, kitab mağazasına gedirəm\"."}],
+text:[{speaker:"Sarah",en:"Excuse me, do you have a few minutes?",az:"Bağışlayın, bir neçə dəqiqəniz var?"},{speaker:"Sarah",en:"I want to ask you a couple of questions.",az:"Sizə bir neçə sual vermək istəyirəm."},{speaker:"Charlie",en:"Yes, all right. What would you like to know?",az:"Bəli, əlbəttə. Nə bilmək istərdiniz?"},{speaker:"Sarah",en:"Well, I work for the Regal Bookstore and we are doing a survey about people's reading habits.",az:"Mən \"Regal\" kitab mağazasında işləyirəm və biz insanların oxu vərdişləri haqqında sorğu keçiririk."},{speaker:"Sarah",en:"Can I ask you how often you read fiction books?",az:"Sizdən bədii kitabları nə qədər vaxtdan bir oxuduğunuzu soruşa bilərəm?"},{speaker:"Charlie",en:"Very often. I usually read about one book a week, sometimes more if I'm away on vacation.",az:"Çox tez-tez. Adətən həftədə bir kitab oxuyuram, bəzən tətildə olanda daha çox."},{speaker:"Sarah",en:"Now then, next question. What three categories of books do you prefer to read?",az:"Yaxşı, növbəti sual. Hansı üç kitab kateqoriyasını oxumağa üstünlük verirsiniz?"},{speaker:"Charlie",en:"Hmm, let me think. I absolutely love crime books. You know, Agatha Christie, a good whodunit.",az:"Hmm, qoy fikirləşim. Mən cinayət kitablarını çox sevirəm. Bilirsiniz də, Aqata Kristi, yaxşı bir detektiv hekayə."},{speaker:"Charlie",en:"I'm also keen on science fiction books such as Arthur C. Clarke and Asimov.",az:"Mən həmçinin Artur Klark və Azimov kimi elmi fantastika kitablarına həvəsliyəm."},{speaker:"Charlie",en:"And then recently, I've read a lot of westerns.",az:"Və bu yaxınlarda çoxlu vesternlər oxumuşam."},{speaker:"Sarah",en:"Fine. How much do you think you spend on fiction books every month?",az:"Əla. Sizcə, hər ay bədii kitablara nə qədər pul xərcləyirsiniz?"},{speaker:"Charlie",en:"Not very much, because I get a lot of my books from friends when they finish reading them, probably around $50.",az:"Çox pul xərcləmirəm, çünki kitablarımın çoxunu dostlarım oxuyub bitirdikdən sonra onlardan alıram, yəqin ki, təxminən 50 dollar xərcləyirəm."},{speaker:"Sarah",en:"Okay. Now the next question is about where you buy your books, if you don't get them from your friends, of course. Do you spend most of your money on books in stores or on the Internet?",az:"Yaxşı. İndi növbəti sual, əlbəttə ki, əgər dostlarınızdan almırsınızsa, kitablarınızı haradan aldığınızla bağlıdır. Kitab almaq üçün pulunuzun çoxunu mağazalarda, yoxsa internetdə xərcləyirsiniz?"},{speaker:"Charlie",en:"As I said, I don't buy books very often, but when I do, I buy them online, or sometimes I go to a bookstore if I see something interesting in the window.",az:"Dediyim kimi, mən çox tez-tez kitab almıram, amma alanda onlayn alıram və ya bəzən vitrində maraqlı bir şey görsəm, kitab mağazasına gedirəm."},{speaker:"Sarah",en:"And have you ever been to the Regal Bookstore before to buy books?",az:"Bəs siz əvvəllər kitab almaq üçün \"Regal\" kitab mağazasında olmusunuz?"},{speaker:"Charlie",en:"Yes. I bought something from that store only two weeks ago. It was a new book by Grisham.",az:"Bəli. Cəmi iki həftə əvvəl o mağazadan bir şey aldım. Bu, Qrişemin yeni kitabı idi."},{speaker:"Charlie",en:"I saw that it was on special offer, so I came in.",az:"Gördüm ki, o (kitab), xüsusi təklifdədir, ona görə də içəri girdim."},{speaker:"Sarah",en:"Now my final question. Would you buy a book from the Regal Bookstore website? We have a new site, did you know?",az:"İndi isə sonuncu sualım. \"Regal\" kitab mağazasının veb-saytından kitab alardınız? Bizim yeni saytımız var, bilirdinizmi?"},{speaker:"Charlie",en:"No, I didn't know. I'll go and have a look at it. It's got some good prices. I would like to buy something from the site, if the price is right, of course.",az:"Xeyr, bilmirdim. Gedib ona bir nəzər salaram. Orada bəzi yaxşı qiymətlər var. Əlbəttə, qiymət uyğun olsa, saytdan bir şey almaq istərdim."},{speaker:"Sarah",en:"Okay, sir. Thank you for your time. Have a nice day.",az:"Yaxşı, cənab. Vaxt ayırdığınız üçün təşəkkür edirəm. Gününüz xeyirli keçsin."},{speaker:"Charlie",en:"Thanks. Good day to you!",az:"Sağ olun. Gününüz uğurlu olsun!"}],
+vocabulary:[{en:"A couple of",az:"bir neçə"},{en:"Bookstore",az:"kitab mağazası"},{en:"Category",az:"kateqoriya"},{en:"Crime book",az:"cinayət/detektiv kitabı"},{en:"Fiction",az:"bədii ədəbiyyat"},{en:"Final",az:"son, sonuncu"},{en:"Habit",az:"vərdiş"},{en:"Keen on",az:"həvəsli olmaq"},{en:"Offer",az:"təklif"},{en:"Online",az:"onlayn, internet üzərindən"},{en:"Prefer",az:"üstünlük vermək"},{en:"Price",az:"qiymət"},{en:"Question",az:"sual"},{en:"Recently",az:"bu yaxınlarda"},{en:"Science fiction",az:"elmi fantastika"},{en:"Special",az:"xüsusi"},{en:"Spend money on",az:"nəyəsə pul xərcləmək"},{en:"Survey",az:"sorğu"},{en:"Vacation",az:"tətil"},{en:"Website",az:"veb-sayt"},{en:"Western",az:"vestern (janr)"},{en:"Whodunit",az:"detektiv hekayə"}]},
+listening6:{title:"Listening 6",audioSrc:"Listening 6.mp3",questions:[
+{id:"l6q1",q:"1. How will they take their families for a cruise?",options:["A) There is a 60-minute boat trip that takes passengers out seven times a day.","B) There is a 90-minute steamship trip that only takes families out several times a day.","C) There is a 90-minute boat trip that takes passengers out several times a day.","D) There is a 90-minute steamship trip that only takes families out seven times a day.","E) There is a 60-minute visitor boat trip that takes families out several times a day."],correct:"C) There is a 90-minute boat trip that takes passengers out several times a day.",correctText:"C) There is a 90-minute boat trip that takes passengers out several times a day.",explanation:"1. Dialoqda turizm işçisi sərnişinləri gündə bir neçə dəfə gəzintiyə çıxaran bir buxar gəmisi olduğunu və səfərin təxminən bir saat yarım (90 dəqiqə) davam etdiyini söyləyir."},
+{id:"l6q2",q:"2. Which activity does the visitor mention that his son has not tried before?",options:["A) visiting the farm","B) feeding the animals","C) riding around on a horse","D) exploring the farm on his own","E) walking along the side of the lake"],correct:"C) riding around on a horse",correctText:"C) riding around on a horse",explanation:"2. İşçi fermada atla 40 dəqiqəlik gəzinti təklif etdikdə, ziyarətçi oğlunun bunu bacarıb-bacarmayacağını soruşur və \"O, bunu əvvəllər etməyib\" deyə əlavə edir."},
+{id:"l6q3",q:"3. ........... is available at an additional cost.",options:["A) Taking a cruise trip","B) Buying anything on board","C) Visiting the Country Farm","D) Riding a horse","E) Having lunch"],correct:"E) Having lunch",correctText:"E) Having lunch",explanation:"3. Ziyarətçi nahar etmək imkanının olub-olmadığını soruşduqda, işçi bunun mümkün olduğunu, lakin \"əsas xərcə daxil olmadığını\" və ora çatanda ödəniş edildiyini bildirir."},
+{id:"l6q4",q:"4. Visitors will not prepay for lunch because .....",options:["A) they pay while on the cruise trip","B) they pay before crossing the lake","C) the farmer will cover the cost for them","D) it is included in the basic cost","E) they pay upon reaching the farm"],correct:"E) they pay upon reaching the farm",correctText:"E) they pay upon reaching the farm",explanation:"4. Əvvəlki sualın davamı olaraq, işçi nahar üçün ödənişin \"ora çatanda\" yəni fermaya çatdıqda edildiyini aydın şəkildə ifadə edir."},
+{id:"l6q5",q:"5. Which of the following questions does the dialogue not answer?",options:["A) Are there any excursions suitable for families?","B) Is there information about the duration of the trips?","C) Does the employee provide information about any services during the cruise?","D) Did the visitor inquire about the scenery around the farm?","E) Did they discuss the payment requirements for any meals?"],correct:"D) Did the visitor inquire about the scenery around the farm?",correctText:"D) Did the visitor inquire about the scenery around the farm?",explanation:"5. Bu testdə A, B, C və E variantlarındakı sualların cavabı \"Yes\" (bəli) şəklindədir. Lakin ziyarətçi heç bir zaman ferma ətrafındakı mənzərə haqqında sual vermir. Mənzərə haqqında məlumatı (dağlar, bağlar) işçi özü verir."}],
+text:[{speaker:"Employee",en:"Hi. Can I help you?",az:"Salam. Sizə kömək edə bilərəm?"},{speaker:"Visitor",en:"I'd like to find out if you have any excursions suitable for families.",az:"Ailələr üçün uyğun ekskursiyalarınızın olub-olmadığını öyrənmək istərdim."},{speaker:"Employee",en:"Sure. How about taking your family for a cruise?",az:"Əlbəttə. Ailənizi bir gəmi səyahətinə çıxarmağa necə baxırsınız?"},{speaker:"Employee",en:"We have a steamship that takes passengers out several times a day. It's over a hundred years old.",az:"Bizim sərnişinləri gündə bir neçə dəfə gəzintiyə çıxaran bir buxar gəmimiz var. Onun yüz ildən çox yaşı var."},{speaker:"Visitor",en:"That sounds interesting. How long is the trip?",az:"Maraqlı səslənir. Səfər nə qədər davam edir?"},{speaker:"Employee",en:"About an hour and a half. And don't forget to take pictures of the mountains. They're all around you when you're on the boat and they look fantastic.",az:"Təxminən bir saat yarım. Dağların şəkillərini çəkməyi unutmayın. Siz qayıqda olanda onlar hər tərəfinizdə olur və möhtəşəm görünür."},{speaker:"Visitor",en:"Okay. And I assume there's a café or something on board?",az:"Yaxşı. Və güman edirəm ki, gəmidə bir kafe və ya buna bənzər bir şey var?"},{speaker:"Employee",en:"Sure. How old are your children?",az:"Əlbəttə. Uşaqlarınızın neçə yaşı var?"},{speaker:"Visitor",en:"My daughter's 15 and my son's 7.",az:"Qızımın 15, oğlumun isə 7 yaşı var."},{speaker:"Employee",en:"Right. Well, there are various things you can do once you've crossed the lake to make a day of it. One thing that's very popular is a visit to the country farm.",az:"Aydındır. Gölün o tayına keçdikdən sonra bütün günü orada keçirmək üçün edə biləcəyiniz müxtəlif şeylər var. Çox populyar olan bir şey kənd fermasına baş çəkməkdir."},{speaker:"Employee",en:"You're met off the boat by the farmer and he'll take you to the holding pens where the sheep are kept. Children love feeding them.",az:"Gəmidən düşəndə sizi fermer qarşılayır və o, sizi qoyunların saxlandığı ağıllara aparacaq. Uşaqlar onları yemləməyi sevirlər."},{speaker:"Visitor",en:"My son would love that. He really likes animals.",az:"Oğlum bunu çox sevər. O, heyvanları həqiqətən sevir."},{speaker:"Employee",en:"Well, there's also a 40-minute trek around the farm on a horse if he wants.",az:"Əgər istəsə, ferma ətrafında atla 40 dəqiqəlik bir gəzinti də var."},{speaker:"Visitor",en:"Do you think he'd manage it? He hasn't done that before.",az:"Sizcə, o, bunu bacarar? O, bunu əvvəllər etməyib."},{speaker:"Employee",en:"Sure. It's suitable for complete beginners.",az:"Əlbəttə. Bu, tamamilə yeni başlayanlar üçün uyğundur."},{speaker:"Visitor",en:"Good. And again, visitors are welcome to explore the farm on their own as long as they take care to close gates and so on.",az:"Yaxşı. Və yenə də, ziyarətçilər darvazaları bağlamağa və s. diqqət etdikləri müddətcə fermanı özləri araşdıra (yəni, gəzib-dolaşa) bilərlər."},{speaker:"Employee",en:"There are some very beautiful gardens along the side of the lake which also belong to the farm. They'll be just at their best now. You could easily spend an hour or two there.",az:"Gölün kənarında fermaya məxsus olan çox gözəl bağlar da var. Onlar indi ən gözəl vaxtlarında olacaqlar. Siz orada asanlıqla bir və ya iki saat keçirə bilərsiniz."},{speaker:"Visitor",en:"Okay. Well, that all sounds good. And can we get lunch there?",az:"Yaxşı. Bütün bunlar yaxşı səslənir. Bəs biz orada nahar edə bilərik?"},{speaker:"Employee",en:"You can. And it's very good, though it's not included in the basic cost. You pay when you get there.",az:"Edə bilərsiniz. Və o, çox yaxşıdır, lakin bu, əsas qiymətə daxil deyil. Ora çatanda ödəyirsiniz."},{speaker:"Visitor",en:"Right.",az:"Aydındır."}],
+vocabulary:[{en:"Additional",az:"əlavə"},{en:"Assume",az:"güman etmək, fərz etmək"},{en:"Basic",az:"əsas, ilkin"},{en:"Beginner",az:"yeni başlayan"},{en:"Belong to",az:"məxsus olmaq"},{en:"Cost",az:"qiymət, xərc"},{en:"Cruise",az:"gəmi səyahəti (istirahət məqsədli)"},{en:"Duration",az:"müddət"},{en:"Excursion",az:"ekskursiya"},{en:"Explore",az:"kəşf etmək, araşdırmaq"},{en:"Holding pen",az:"ağıl (heyvanların saxlandığı yer)"},{en:"Inquire",az:"maraqlanmaq, soruşmaq"},{en:"Manage",az:"öhdəsindən gəlmək, bacarmaq"},{en:"On board",az:"gəmidə, göyərtədə"},{en:"Passenger",az:"sərnişin"},{en:"Scenery",az:"mənzərə"},{en:"Steamship",az:"buxar gəmisi"},{en:"Suitable (for)",az:"(...üçün) uyğun"},{en:"Trek",az:"(uzun və çətin olan) gəzinti"},{en:"Various",az:"müxtəlif"}]},
+listening7:{title:"Listening 7",audioSrc:"Listening 7.mp3",questions:[
+{id:"l7q1",q:"1. Answer the question according to the passage. Where is Louise from?",options:["A) She is French though her mother was Scottish.","B) She is English though her mother was Irish.","C) She is Canadian but her father was English.","D) She is French but her sister was Australian.","E) She is Canadian though her mother was British."],correct:"E) She is Canadian though her mother was British.",correctText:"E) She is Canadian though her mother was British.",explanation:"1. Dialoqda Luiza \"Xeyr, mən əslində kanadalıyam, amma anam britaniyalı idi\" deyir. Bu məlumata uyğun gələn variantı tapmaq lazımdır."},
+{id:"l7q2",q:"2. Complete the sentence according to the passage. Louise says she is an interior designer and she comes over ...",options:["A) to sell antiques.","B) to draw pictures.","C) to buy old furniture.","D) to construct buildings.","E) to build houses."],correct:"C) to buy old furniture.",correctText:"C) to buy old furniture.",explanation:"2. Luiza peşəsi haqqında danışarkən deyir: \"Mən interyer dizayneriyəm və köhnə mebel almaq üçün gəlirəm\"."},
+{id:"l7q3",q:"3. Choose the correct statement according to the passage.",options:["A) Louise had nothing stolen out of his bag.","B) Louise has got a place at Park Apartments. It is on King Street.","C) Louise bought some houses at the Riverside.","D) Louise wants to come back in three months.","E) Officer didn't ask Louise's name."],correct:"B) Louise has got a place at Park Apartments. It is on King Street.",correctText:"B) Louise has got a place at Park Apartments. It is on King Street.",explanation:"3. Luiza hazırda harada qaldığını deyərkən qeyd edir: \"hazırda mən 'Park mənzilləri'ndə bir yerdə qalıram. Bu, Kral küçəsindədir\"."},
+{id:"l7q4",q:"4. According to passage, all of the following statements are true Except:",options:["A) Louise's date of birth is December 14th, 1977.","B) Louise wants to report a theft.","C) Officer wants to take a few details about stolen things.","D) Louise's apartment number is fifty.","E) Officer asks where Louise is staying."],correct:"D) Louise's apartment number is fifty.",correctText:"D) Louise's apartment number is fifty.",explanation:"4. Bu sualda yanlış olan ifadəni tapmaq tələb olunur. Luiza mənzil nömrəsini soruşduqda \"On beş\" (Fifteen) cavabını verir, lakin variantda \"əlli\" (fifty) yazılıb."},
+{id:"l7q5",q:"5. What is the main idea of dialogue?",options:["A) Louise's visit to the U.S.A","B) the best way to visit","C) to get information in order to investigate theft","D) interior designer's works","E) an apartment where a visitor stayed"],correct:"C) to get information in order to investigate theft",correctText:"C) to get information in order to investigate theft",explanation:"5. Bütün dialoq bir polis əməkdaşının oğurluq hadisəsini araşdırmaq üçün zərərçəkmişdən (Luizadan) məlumat toplamasından ibarətdir."}],
+text:[{speaker:"Officer",en:"Good morning. What can I do for you?",az:"Sabahınız xeyir. Sizin üçün nə edə bilərəm? (Sizə necə kömək edə bilərəm?)"},{speaker:"Louise",en:"I want to report a theft. I had some things stolen out of my bag yesterday.",az:"Mən bir oğurluq barədə məlumat vermək istəyirəm. Dünən çantamdan bəzi əşyalarım oğurlanıb."},{speaker:"Officer",en:"I'm sorry to hear that. Right, so I'll need to take a few details. Can I start with your name?",az:"Bunu eşitdiyim üçün təəssüf edirəm. Yaxşı, mən bir neçə detal qeyd etməliyəm. Adınızla başlaya bilərəm?"},{speaker:"Louise",en:"Louise Taylor.",az:"Luiza Teylor."},{speaker:"Officer",en:"Okay, thank you. And are you resident in the UK?",az:"Yaxşı, təşəkkür edirəm. Siz Birləşmiş Krallıq sakininizsiniz?"},{speaker:"Louise",en:"No, I'm actually Canadian, though my mother was British.",az:"Xeyr, mən əslində kanadalıyam, amma anam britaniyalı idi."},{speaker:"Officer",en:"And your date of birth?",az:"Bəs doğum tarixiniz?"},{speaker:"Louise",en:"December 14th, 1977.",az:"14 dekabr, 1977-ci il."},{speaker:"Officer",en:"So you're just visiting this country?",az:"Deməli, siz bu ölkəyə sadəcə səfərə gəlmisiniz?"},{speaker:"Louise",en:"That's right. I come over most summers on business.",az:"Düzdür. Mən əksər yay aylarında işgüzar səfərə gəlirəm."},{speaker:"Louise",en:"I'm an interior designer, and I come over to buy old furniture. Antiques, you know?",az:"Mən interyer dizayneriyəm və köhnə mebel almaq üçün gəlirəm. Antik əşyalar, bilirsiniz?"},{speaker:"Louise",en:"There are some really lovely things around here, but you need to get out to small towns.",az:"Buralarda həqiqətən də çox gözəl əşyalar var, amma bunun üçün kiçik şəhərlərə getməyiniz lazımdır."},{speaker:"Louise",en:"I've had a really good trip this year, until this happened.",az:"Bu hadisə (oğurluq) baş verənə qədər, bu il həqiqətən də yaxşı bir səfər keçirmişdim."},{speaker:"Officer",en:"Okay. So you've been here quite a while?",az:"Yaxşı. Deməli, siz xeyli müddətdir buradasınız?"},{speaker:"Louise",en:"Yes. I'm here for two months. I go back next week.",az:"Bəli. Mən iki aydır buradayam. Gələn həftə geri qayıdıram."},{speaker:"Officer",en:"So may I ask where you're staying now?",az:"Soruşa bilərəmmi, hazırda harada qalırsınız?"},{speaker:"Louise",en:"Well, at present I've got a place at Park Apartments. That's on King Street.",az:"Hazırda mən \"Park mənzilləri\"ndə bir yerdə qalıram. O, Kral küçəsindədir."},{speaker:"Louise",en:"I was staying at the Riverside Apartments on the same street, but the apartment there was only available for six weeks, so I had to find another one.",az:"Mən eyni küçədəki \"Riverside mənzilləri\"ndə qalırdım, lakin oradakı mənzil yalnız altı həftə üçün əlçatan (yəni boş) idi, buna görə də başqasını tapmalı oldum."},{speaker:"Officer",en:"Okay. And the apartment number?",az:"Yaxşı. Bəs mənzil nömrəsi?"},{speaker:"Louise",en:"Fifteen.",az:"On beş."},{speaker:"Officer",en:"Right.",az:"Aydındır."}],
+vocabulary:[{en:"Antique",az:"antik əşya"},{en:"Apartment",az:"mənzil"},{en:"At present",az:"hal-hazırda"},{en:"Available",az:"mövcud, əlçatan"},{en:"Construct",az:"qurmaq, tikmək"},{en:"Date of birth",az:"doğum tarixi"},{en:"Detail",az:"detal"},{en:"Except",az:"istisna"},{en:"Furniture",az:"mebel"},{en:"In order to",az:"(nəsə etmək) məqsədilə"},{en:"Interior designer",az:"interyer dizayneri"},{en:"On business",az:"işgüzar səfərdə"},{en:"Resident",az:"sakin"},{en:"Stolen",az:"oğurlanmış"},{en:"Theft",az:"oğurluq"},{en:"To report",az:"məlumat vermək, raport vermək"},{en:"To steal",az:"oğurlamaq"},{en:"Trip",az:"səfər, səyahət"},{en:"While",az:"müddət, zaman kəsiyi"}]},
+listening8:{title:"Listening 8",audioSrc:"Listening 8.mp3",questions:[
+{id:"l8q1",q:"1. Choose the correct statement according to the dialogue.",options:["A) Mia refused living in a shared house because of extra expenses.","B) Mia attends a geography lecture twice a week.","C) The first geography lecture was confusing both for Tim and Mia.","D) Mia and Tim's first week in the campus was quiet.","E) Mia attends a math lecture every week."],correct:"C) The first geography lecture was confusing both for Tim and Mia.",correctText:"C) The first geography lecture was confusing both for Tim and Mia.",explanation:"Dialoqda həm Maya (\"çox şey başa düşmədim\"), həm də Tim (\"Mən də\") ilk coğrafiya mühazirəsinin onlar üçün aydın olmadığını bildirirlər."},
+{id:"l8q2",q:"2. Complete the sentence according to the dialogue. Tim gets lost on the campus frequently because....",options:["A) he cannot take the right direction","B) the facilities there look the same","C) it is enormous in size","D) he is a foreign student","E) the amenities there appear unchanged."],correct:"C) it is enormous in size",correctText:"C) it is enormous in size",explanation:"Tim özü deyir: \"...və bu, nəhəng bir kampusdur, mən daim azıram\". Yəni kampus böyük olduğu üçün o, yolunu itirir."},
+{id:"l8q3",q:"3. Which of the following questions does the dialogue answer?",options:["A) How long did it take Mia to find the bookshop?","B) Why was Tim's brother interested in economics?","C) How far is Tim living from the campus?","D) How much does Mia pay for a shared house?","E) Why was Tim's brother interested in art?"],correct:"A) How long did it take Mia to find the bookshop?",correctText:"A) How long did it take Mia to find the bookshop?",explanation:"Maya: \"Bəli, nəhayət, amma bu, mənim təxminən yarım saat vaxtımı apardı\" deyə cavab verir."},
+{id:"l8q4",q:"4. Answer the question according to the dialogue. What did Tim advise Mia to do?",options:["A) not to worry about difficult lectures","B) to live in a shared house","C) to choose the cheapest accommodation","D) to use a map not to get lost","E) to select the least expensive way to go to university"],correct:"D) to use a map not to get lost",correctText:"D) to use a map not to get lost",explanation:"Maya azdığını deyəndə Tim ona \"Bəlkə bir xəritə əldə etməlisən\" deyə məsləhət görür."},
+{id:"l8q5",q:"5. It is clear from the dialogue that.....",options:["A) Mia was suggested to live in a shared house","B) Tim's brother is working for an environmental charity","C) Tim thinks that economics is completely boring","D) Mia works for an environmental charity in London","E) Mia understood everything in geography at the first lecture."],correct:"B) Tim's brother is working for an environmental charity",correctText:"B) Tim's brother is working for an environmental charity",explanation:"Tim deyir: \"O, indicə Londonda bir ekoloji xeyriyyə təşkilatında işə başlayıb\"."}],
+text:[{speaker:"Tim",en:"Hi, my name is Tim.",az:"Salam, mənim adım Timdir."},{speaker:"Maya",en:"Hi, I'm Maya, nice to meet you.",az:"Salam, mən Mayayam, tanış olduğumuza şadam."},{speaker:"Tim",en:"You went to Professor Lee's geography lecture yesterday, didn't you?",az:"Sən dünən professor Linin coğrafiya mühazirəsinə getmişdin, elə deyilmi?"},{speaker:"Maya",en:"Yeah, I think this was the first geography lecture. That's why I didn't understand very much.",az:"Bəli, düşünürəm ki, bu, ilk coğrafiya mühazirəsi idi. Buna görə də çox şey başa düşmədim."},{speaker:"Tim",en:"Neither did I. But don't worry about it.",az:"Mən də. Amma buna görə narahat olma."},{speaker:"Maya",en:"Yeah, I suppose so.",az:"Bəli, elə güman edirəm."},{speaker:"Tim",en:"Anyway, how's your first week going?",az:"Nəysə, ilk həftən necə keçir?"},{speaker:"Maya",en:"Oh, it's just been crazy. I haven't stopped since I got here.",az:"Oh, sadəcə dəhşətli dərəcədə gərgin olub. Bura gələndən bəri dayanmamışam."},{speaker:"Tim",en:"Neither have I, and it's a huge campus, I keep getting lost.",az:"Mən də, və bu, nəhəng bir kampusdur, mən daim azıram."},{speaker:"Maya",en:"Yes, so do I. Yesterday I was walking around looking for the bookshop.",az:"Bəli, mən də. Dünən kitab mağazasını axtararaq ətrafda gəzirdim."},{speaker:"Tim",en:"Did you find it?",az:"Onu tapdın?"},{speaker:"Maya",en:"Yes, eventually, but it took me about half an hour.",az:"Bəli, nəhayət, amma bu, mənim təxminən yarım saat vaxtımı apardı."},{speaker:"Tim",en:"Well, at least you found it in the end. Maybe you should get a map.",az:"Yaxşı, heç olmasa sonda onu tapdın. Bəlkə də, bir xəritə əldə etməlisən."},{speaker:"Maya",en:"I did have a map, but I couldn't work out where I was to start with.",az:"Məndə xəritə var idi, amma haradan başlamalı olduğumu anlaya bilmirdim."},{speaker:"Tim",en:"So what are you studying?",az:"Bəs sən nə üzrə təhsil alırsan?"},{speaker:"Maya",en:"I'm doing a degree in Environmental Science.",az:"Mən Ekologiya elmləri ixtisası üzrə oxuyuram."},{speaker:"Tim",en:"Are you? My brother's done that course. He graduated last July.",az:"Eləmi? Mənim qardaşım o ixtisası bitirib. O, keçən iyulda məzun olub."},{speaker:"Maya",en:"Did he? Has he found a job yet?",az:"Eləmi? O, artıq iş tapıb?"},{speaker:"Tim",en:"Yes, he has, actually. He has just started working for an environmental charity in London. He does not get paid very much, but it's his start.",az:"Bəli, əslində, hə. O, indicə Londonda bir ekoloji xeyriyyə təşkilatında işə başlayıb. O, çox maaş almır, amma bu onun başlanğıcıdır."},{speaker:"Maya",en:"Well, that's encouraging. And what are you studying?",az:"Yaxşı, bu, ruhlandırıcıdır. Bəs sən nə təhsili alırsan?"},{speaker:"Tim",en:"Geography and economics. Most people think economics is really boring, but I don't. I do find it quite difficult though.",az:"Coğrafiya və iqtisadiyyat. Əksər insanlar iqtisadiyyatın həqiqətən darıxdırıcı olduğunu düşünür, amma mən elə düşünmürəm. Ancaq onu olduqca çətin hesab edirəm."},{speaker:"Maya",en:"Yeah, I'm not surprised. I would be completely confused.",az:"Bəli, təəccüblənmədim. Mənim başım tamamilə qarışırdır."},{speaker:"Tim",en:"Yeah. Anyway, do you live here on campus?",az:"Bəli. Nəysə, sən burada, kampusda yaşayırsan?"},{speaker:"Maya",en:"No, I don't. I was told to do so but it was really expensive, so I'm living in a shared house about two miles from here. It seemed the cheapest option.",az:"Xeyr. Mənə elə etmək deyilmişdi, amma çox bahalı idi, ona görə də buradan təxminən iki mil məsafədə ortaq bir evdə yaşayıram. Bu, ən ucuz seçim kimi görünürdü."},{speaker:"Tim",en:"Right, I have to go. I have got a lecture at two o'clock.",az:"Yaxşı, mən getməliyəm. Saat ikidə mühazirəm var."},{speaker:"Maya",en:"So have I, see you again soon.",az:"Mənim də, tezliklə görüşərik."},{speaker:"Tim",en:"Yeah, hope so, and try not to get lost again.",az:"Bəli, elə ümid edirəm, və çalış yenidən azma."},{speaker:"Maya",en:"I will do my best, bye.",az:"Əlimdən gələni edəcəyəm, hələlik."}],
+vocabulary:[{en:"Amenities",az:"infrastruktur, imkanlar, rahatlıqlar, şərait"},{en:"Campus",az:"universitet şəhərciyi"},{en:"Charity",az:"xeyriyyə təşkilatı"},{en:"Cheapest",az:"ən ucuz"},{en:"Confused",az:"başı qarışmış, çaşqın"},{en:"Crazy",az:"dəli, gərgin"},{en:"Degree",az:"dərəcə (elmi)"},{en:"Difficult",az:"çətin"},{en:"Encouraging",az:"ruhlandırıcı, həvəsləndirici"},{en:"Enormous",az:"nəhəng, çox böyük"},{en:"Environmental science",az:"ekologiya elmləri"},{en:"Eventually",az:"nəhayət, sonda"},{en:"Expensive",az:"bahalı"},{en:"Facilities",az:"avadanlıqlar, imkanlar, şərait"},{en:"Frequently",az:"tez-tez"},{en:"Huge",az:"nəhəng"},{en:"In size",az:"ölçü baxımından, həcmcə"},{en:"Lecture",az:"mühazirə"},{en:"Option",az:"seçim, variant"},{en:"Shared house",az:"ortaq ev"},{en:"To get lost",az:"azmaq, yolunu itirmək"},{en:"To graduate",az:"məzun olmaq"},{en:"To suppose",az:"güman etmək"},{en:"To work out",az:"anlamaq, başa düşmək"}]},
+listening9:{title:"Listening 9",audioSrc:"Listening 9.mp3",questions:[
+{id:"l9q1",q:"1. Choose the correct statement according to the dialogue.",options:["A) The woman wants to visit the art museum in the morning.","B) The man isn't excited about going to the zoo.","C) They decide to have dinner at an Indian restaurant.","D) The woman prefers to visit the zoo instead of shopping.","E) They agree to go shopping after lunch."],correct:"A) The woman wants to visit the art museum in the morning.",correctText:"A) The woman wants to visit the art museum in the morning.",explanation:"Dialoqun əvvəlində qadın şəhər bələdçisinə baxaraq təklif edir: “Niyə səhər əvvəlcə incəsənət muzeyinə baş çəkməyək?”"},
+{id:"l9q2",q:"2. Complete the sentence according to the dialogue. The woman does not want to go to the zoo because ...",options:["A) she's already seen it","B) she wants to take pictures of animals","C) she prefers shopping over seeing animals","D) she lost interest in museums","E) the zoo is too far from the restaurant"],correct:"C) she prefers shopping over seeing animals",correctText:"C) she prefers shopping over seeing animals",explanation:"Kişi zooparka getməyi təklif etdikdə, qadın “Düzünü desəm, ora getməkdə o qədər də maraqlı deyiləm” deyir və dərhal əvəzinə alış-verişə getməyi təklif edir. Bu, onun heyvanları görməkdənsə alış-verişə üstünlük verdiyini göstərir."},
+{id:"l9q3",q:"3. Which of the following questions does the dialogue answer (choose an exact answer)?",options:["A) What is the name of the Indian restaurant they visit?","B) Why did they go to the shopping mall?","C) What will they do after visiting the museum?","D) How much do the museum tickets cost?","E) How many traveler's checks do they have?"],correct:"C) What will they do after visiting the museum?",correctText:"C) What will they do after visiting the museum?",explanation:"Dialoqda muzeyi ziyarət etdikdən sonra nə edəcəklərini müzakirə edirlər. Kişi soruşur: “Nahar yeməyini harada yemək istəyirsən?”. Onlar muzeydən bir neçə məhəllə aralıda yerləşən hind restoranına getməyi planlaşdırırlar."},
+{id:"l9q4",q:"4. It is clear from the dialogue that...",options:["A) the man is worried about spending too much money","B) the woman dislikes going to the beach","C) they plan to rent a car to explore the city","D) they missed the train to the museum","E) the man lost his credit card"],correct:"A) the man is worried about spending too much money",correctText:"A) the man is worried about spending too much money",explanation:"Qadın alış-verişə getməyi təklif etdikdə, kişi buna etiraz edir və səbəbini belə izah edir: “Bizim cəmi bir neçə səyahətçi çekimiz qalıb və mənim cəmi əlli dollar nağd pulum var.” Bu, onun çox pul xərcləməkdən narahat olduğunu açıq şəkildə göstərir."},
+{id:"l9q5",q:"5. What do they finally decide to do after the disagreement?",options:["A) Visit the zoo","B) Go shopping downtown","C) Walk along the beach","D) Eat at a fast food restaurant","E) Go back to the hotel"],correct:"C) Walk along the beach",correctText:"C) Walk along the beach",explanation:"Mübahisədən sonra nəhayət nə etməyə qərar verirlər? Alış-veriş planı ilə bağlı fikir ayrılığından sonra qadın yeni bir təklif irəli sürür: “Gəl metro ilə dəniz kənarına enək və çimərlik boyunca gəzək.” Kişi dərhal razılaşır: “Bax bu, əla bir plana bənzəyir.”"}],
+text:[{speaker:"Man",en:"So, what do you wanna [want to] do tomorrow?",az:"Kişi: Bələdliklə, sabah nə etmək istəyirsən?"},{speaker:"Woman",en:"Well, let's look at this city guide here.",az:"Qadın: Gəl buradakı bu şəhər bələdçisinə baxaq."},{speaker:"Woman",en:"[Okay] Uh, here's something interesting.",az:"[Yaxşı] Burada maraqlı bir şey var."},{speaker:"Woman",en:"[Oh!] Why don't we first visit the art museum in the morning?",az:"[Oh!] Niyə səhər əvvəlcə incəsənət muzeyinə baş çəkməyək?"},{speaker:"Man",en:"Okay. I like that idea.",az:"Kişi: Yaxşı. Bu fikir xoşuma gəldi."},{speaker:"Man",en:"And, uh, where do you want to eat lunch?",az:"Bəs nahar yeməyini harada yemək istəyirsən?"},{speaker:"Woman",en:"How about going to an Indian restaurant?",az:"Qadın: Hind restoranına getməyə nə deyirsən?"},{speaker:"Woman",en:"[Hmm] The guide recommends one downtown a few blocks from the museum.",az:"[Hmm] Bələdçi şəhər mərkəzində, muzeydən bir neçə kvartal aralıda birini tövsiyə edir."},{speaker:"Man",en:"Now, that sounds great.",az:"Kişi: Bax, bu, əla səslənir."},{speaker:"Man",en:"And after that, what do you think about visiting the zoo?",az:"Bəs ondan sonra, zooparkı ziyarət etmək barədə nə düşünürsən?"},{speaker:"Man",en:"[Umm ... well ... ] Well, it says here that there are some very unique animals not found anywhere else.",az:"[Umm ... yaxşı ... ] Yaxşı, burada deyilir ki, orada heç bir yerdə tapılmayan bəzi çox unikal heyvanlar var."},{speaker:"Woman",en:"Well, to tell you the truth, I'm not really interested in going there.",az:"Qadın: Yaxşı, düzünü desəm, ora getməkdə o qədər də maraqlı deyiləm."},{speaker:"Woman",en:"[Really?]. Yeah. Why don't we go shopping instead?",az:"[Doğrudan?]. Bəli. Niyə bunun əvəzinə alış-verişə getməyək?"},{speaker:"Woman",en:"There's supposed to be some really nice places to pick up souvenirs.",az:"Deyilənə görə, suvenirlər almaq üçün həqiqətən bəzi gözəl yerlər var."},{speaker:"Man",en:"Nah, I don't think that's a good idea.",az:"Kişi: Yox, düşünürəm ki, bu, yaxşı fikir deyil."},{speaker:"Man",en:"A traveler's check is for a prepaid fixed amount and operates like cash, so a purchaser can use it to buy goods or services when traveling.",az:"Səyahətçi çeki əvvəlcədən ödənilmiş sabit məbləğ üçündür və nağd pul kimi işləyir, buna görə də alıcı səyahət edərkən ondan mal və ya xidmət almaq üçün istifadə edə bilər."},{speaker:"Man",en:"We only have a few traveler's checks left, and I only have fifty dollars left in cash.",az:"Bizim cəmi bir neçə səyahətçi çekimiz qalıb və mənim cəmi əlli dollar nağd pulum var."},{speaker:"Woman",en:"No problem. We can use YOUR credit card to pay for MY new clothes.",az:"Qadın: Problem deyil. MƏNİM yeni paltarlarım üçün SƏNİN kredit kartını istifadə edə bilərik."},{speaker:"Man",en:"Oh, no. I remember the last time you used MY credit card for YOUR purchases.",az:"Kişi: Oh, yox. Sənin ÖZ alış-verişlərin üçün MƏNİM kredit kartımı istifadə etdiyin son dəfəni xatırlayıram."},{speaker:"Woman",en:"Oh well. Let's take the subway down to the seashore and walk along the beach.",az:"Qadın: Eh, yaxşı. Gəl metro ilə dəniz kənarına enək və çimərlik boyunca gəzək."},{speaker:"Man",en:"Now that sounds like a wonderful plan.",az:"Kişi: Bax bu, əla bir plana bənzəyir."}],
+vocabulary:[{en:"Art museum",az:"incəsənət muzeyi"},{en:"Beach",az:"çimərlik"},{en:"Block",az:"kvartal (məhəllə); blok"},{en:"Cash",az:"nağd pul"},{en:"City guide",az:"şəhər bələdçisi"},{en:"Credit card",az:"kredit kartı"},{en:"Downtown",az:"şəhər mərkəzi"},{en:"Instead (of sth)",az:"(nəyinsə) əvəzində"},{en:"Purchases",az:"alış-veriş, alınan mallar"},{en:"Seashore",az:"dəniz kənarı"},{en:"Souvenir",az:"suvenir, xatirə hədiyyəsi"},{en:"Subway",az:"metro"},{en:"To agree",az:"razılaşmaq"},{en:"To be interested in sth",az:"nə iləsə maraqlanmaq"},{en:"To decide",az:"qərar vermək"},{en:"To disagree",az:"razılaşmamaq"},{en:"To recommend",az:"tövsiyə etmək"},{en:"Traveler's check",az:"səyahətçi çeki"},{en:"Unique",az:"unikal, bənzərsiz"},{en:"Wonderful",az:"gözəl"},{en:"Zoo",az:"zoopark"}]},
+listening10:{title:"Listening 10",audioSrc:"Listening 10.mp3",questions:[
+{id:"l10q1",q:"1. Choose the correct statement according to the dialogue.",options:["A) Boredom made Betty to do the assignments earlier.", "B) Betty always has some good ideas to do in free time.", "C) Betty liked the idea of watching a reality programme.", "D) Betty always wins the game when she plays.", "E) Betty didn't like a game of card last time."],correct:"A) Boredom made Betty to do the assignments earlier.",correctText:"A) Boredom made Betty to do the assignments earlier.",explanation:"Dialoqa əsasən düzgün ifadəni seçin. Dialoqun əvvəlində Betti deyir: “Mən o qədər darıxıram ki, hər iki tapşırığımı vaxtından üç gün əvvəl tamamlamışam.” Bu, darıxmağın onu tapşırıqlarını daha tez bitirməyə sövq etdiyini göstərir."},
+{id:"l10q2",q:"2. Complete the sentence according to the dialogue. Betty suggested going to the cinema ....",options:["A) but then she saw that it was too late.", "B) because her favourite actor's movie was at the cinema.", "C) because there was no other thing to do.", "D) but Kevin didn't agree because of having little money", "E) Carl invited her several days ago"],correct:"D) but Kevin didn't agree because of having little money",correctText:"D) but Kevin didn't agree because of having little money",explanation:"Dialoqa əsasən cümləni tamamlayın. Betti kinoya getməyi təklif etdikdə, Kevin cavab verir: “Xeyr, mən bu həftə həqiqətən pulsuzam... Gələn çərşənbə axşamına qədər maaş almayacağam.” Bu, Kevinin pulu olmadığı üçün razılaşmadığını göstərir."},
+{id:"l10q3",q:"3. Which of the following questions does the dialogue answer?",options:["A) What is the name of the reality programme?", "B) What does Betty think about reality programmes?", "C) How much did Betty owe Kevin last time when they played a game?", "D) What did Kevin buy for his mother's birthday?", "E) How many dollars does Kevin have?"],correct:"B) What does Betty think about reality programmes?",correctText:"B) What does Betty think about reality programmes?",explanation:"Aşağıdakı suallardan hansına dialoqda cavab var? Betti realiti şoular haqqında danışarkən öz fikrini açıq şəkildə bildirir: “Uf! Mən realiti şoulara nifrət edirəm... oh, o qədər saxta idi. Buna realiti TV demələri çox ironikdir, elə deyilmi?”"},
+{id:"l10q4",q:"4. It is clear from the dialogue that .....",options:["A) Betty liked all the ideas that were suggested.", "B) Kevin has some money problems these days.", "C) Kevin doesn't want to go anywhere.", "D) Carl didn't return Carla's racket.", "E) There is no spare racket for Karl to play."],correct:"B) Kevin has some money problems these days.",correctText:"B) Kevin has some money problems these days.",explanation:"Dialoqdan aydındır ki, … . Kevin kinoya getmək təklifini rədd edərkən pulunun olmadığını deyir: “Mən bu həftə həqiqətən pulsuzam. Anama ad günü hədiyyəsi almalı oldum və gələn çərşənbə axşamına qədər maaş almayacağam.” Bu, onun bu günlərdə pul probleminin olduğunu göstərir."},
+{id:"l10q5",q:"5. Answer the questions according to the passage. What did they decide to do in the end?",options:["A) to go and watch a movie.", "B) to buy a present for Karl's mother.", "C) to play a card game.", "D) to go to the tennis court and play tennis.", "E) to invite Carl to their house."],correct:"D) to go to the tennis court and play tennis.",correctText:"D) to go to the tennis court and play tennis.",explanation:"Mətnə əsasən suallara cavab verin. Onlar sonda nə etmək qərarına gəldilər? Bütün digər təkliflər rədd edildikdən sonra Betti tennis oynamağı təklif edir. Kevin bu fikri bəyənir (“Hey, bu yaxşı fikrə bənzəyir.”) və sonda getməyə razılaşırlar."}],
+text:[{"speaker": "Betty", "en": "Oh Kevin, I'm so bored!", "az": "Oh Kevin, mən çox darıxıram!"}, {"speaker": "Kevin", "en": "I thought you had some studying to do!", "az": "Mən elə bilirdim ki, sənin bir az dərsin var!"}, {"speaker": "Betty", "en": "I've finished it already.", "az": "Mən onu artıq bitirmişəm."}, {"speaker": "Betty", "en": "I'm so bored that I have completed both my assignments three days ahead of schedule.", "az": "Mən o qədər darıxıram ki, hər iki tapşırığımı vaxtından üç gün əvvəl tamamlamışam."}, {"speaker": "Betty", "en": "What can we do?", "az": "Nə edə bilərik?"}, {"speaker": "Betty", "en": "You usually have some good ideas.", "az": "Sənin adətən yaxşı fikirlərin olur."}, {"speaker": "Kevin", "en": "How about watching this new reality program on the TV tonight?", "az": "Bu axşam televiziyada bu yeni realiti şouya baxmağa nə deyirsən?"}, {"speaker": "Kevin", "en": "It looks pretty interesting if you ask me.", "az": "Məndən soruşsan, olduqca maraqlı görünür."}, {"speaker": "Betty", "en": "Urgh! I hate reality programs.", "az": "Uf! Mən realiti şoulara nifrət edirəm."}, {"speaker": "Betty", "en": "Did you see the one that won in the jungle last week?", "az": "Keçən həftə cəngəllikdə qalib gələni gördün?"}, {"speaker": "Betty", "en": "She was supposed to be living in the jungle, right, but she had perfect hair and make up every morning... oh, it was so false.", "az": "O, guya cəngəllikdə yaşamalı idi, düzdür, amma hər səhər mükəmməl saçı və makiyajı var idi... oh, o qədər saxta idi ki."}, {"speaker": "Betty", "en": "It's very ironic that they call it reality TV, don't you think?", "az": "Buna realiti TV demələri çox ironikdir, elə deyilmi?"}, {"speaker": "Kevin", "en": "Hmm...well, let's play a game then.", "az": "Hmm... yaxşı, o zaman gəl bir oyun oynayaq."}, {"speaker": "Kevin", "en": "It's been years since we played a game like Scrabble or Monopoly.", "az": "“Skrabl” və ya “monopoliya” kimi bir oyun oynamağımızdan illər keçib."}, {"speaker": "Kevin", "en": "What do you think?", "az": "Nə düşünürsən?"}, {"speaker": "Betty", "en": "I always lose!", "az": "Mən həmişə uduzuram!"}, {"speaker": "Betty", "en": "I can't keep my concentration on those games... and I always land on your hotels on Fifth Avenue.", "az": "Mən o oyunlarda diqqətimi cəmləyə bilmirəm... və həmişə sənin Beşinci Prospektdəki otellərinin üzərinə düşürəm."}, {"speaker": "Betty", "en": "Do you remember how much I owed you last time we played at Jane's house?", "az": "Yadındadır, Ceynin evində son dəfə oynayanda sənə nə qədər borcum var idi?"}, {"speaker": "Kevin", "en": "Yeah, that's true.", "az": "Bəli, bu, doğrudur."}, {"speaker": "Kevin", "en": "What about a game of cards then?", "az": "Bəs kart oyununa nə deyirsən?"}, {"speaker": "Kevin", "en": "You liked it the last time we played poker, didn't you?", "az": "Son dəfə poker oynayanda xoşuna gəlmişdi, deyilmi?"}, {"speaker": "Betty", "en": "Well, only because your friend Carl was here!", "az": "Yaxşı, ancaq sənin dostun Karl burada olduğu üçün!"}, {"speaker": "Betty", "en": "No, I want to go out.", "az": "Xeyr, mən çölə çıxmaq istəyirəm."}, {"speaker": "Betty", "en": "It's not too late.", "az": "Hələ çox gec deyil."}, {"speaker": "Betty", "en": "We could go see a movie at the cinema - what do you say?", "az": "Kinoteatrda filmə baxa bilərik - nə deyirsən?"}, {"speaker": "Kevin", "en": "No, I'm really broke this week.", "az": "Xeyr, mən bu həftə həqiqətən pulsuzam."}, {"speaker": "Kevin", "en": "I had to buy my mom a birthday gift and I won't get paid till next Tuesday.", "az": "Anama ad günü hədiyyəsi almalı oldum və gələn çərşənbə axşamına qədər maaş almayacağam."}, {"speaker": "Kevin", "en": "Do you have any cheaper suggestions?", "az": "Daha ucuz təkliflərin var?"}, {"speaker": "Betty", "en": "We could always go and play tennis.", "az": "Biz həmişə gedib tennis oynaya bilərik."}, {"speaker": "Kevin", "en": "It's eight o'clock in the evening!", "az": "Axşam saat səkkizdir!"}, {"speaker": "Betty", "en": "I know but they've just opened up this new floodlit tennis courts on Rigby Road.", "az": "Bilirəm, amma onlar indicə Rigby Yolunda bu yeni işıqlandırılmış tennis kortlarını açıblar."}, {"speaker": "Betty", "en": "It only costs $4 on weekday evenings for an hour.", "az": "Həftəiçi axşamlar bir saatı cəmi 4 dollardır."}, {"speaker": "Betty", "en": "You've got two dollars haven't you?", "az": "Sənin iki dolların var, deyilmi?"}, {"speaker": "Kevin", "en": "Hey, that sounds like a good idea.", "az": "Hey, bu yaxşı fikrə bənzəyir."}, {"speaker": "Kevin", "en": "I could do with some exercise.", "az": "Bir az idman mənə yaxşı təsir edərdi."}, {"speaker": "Kevin", "en": "Do you have another racket I could borrow?", "az": "Borc ala biləcəyim başqa bir raketkan var?"}, {"speaker": "Kevin", "en": "I lent mine to Carl a month ago.", "az": "Mən özümünkünü bir ay əvvəl Karla borc vermişdim."}, {"speaker": "Betty", "en": "Ooh, well what about inviting Carl to come and play too?", "az": "Ooh, bəs Karlı da gəlib oynamağa dəvət etməyə nə deyirsən?"}, {"speaker": "Kevin", "en": "No way!", "az": "Heç bir halda!"}, {"speaker": "Kevin", "en": "You'd never concentrate on the game!", "az": "Sən heç vaxt diqqətini oyuna cəmləməzdin!"}, {"speaker": "Betty", "en": "OK, I have a spare racket you could borrow.", "az": "Yaxşı, mənim borc ala biləcəyin bir ehtiyat raketkam var."}, {"speaker": "Betty", "en": "Let's go!", "az": "Gedək!"}],
+vocabulary:[{"en": "Ahead", "az": "irəlidə, irəliyə, öndə"}, {"en": "Ahead of schedule", "az": "vaxtından əvvəl"}, {"en": "Assignment", "az": "tapşırıq (dərs)"}, {"en": "Bored", "az": "darıxmış"}, {"en": "Broke", "az": "pulsuz, kasıb"}, {"en": "Concentration", "az": "diqqət"}, {"en": "Exercise", "az": "idman, məşq"}, {"en": "False", "az": "saxta, yalançı"}, {"en": "Floodlit", "az": "işıqlandırılmış"}, {"en": "Ironic", "az": "ironik, istehzalı"}, {"en": "Jungle", "az": "cəngəllik"}, {"en": "Make-up", "az": "makiyaj"}, {"en": "Pretty", "az": "çox, olduqca (sifət kimi: gözəl)"}, {"en": "Racket", "az": "raketka"}, {"en": "Reality program", "az": "realiti proqram/şou"}, {"en": "Spare", "az": "ehtiyat, artıq, boş"}, {"en": "Suggestion", "az": "təklif"}, {"en": "To borrow", "az": "borc almaq"}, {"en": "To cost", "az": "qiyməti olmaq, dəyərində olmaq"}, {"en": "To lend", "az": "borc vermək"}, {"en": "To lose", "az": "uduzmaq"}, {"en": "To owe", "az": "borclu olmaq"}, {"en": "Weekday", "az": "həftəiçi gün"}]}
+};
+const speakerColors=['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#f97316','#14b8a6','#6366f1'];let currentListeningId="listening1";
+const PKEY='listeningProgress';let progMem={};try{progMem=JSON.parse(localStorage.getItem(PKEY))||{}}catch(e){progMem={}}
+function saveProg(id,ok,total){progMem[id]={ok,total};try{localStorage.setItem(PKEY,JSON.stringify(progMem))}catch(e){}}
+function isDone(id){return !!progMem[id]}
+function updateLock(){const d=isDone(currentListeningId);document.getElementById('text-lock').style.display=d?'none':'block';document.getElementById('dialogue-container').style.display=d?'':'none';document.getElementById('tab-text-btn').innerHTML=d?'2. Mətn':'<i class="fas fa-lock"></i> 2. Mətn'}
+function updateToc(){Object.keys(appData).forEach(k=>{const e=document.getElementById('score-'+k);if(e)e.innerText=progMem[k]?'✓ '+progMem[k].ok+'/'+progMem[k].total:''})}
+function retryQuiz(){document.querySelectorAll('#questions-container input[type=radio]').forEach(r=>r.checked=false);document.querySelectorAll('#questions-container .result-box').forEach(b=>b.className='result-box');document.querySelectorAll('#questions-container .correct-answer-text').forEach(e=>e.style.display='none');const sb=document.getElementById('score-box');sb.classList.remove('show');sb.innerHTML='';document.getElementById('questions-container').scrollIntoView({behavior:'smooth',block:'start'})}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sidebar-overlay').classList.toggle('active')}
+function toggleGroup(){document.getElementById('toc-group').classList.toggle('open')}
+function closeSidebar(){const s=document.getElementById('sidebar'),o=document.getElementById('sidebar-overlay');if(s.classList.contains('open')){s.classList.remove('open');o.classList.remove('active')}}
+function toggleTheme(){const b=document.body,i=document.getElementById('theme-icon');if(b.getAttribute('data-theme')==='dark'){b.removeAttribute('data-theme');i.classList.replace('fa-sun','fa-moon');localStorage.setItem('theme','light')}else{b.setAttribute('data-theme','dark');i.classList.replace('fa-moon','fa-sun');localStorage.setItem('theme','dark')}}
+function toggleLayout(){const b=document.body;if(b.classList.contains('centered')){b.classList.replace('centered','full-width');localStorage.setItem('layout','full-width')}else{b.classList.replace('full-width','centered');localStorage.setItem('layout','centered')}}
+function openTab(n,b){document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active'));document.getElementById(n).classList.add('active');if(b)b.classList.add('active')}
+function skipAudio(n){const a=document.getElementById('audio-player');a.currentTime=Math.max(0,Math.min(a.duration||1e9,a.currentTime+n))}
+function applySpeed(s){const a=document.getElementById('audio-player');a.defaultPlaybackRate=s;a.playbackRate=s;document.querySelectorAll('.speed-btn').forEach(e=>e.classList.toggle('active',parseFloat(e.textContent)===s))}
+function changeSpeed(s){applySpeed(s);try{localStorage.setItem('audioSpeed',s)}catch(e){}}
+document.addEventListener('keydown',e=>{const t=e.target,tag=t.tagName;if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||e.ctrlKey||e.metaKey||e.altKey)return;const a=document.getElementById('audio-player');if(e.code==='Space'){e.preventDefault();if(e.repeat)return;if(a.paused)a.play();else a.pause()}else if(e.code==='ArrowRight'){e.preventDefault();skipAudio(5)}else if(e.code==='ArrowLeft'){e.preventDefault();skipAudio(-5)}});
+document.addEventListener('keyup',e=>{if(e.code==='Space'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA')e.preventDefault()});
+function speakWord(w){if('speechSynthesis'in window){window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(w);u.lang='en-US';window.speechSynthesis.speak(u)}}
+function checkAllAnswers(){const d=appData[currentListeningId];let ok=0,bad=0,skip=0;d.questions.forEach(q=>{const s=document.querySelector(`input[name="${q.id}"]:checked`),b=document.getElementById(`result-${q.id}`),f=document.getElementById(`feedback-${q.id}`);if(!s){skip++;f.innerText="Cavab seçilməyib!";f.className="feedback-title";b.className="result-box show";document.getElementById(`correct-text-${q.id}`).style.display="block";return}if(s.value===q.correct){ok++;f.innerText="Düzdür!";f.className="feedback-title correct";b.className="result-box show correct"}else{bad++;f.innerText="Səhvdir!";f.className="feedback-title wrong";b.className="result-box show wrong"}document.getElementById(`correct-text-${q.id}`).style.display="block"});
+const sb=document.getElementById('score-box');sb.innerHTML=`<div class="score-main">Nəticə: ${ok} / ${d.questions.length}</div><div class="score-row"><span class="score-ok"><i class="fas fa-check-circle"></i> Düz: ${ok}</span><span class="score-bad"><i class="fas fa-times-circle"></i> Səhv: ${bad}</span><span class="score-skip"><i class="fas fa-minus-circle"></i> Cavabsız: ${skip}</span></div>${ok+bad>0?'<div class="score-note">Mətn bölməsi açıldı.</div>':''}<button class="retry-btn" onclick="retryQuiz()"><i class="fas fa-rotate-right"></i> Yenidən cəhd et</button>`;sb.classList.add('show');if(ok+bad>0){saveProg(currentListeningId,ok,d.questions.length);updateLock();updateToc()}sb.scrollIntoView({behavior:'smooth',block:'center'})}
+function toggleTip(e){const was=e.classList.contains('open');document.querySelectorAll('.sentence-wrapper.open').forEach(x=>x.classList.remove('open'));if(!was){e.classList.add('open');adjustTooltip(e)}}
+function adjustTooltip(e){const t=e.querySelector('.tooltip');if(!t)return;t.style.left='50%';t.style.right='auto';t.style.transform='translateX(-50%) translateY(-10px)';const r=t.getBoundingClientRect(),w=window.innerWidth;if(r.left<10){t.style.left=`calc(50% + ${10-r.left}px)`}else if(r.right>w-10){t.style.left=`calc(50% - ${r.right-(w-10)}px)`}}
+function loadListening(id){currentListeningId=id;const d=appData[id];document.getElementById('current-title').innerText=d.title;const a=document.getElementById('audio-player');a.src=d.audioSrc;a.load();document.querySelectorAll('.tab-btn').forEach((b,i)=>{if(i===0)b.classList.add('active');else b.classList.remove('active')});document.querySelectorAll('.tab-content').forEach((e,i)=>{if(i===0)e.classList.add('active');else e.classList.remove('active')});
+const sbx=document.getElementById('score-box');if(sbx){sbx.classList.remove('show');sbx.innerHTML=''}const q=document.getElementById('questions-container');q.innerHTML='';d.questions.forEach(item=>{let o=item.options.map(x=>`<label class="option-label"><input type="radio" name="${item.id}" value="${x}"><span>${x}</span></label>`).join('');q.innerHTML+=`<div class="question-card"><div class="question-text">${item.q}</div><div class="options-list">${o}</div><div class="result-box" id="result-${item.id}"><div class="feedback-title" id="feedback-${item.id}"></div><div class="correct-answer-text" id="correct-text-${item.id}" style="display:none;">Düzgün cavab: ${item.correctText}</div><div class="explanation-text" style="display:none;"><strong>İzah:</strong> ${item.explanation}</div></div></div>`;setTimeout(()=>{const e=q.querySelector(`#result-${item.id} .explanation-text`);if(e)e.style.display="block"},0)});
+const v=document.getElementById('vocab-list');v.innerHTML='';d.vocabulary.forEach(item=>{v.innerHTML+=`<li class="vocab-item"><div class="vocab-en" onclick="speakWord('${item.en.replace(/'/g,"\\'")}')"><i class="fas fa-volume-up"></i> ${item.en}</div><div class="vocab-az">${item.az}</div></li>`});
+const t=document.getElementById('dialogue-container');t.innerHTML='';const u=[...new Set(d.text.map(i=>i.speaker))],c={};u.forEach((s,i)=>c[s]=speakerColors[i%speakerColors.length]);const g=[];d.text.forEach(i=>{if(g.length>0&&g[g.length-1].speaker===i.speaker)g[g.length-1].sentences.push(i);else g.push({speaker:i.speaker,sentences:[i]})});
+g.forEach(x=>{let h=x.sentences.map(s=>`<span class="sentence-wrapper" onmouseenter="adjustTooltip(this)" onclick="toggleTip(this)">${s.en}<span class="tooltip">${s.az}</span></span>`).join(' ');t.innerHTML+=`<div class="dialogue-block"><span class="speaker-name" style="color:${c[x.speaker]};">${x.speaker}:</span> <span class="speaker-text">${h}</span></div>`});
+updateLock();document.querySelectorAll('.toc-item').forEach(e=>e.classList.remove('active'));document.getElementById(`toc-${id}`).classList.add('active');closeSidebar()}
+window.onload=()=>{if(localStorage.getItem('theme')==='dark'){document.body.setAttribute('data-theme','dark');document.getElementById('theme-icon').classList.replace('fa-moon','fa-sun')}if(localStorage.getItem('layout')==='full-width')document.body.classList.replace('centered','full-width');const t=document.getElementById('toc-list');let items='';Object.keys(appData).forEach(k=>{items+=`<div class="toc-item" id="toc-${k}" onclick="loadListening('${k}')"><span>${appData[k].title}</span><span class="toc-score" id="score-${k}"></span></div>`});t.innerHTML=`<div class="toc-group" id="toc-group"><div class="toc-group-head" onclick="toggleGroup()"><span>Listening</span><i class="fas fa-chevron-down"></i></div><div class="toc-sub">${items}</div></div>`;loadListening('listening1');updateToc();try{const sp=parseFloat(localStorage.getItem('audioSpeed'));if([0.75,1,1.25].includes(sp))applySpeed(sp)}catch(e){}};
+</script>
 </body>
 </html>
