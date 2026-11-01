@@ -378,7 +378,9 @@ function ensureItem(t,n){if(!TYPES[t])return;const k=t+n;if(!appData[k])appData[
    Yeni əlavə üçün sətir əlavə edin, məs: {key:'listening13',file:'listening13.html'} */
 const STATIC_PAGES=Array.from({length:19},(_,i)=>({key:'listening'+(i+12),file:'listening'+(i+12)+'.html'})); /* Listening 12–30 */
 STATIC_PAGES.push({key:'grammar1',file:'grammar1.html',title:'Pronouns'});
-STATIC_PAGES.push({key:'grammar2',file:'grammar2.html',title:'Pronouns II'}); /* Qramatika */
+STATIC_PAGES.push({key:'grammar2',file:'grammar2.html',title:'Pronouns II'});
+STATIC_PAGES.push({key:'grammar3',file:'grammar3.html',title:'Zamanlar I'});
+STATIC_PAGES.push({key:'grammar4',file:'grammar4.html',title:'Zamanlar II'}); /* Qramatika */
 const staticState={};
 function fetchFirst(names){let i=0;const tryNext=()=>{const n=names[i++];return fetch(n,{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status+' ('+n+')');return r.text()}).catch(e=>{if(i<names.length)return tryNext();throw e})};return tryNext()}
 function loadStatic(){STATIC_PAGES.forEach(p=>{ensureItem(typeOf(p.key),numOf(p.key));if(p.title&&appData[p.key])appData[p.key].title=p.title;if(titles[p.key]&&appData[p.key])appData[p.key].title=titles[p.key];staticState[p.key]='loading';const n=numOf(p.key),names=(p.key.indexOf('listening')===0&&n<=13)?[p.file,'Listening'+n+'.html','Listening '+n+'.html','listening '+n+'.html']:[p.file];fetchFirst(names).then(h=>{staticState[p.key]='ok';if(!customHtml[p.key]||customHtml[p.key].fromRepo)customHtml[p.key]={name:p.file,html:h,fromRepo:true};buildToc();if(currentListeningId===p.key)loadListening(p.key)}).catch(e=>{staticState[p.key]='Fayl tapılmadı: '+p.file+' — '+(e&&e.message||'xəta');if(currentListeningId===p.key)loadListening(p.key)})})}
