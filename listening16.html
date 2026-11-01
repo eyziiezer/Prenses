@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Listening 16</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{color-scheme:dark;--bg-color:#1a1a2e;--text-color:#e0e0e0;--panel-bg:#16213e;--primary-color:#0f3460;--border-color:#2a2a4a;--vocab-en-color:#60a5fa;--highlight-bg:rgba(96,165,250,.2);--success-color:#4ade80;--success-bg:rgba(74,222,128,.1);--error-color:#f87171;--error-bg:rgba(248,113,113,.1);--tooltip-bg:rgba(15,23,42,.95);--tooltip-text:#f8fafc;--tooltip-border:rgba(255,255,255,.1)}
+*{box-sizing:border-box;margin:0;padding:0;transition:background-color .3s,color .3s}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg-color);color:var(--text-color);min-height:100vh;max-width:900px;margin:0 auto;padding:20px}
+#sidebar-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:90}
+#sidebar-overlay.active{display:block}
+#sidebar{width:250px;background:var(--panel-bg);border-right:1px solid var(--border-color);display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .3s;position:absolute;height:100%;z-index:100;box-shadow:2px 0 10px rgba(0,0,0,.1)}
+#sidebar.open{transform:translateX(0)}
+.sidebar-header{padding:20px;border-bottom:1px solid var(--border-color);font-weight:bold;font-size:1.1rem;display:flex;justify-content:space-between;align-items:center}
+.toc-group-head{padding:15px 20px;cursor:pointer;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;font-weight:600}
+.toc-group-head:hover{background:var(--highlight-bg)}
+.toc-group-head .chev{transition:transform .3s;font-size:.8rem}
+.toc-group-head .gi{margin-right:8px}
+.toc-group.open .chev{transform:rotate(180deg)}
+.toc-listening .toc-group-head{border-left:4px solid #3b82f6}
+.toc-reading .toc-group-head{border-left:4px solid #10b981}
+.toc-reading .toc-item:hover,.toc-reading .toc-item.active{background:#0f766e;color:#fff}
+.toc-sub{display:none;background:rgba(255,255,255,.03)}
+.toc-group.open .toc-sub{display:block}
+.toc-sub .toc-item{padding:12px 20px 12px 40px}
+#toc-list{overflow-y:auto;flex:1}
+.toc-item{padding:15px 20px;cursor:pointer;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.toc-right{display:flex;align-items:center;gap:6px}
+.toc-up{background:none;border:none;color:inherit;cursor:pointer;padding:5px 8px;border-radius:6px;opacity:.9;font-size:.95rem}
+.toc-up:hover{background:rgba(128,128,128,.3)}
+#custom-frame{display:none;flex:1;width:100%;min-height:75vh;min-height:75dvh;border:0;border-radius:10px;background:#fff;box-shadow:0 4px 6px rgba(0,0,0,.05)}
+.custom-mode #custom-frame{display:block}
+.custom-mode .audio-container,.custom-mode .tabs,.custom-mode .tab-content{display:none!important}
+.res-summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.res-chip{flex:1;min-width:110px;text-align:center;padding:12px 10px;border-radius:10px;background:var(--highlight-bg);font-weight:600;font-size:.9rem}
+.res-chip b{display:block;font-size:1.3rem;margin-top:4px}
+.res-row{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:14px 16px;margin-bottom:10px;border:1px solid var(--border-color);border-radius:10px;flex-wrap:wrap}
+.res-no{font-weight:bold;font-size:1.05rem}
+.res-date{opacity:.8;font-size:.9rem;margin-top:3px}
+.res-right{text-align:right}
+.res-score{font-weight:bold;font-size:1.2rem}
+.res-score.good{color:var(--success-color)}.res-score.mid{color:#d97706}.res-score.low{color:var(--error-color)}
+.res-detail{opacity:.75;font-size:.85rem;margin-top:3px}
+.sidebar-footer{padding:12px;border-top:1px solid var(--border-color);display:flex;flex-direction:column;gap:8px}
+.add-reading{background:#0f766e}
+.toc-del{background:none;border:none;color:inherit;cursor:pointer;padding:5px 8px;border-radius:6px;opacity:.9;font-size:.95rem}
+.toc-del:hover{background:rgba(220,38,38,.45)}
+#empty-state{display:none;background:var(--panel-bg);border-radius:10px;box-shadow:0 4px 6px rgba(0,0,0,.05)}
+.empty-mode #empty-state{display:block}
+.empty-mode .audio-container,.empty-mode .tabs,.empty-mode .tab-content{display:none!important}
+.add-btn{width:100%;padding:12px;background:var(--primary-color);color:#fff;border:none;border-radius:8px;font-weight:bold;font-size:1rem;cursor:pointer}
+.add-btn:hover{opacity:.9}
+.toc-score{font-size:.85rem;font-weight:600;opacity:.9;white-space:nowrap}
+.lock-box{text-align:center;padding:40px 20px;opacity:.85}
+.lock-box i{font-size:2.2rem;margin-bottom:12px;display:block}
+.retry-btn{margin-top:15px;padding:10px 22px;background:var(--primary-color);color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:bold;cursor:pointer}
+.retry-btn:hover{opacity:.9}
+.score-note{margin-top:10px;font-size:.9rem;opacity:.8}
+.toc-item:hover,.toc-item.active{background:var(--primary-color);color:#fff}
+#main-content{flex:1;display:flex;flex-direction:column;height:100%;overflow-y:auto;padding:20px}
+.centered #main-content{max-width:900px;margin:0 auto;width:100%}
+nav{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:var(--panel-bg);border-bottom:1px solid var(--border-color);margin-bottom:20px;border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,.02)}
+.nav-left,.nav-right{display:flex;align-items:center;gap:15px}
+.btn{background:none;border:none;color:var(--text-color);font-size:1.2rem;cursor:pointer;padding:8px;border-radius:5px}
+.btn:hover{background:var(--border-color)}
+.audio-container{background:var(--panel-bg);padding:20px;border-radius:10px;margin-bottom:20px;box-shadow:0 4px 6px rgba(0,0,0,.05)}
+audio{width:100%;margin-bottom:10px;outline:none}
+.speed-controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.skip-btn{background:var(--border-color);border:none;padding:5px 15px;border-radius:15px;cursor:pointer;color:var(--text-color);font-weight:bold}
+.skip-btn:hover{background:var(--primary-color);color:#fff}
+.score-box{display:none;margin-top:20px;padding:20px;border-radius:10px;border:2px solid var(--primary-color);background:var(--panel-bg);text-align:center;animation:fadeIn .3s}
+.score-box.show{display:block}
+.score-main{font-size:1.4rem;font-weight:bold;margin-bottom:12px}
+.score-row{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;font-weight:600}
+.score-ok{color:var(--success-color)}.score-bad{color:var(--error-color)}.score-skip{opacity:.7}
+.speed-btn{background:var(--border-color);border:none;padding:5px 15px;border-radius:15px;cursor:pointer;color:var(--text-color);font-weight:bold}
+.speed-btn.active{background:var(--primary-color);color:#fff}
+.tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.tab-btn{padding:10px 20px;background:var(--panel-bg);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;color:var(--text-color);font-weight:600}
+.tab-btn.active{background:var(--primary-color);color:#fff;border-color:var(--primary-color)}
+.tab-content{display:none;background:var(--panel-bg);padding:20px;border-radius:10px;box-shadow:0 4px 6px rgba(0,0,0,.05);line-height:1.6}
+.tab-content.active{display:block}
+.question-card{margin-bottom:25px;padding-bottom:20px;border-bottom:1px solid var(--border-color)}
+.question-text{font-weight:bold;margin-bottom:15px;font-size:1.05rem}
+.options-list{margin-bottom:15px;display:flex;flex-direction:column;gap:8px}
+.option-label{display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:8px;border-radius:5px}
+.option-label:hover{background:var(--highlight-bg)}
+.option-label input[type="radio"]{cursor:pointer;width:18px;height:18px;margin-top:3px}
+.result-box{display:none;margin-top:15px;padding:15px;border-radius:8px;border-left:5px solid}
+.result-box.show{display:block;animation:fadeIn .3s}
+.result-box.correct{background:var(--success-bg);border-color:var(--success-color)}
+.result-box.wrong{background:var(--error-bg);border-color:var(--error-color)}
+.feedback-title{font-weight:bold;margin-bottom:5px}
+.feedback-title.correct{color:var(--success-color)}
+.feedback-title.wrong{color:var(--error-color)}
+.correct-answer-text{font-weight:bold;color:var(--success-color);margin-bottom:10px}
+.explanation-text{font-size:.95rem;opacity:.9;font-style:italic}
+.check-all-btn{display:block;width:100%;padding:15px;background:var(--primary-color);color:#fff;border:none;border-radius:8px;font-size:1.1rem;font-weight:bold;cursor:pointer;margin-top:20px}
+.check-all-btn:hover{opacity:.9}
+.dialogue-container{display:flex;flex-direction:column;gap:20px}
+.dialogue-block{line-height:1.8;padding:10px;border-radius:8px;background:rgba(255,255,255,.02)}
+.speaker-name{font-weight:bold;margin-right:5px}
+.sentence-wrapper{position:relative;display:inline;cursor:pointer;border-bottom:1px dashed var(--border-color);padding:2px 0;border-radius:3px}
+.sentence-wrapper.open{background:var(--highlight-bg);border-bottom-color:var(--primary-color)}
+.sentence-wrapper.open .tooltip{visibility:visible;opacity:1;transform:translateX(-50%) translateY(-10px)}
+@media(hover:hover){.sentence-wrapper:hover{background:var(--highlight-bg);border-bottom-color:var(--primary-color)}
+.sentence-wrapper:hover .tooltip{visibility:visible;opacity:1;transform:translateX(-50%) translateY(-10px)}}
+.tooltip{visibility:hidden;width:max-content;max-width:min(700px,90vw);white-space:normal;background:var(--tooltip-bg);color:var(--tooltip-text);text-align:center;border-radius:8px;padding:10px 16px;position:absolute;z-index:10;bottom:100%;left:50%;transform:translateX(-50%);opacity:0;transition:opacity .2s,transform .2s;font-size:.95rem;box-shadow:0 10px 25px -5px rgba(0,0,0,.3);pointer-events:none;line-height:1.5;border:1px solid var(--tooltip-border)}
+.tooltip::after{content:"";position:absolute;top:100%;left:50%;margin-left:-6px;border-width:6px;border-style:solid;border-color:var(--tooltip-bg) transparent transparent transparent}
+.vocab-list{list-style:none}
+.vocab-item{display:flex;padding:12px 10px;border-bottom:1px solid var(--border-color);align-items:center}
+.vocab-item:hover{background:var(--highlight-bg)}
+.vocab-en{font-weight:bold;width:50%;cursor:pointer;color:var(--vocab-en-color);display:flex;align-items:center;gap:10px}
+.vocab-en:hover{text-decoration:underline}
+.vocab-az{width:50%}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:768px){.tabs{flex-direction:column}.vocab-item{flex-direction:column;align-items:flex-start;gap:5px}.vocab-en,.vocab-az{width:100%}}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:rgba(15,23,42,.92);color:#fff;padding:8px 18px;border-radius:20px;font-size:.95rem;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;z-index:300}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="audio-container"><audio id="audio-player" src="" controls></audio><div class="speed-controls"><button class="skip-btn" onclick="skipAudio(-5)" title="5 saniyə geri (←)"><i class="fas fa-rotate-left"></i> 5s</button><button class="speed-btn" onclick="changeSpeed(0.75)">0.75x</button><button class="speed-btn active" onclick="changeSpeed(1)">1x</button><button class="speed-btn" onclick="changeSpeed(1.25)">1.25x</button><button class="skip-btn" onclick="skipAudio(5)" title="5 saniyə irəli (→)">5s <i class="fas fa-rotate-right"></i></button></div></div>
+<div class="tabs"><button class="tab-btn active" onclick="openTab('questions',this)">1. Suallar</button><button class="tab-btn" id="tab-text-btn" onclick="openTab('text',this)">2. Mətn</button><button class="tab-btn" onclick="openTab('vocabulary',this)">3. Lüğət</button><button class="tab-btn" onclick="openTab('results',this)">4. Nəticələr</button></div>
+<div id="questions" class="tab-content active"><div id="questions-container"></div><button class="check-all-btn" onclick="checkAllAnswers()">Cavabları Yoxla</button><div class="score-box" id="score-box"></div></div>
+<div id="text" class="tab-content"><div class="lock-box" id="text-lock"><i class="fas fa-lock"></i>Mətn bölməsi suallara cavab verib "Cavabları Yoxla" düyməsinə basdıqdan sonra açılacaq.</div><div class="dialogue-container" id="dialogue-container"></div></div>
+<div id="vocabulary" class="tab-content"><ul class="vocab-list" id="vocab-list"></ul></div>
+<div id="results" class="tab-content"><div id="results-container"></div></div>
+<div id="toast"></div>
+<script>
+const ID="listening16";
+const data={"title":"Listening 16","audioSrc":"Listening 16.mp3","questions":[
+{"id":"l16q1","q":"1. Complete the sentence according to the dialogue. Mike wants to make dinner tonight because he ...","options":["A) has a recipe for apple pie","B) enjoys cooking","C) wants to surprise Cathy","D) forgot to plan","E) has invited friends over"],"correct":"A) has a recipe for apple pie","correctText":"A) has a recipe for apple pie","explanation":"Cümləni dialoqa əsasən tamamlayın. Mayk bu axşam şam yeməyi hazırlamaq istəyir, çünki o... Bu sualın birbaşa cavabı mətndə yoxdur. Dialoq \"Biz bu axşam şam yeməyi hazırlamalıyıq\" cümləsi ilə başlayır ki, bu da əvvəlcədən mövcud olan bir plan və ya öhdəlik olduğunu göstərir. Lakin Maykın dərhal \"keçən dəfə hazırladığımız o alma piroqunu\" təklif etməsi, onun zehnində konkret bir planın və reseptin olduğunu göstərir. Bu səbəbdən, mövcud variantlar arasında mətnə ən yaxın olanı A variantıdır."},
+{"id":"l16q2","q":"2. Answer the question according to the dialogue. What is the first ingredient they check for in the kitchen?","options":["A) Sugar","B) Butter","C) Apples","D) Flour","E) Salt"],"correct":"C) Apples","correctText":"C) Apples","explanation":"Dialoqa əsasən suala cavab verin. Mətbəxdə yoxladıqları ilk ərzaq nədir? Keti mətbəxə keçdikdən sonra ilk olaraq deyir: \"düzdür, birinci, əlbəttə ki, bizə bir az alma lazımdır. Bizdə var?\""},
+{"id":"l16q3","q":"3. Answer the question according to the dialogue. How many apples do they decide to use for the apple pie?","options":["A) Five","B) Six","C) Eight","D) Ten","E) Four"],"correct":"B) Six","correctText":"B) Six","explanation":"Dialoqa əsasən suala cavab verin. Onlar alma piroqu üçün neçə alma istifadə etmək qərarına gəlirlər? Mayk nə qədər alma lazım olduğunu soruşduqda, Keti cavab verir: \"Düşünürəm ki, altı böyük alma kifayət edəcək.\""},
+{"id":"l16q4","q":"4. Which of the following questions does the dialogue answer?","options":["A) How many pears does Mike have?","B) What kind of pie are they making?","C) Where did they buy the apples?","D) What recipe are they using?","E) How long will it take to make the pie?"],"correct":"B) What kind of pie are they making?","correctText":"B) What kind of pie are they making?","explanation":"Aşağıdakı suallardan hansına dialoqda cavab var? Dialoqda Mayk Ketiə təklif edir: \"Düşündüm ki, o alma piroqunu hazırlaya bilərik...\". Bu, onların hansı növ piroq hazırladıqları sualına birbaşa cavabdır."},
+{"id":"l16q5","q":"5. Choose the correct statement according to the dialogue.","options":["A) They have plenty of sugar for the recipe.","B) They need to buy flour and sugar.","C) Mike forgot to buy apples.","D) Cathy bought butter yesterday.","E) They don't have more than enough salt."],"correct":"B) They need to buy flour and sugar.","correctText":"B) They need to buy flour and sugar.","explanation":"Dialoqa əsasən düzgün ifadəni seçin. Onlar ərzaqları yoxlayarkən unun az olduğunu (\"bir az un almalı olacağıq\") və şəkərin heç olmadığını (\"Bizim heç şəkərimiz yoxdur!\") görürlər. Buna görə də hər ikisini alış-veriş siyahısına əlavə edirlər."}],
+"text":[
+{"speaker":"Mike","en":"We have to make dinner tonight. I hope you remembered!","az":"Biz bu axşam şam yeməyi hazırlamalıyıq. Ümid edirəm yadındadır!"},
+{"speaker":"Cathy","en":"Oops, I forgot actually. What do you want to make?","az":"Bıy, əslində unutmuşam. Nə hazırlamaq istəyirsən?"},
+{"speaker":"Mike","en":"Well, I thought we could make that apple pie we did last time. what do you think?","az":"Düşündüm ki, keçən dəfə hazırladığımız o alma piroqunu hazırlaya bilərik. Nə düşünürsən?"},
+{"speaker":"Cathy","en":"Yeah, ok, that's a good idea. Do we have everything we need?","az":"Hə, tamam, bu yaxşı fikirdir. Bizə lazım olan hər şey var?"},
+{"speaker":"Mike","en":"Mm, let's go and have a look in the kitchen.","az":"Mm, gəl gedək mətbəxə baxaq."},
+{"speaker":"Cathy","en":"right, first, of course, we need some apples. Do we have any?","az":"Düzdür, birinci, əlbəttə ki, bizə bir az alma lazımdır. Bizdə var?"},
+{"speaker":"Mike","en":"Yes, we have a lot of apples. I bought ten only yesterday. How many do we have to use?","az":"Bəli, bizdə çoxlu alma var. Dünən on dənə almışam. Neçəsini istifadə etməliyik?"},
+{"speaker":"Cathy","en":"I think six large apples will be fine. Now, is there any flour? We have to use two and a half cups of flour. How much do we have?","az":"Düşünürəm ki, altı böyük alma kifayət edəcək. İndi, heç un var? Biz iki stəkan yarım un istifadə etməliyik. Bizdə nə qədər var?"},
+{"speaker":"Mike","en":"I think we'll have to buy some flour. We don't have much. Maybe only 200 grams. I'll start a shopping list...ok, flour. What about cinnamon and nutmeg?","az":"Düşünürəm ki, bir az un almalı olacağıq. Bizdə çox deyil. Bəlkə cəmi 200 qram. Mən alış-veriş siyahısı tutmağa başlayım... tamam, un. Bəs darçın və muskat qozu?"},
+{"speaker":"Cathy","en":"Well, for this recipe, we only need a little cinnamon and nutmeg. How much do we have?","az":"Yaxşı, bu resept üçün bizə yalnız bir az darçın və muskat qozu lazımdır. Bizdə nə qədər var?"},
+{"speaker":"Mike","en":"Oh, these containers are both full, so we don't need any more. Now, we need a little salt...","az":"Oh, bu qabların hər ikisi doludur, ona görə də bizə daha çox lazım deyil. İndi, bizə bir az duz lazımdır..."},
+{"speaker":"Cathy","en":"OK, we have a lot of salt...","az":"Yaxşı, bizdə çoxlu duz var..."},
+{"speaker":"Mike","en":"And quite a lot of sugar, hmmm...it says in the recipe about a cup.","az":"Və olduqca çox şəkər, hmmm... reseptdə təxminən bir stəkan deyilir."},
+{"speaker":"Cathy","en":"Oh...we don't have any sugar! We can't make apple pie without sugar. Write sugar on the shopping list.","az":"Oh...bizim heç şəkərimiz yoxdur! Biz şəkərsiz alma piroqu hazırlaya bilmərik. Alış-veriş siyahısına şəkər yaz."},
+{"speaker":"Mike","en":"OK, I've got it. We need a little butter too. Did you buy any butter yesterday at the store?","az":"Yaxşı, yazdım. Bizə bir az kərə yağı da lazımdır. Dünən mağazadan heç kərə yağı aldın?"},
+{"speaker":"Cathy","en":"No, I didn't get any. How much do we need for the recipe?","az":"Xeyr, almadım. Resept üçün bizə nə qədər lazımdır?"},
+{"speaker":"Mike","en":"Well, it says 100 grams. I think we have some butter in the fridge.","az":"Yaxşı, 100 qram deyilir. Düşünürəm ki, soyuducuda bir az kərə yağımız var."},
+{"speaker":"Cathy","en":"Yes, we don't have much but there's enough.","az":"Bəli, bizdə çox deyil, amma kifayət qədər var."},
+{"speaker":"Mike","en":"OK, I will go down to the store and buy these things we need. And we can start when I return.","az":"Yaxşı, mən mağazaya gedib bizə lazım olan bu şeyləri alacağam. Və mən qayıdanda başlaya bilərik."},
+{"speaker":"Cathy","en":"Fine, I'll come with you.","az":"Yaxşı, mən də səninlə gələcəyəm."}],
+"vocabulary":[
+{"en":"Actually","az":"əslində"},
+{"en":"Apple pie","az":"alma piroqu"},
+{"en":"Butter","az":"kərə yağı"},
+{"en":"Cinnamon","az":"darçın"},
+{"en":"Container","az":"qab"},
+{"en":"Cup","az":"fincan"},
+{"en":"Enough","az":"kifayət qədər"},
+{"en":"Flour","az":"un"},
+{"en":"To forget","az":"unutmaq"},
+{"en":"Ingredient","az":"ərzaq, tərkib hissəsi"},
+{"en":"Kitchen","az":"mətbəx"},
+{"en":"Last time","az":"keçən dəfə"},
+{"en":"Nutmeg","az":"muskat qozu"},
+{"en":"Recipe","az":"resept"},
+{"en":"To remember","az":"xatırlamaq"},
+{"en":"To return","az":"qayıtmaq"},
+{"en":"Salt","az":"duz"},
+{"en":"Shopping list","az":"alış-veriş siyahısı"},
+{"en":"Sugar","az":"şəkər"}]};
+const speakerColors=['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec4899'];
+const PK='sa:'+ID+':progress',HK='sa:'+ID+':history';
+let prog=null,hist=[],attemptLogged=false;
+try{prog=JSON.parse(localStorage.getItem(PK))}catch(e){prog=null}
+try{hist=JSON.parse(localStorage.getItem(HK))||[]}catch(e){hist=[]}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function openTab(n,b){document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active'));document.getElementById(n).classList.add('active');if(b)b.classList.add('active')}
+function skipAudio(n){const a=document.getElementById('audio-player');a.currentTime=Math.max(0,Math.min(a.duration||1e9,a.currentTime+n))}
+function applySpeed(s){const a=document.getElementById('audio-player');a.defaultPlaybackRate=s;a.playbackRate=s;document.querySelectorAll('.speed-btn').forEach(e=>e.classList.toggle('active',parseFloat(e.textContent)===s))}
+function changeSpeed(s){applySpeed(s);try{localStorage.setItem('audioSpeed',s)}catch(e){}}
+let toastTimer=null;function showToast(t){const e=document.getElementById('toast');e.innerText=t;e.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),900)}
+function changeVolume(d){const a=document.getElementById('audio-player');a.volume=Math.max(0,Math.min(1,Math.round((a.volume+d)*100)/100));showToast('Səs: '+Math.round(a.volume*100)+'%')}
+document.addEventListener('keydown',e=>{const tag=e.target.tagName;if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||e.ctrlKey||e.metaKey||e.altKey)return;const a=document.getElementById('audio-player');if(e.code==='Space'){e.preventDefault();e.stopPropagation();if(e.repeat)return;if(a.paused){const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{})}else a.pause()}else if(e.code==='ArrowRight'||e.code==='Numpad6'){e.preventDefault();e.stopPropagation();skipAudio(5)}else if(e.code==='ArrowLeft'||e.code==='Numpad4'){e.preventDefault();e.stopPropagation();skipAudio(-5)}else if(e.code==='ArrowUp'||e.code==='Numpad8'){e.preventDefault();e.stopPropagation();changeVolume(0.05)}else if(e.code==='ArrowDown'||e.code==='Numpad2'){e.preventDefault();e.stopPropagation();changeVolume(-0.05)}},true);
+document.addEventListener('keyup',e=>{if(e.code==='Space'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA')e.preventDefault()});
+function speakWord(w){if('speechSynthesis'in window){window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(w);u.lang='en-US';window.speechSynthesis.speak(u)}}
+function updateLock(){const d=!!prog;document.getElementById('text-lock').style.display=d?'none':'block';document.getElementById('dialogue-container').style.display=d?'':'none';document.getElementById('tab-text-btn').innerHTML=d?'2. Mətn':'<i class="fas fa-lock"></i> 2. Mətn'}
+function fmtDate(ts){const d=new Date(ts),p=n=>String(n).padStart(2,'0');return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}, ${p(d.getHours())}:${p(d.getMinutes())}`}
+function scoreClass(ok,total){const r=total?ok/total:0;return r>=0.8?'good':(r>=0.5?'mid':'low')}
+function renderResults(){const c=document.getElementById('results-container');
+if(!hist.length&&!prog){c.innerHTML='<div class="lock-box"><i class="fas fa-clipboard-list"></i>Bu Listening üçün hələ nəticə yoxdur. Suallara cavab verib "Cavabları Yoxla" düyməsinə basın.</div>';return}
+if(!hist.length){c.innerHTML=`<div class="res-row"><div><div class="res-no">Əvvəlki nəticə</div><div class="res-date">Tarix qeyd olunmayıb</div></div><div class="res-right"><div class="res-score ${scoreClass(prog.ok,prog.total)}">${prog.ok} / ${prog.total}</div></div></div>`;return}
+const best=Math.max(...hist.map(x=>x.ok)),last=hist[hist.length-1];
+let html=`<div class="res-summary"><div class="res-chip">Cəhd sayı<b>${hist.length}</b></div><div class="res-chip">Ən yaxşı nəticə<b>${best} / ${last.total}</b></div><div class="res-chip">Son nəticə<b>${last.ok} / ${last.total}</b></div></div>`;
+hist.map((x,i)=>({x,i})).reverse().forEach(({x,i})=>{html+=`<div class="res-row"><div><div class="res-no">Cəhd ${i+1}</div><div class="res-date"><i class="fas fa-clock"></i> ${fmtDate(x.t)}</div></div><div class="res-right"><div class="res-score ${scoreClass(x.ok,x.total)}">${x.ok} / ${x.total}</div><div class="res-detail">Düz: ${x.ok} · Səhv: ${x.bad} · Cavabsız: ${x.skip}</div></div></div>`});
+c.innerHTML=html}
+function retryQuiz(){attemptLogged=false;document.querySelectorAll('#questions-container input[type=radio]').forEach(r=>r.checked=false);document.querySelectorAll('#questions-container .result-box').forEach(b=>b.className='result-box');document.querySelectorAll('#questions-container .correct-answer-text').forEach(e=>e.style.display='none');const sb=document.getElementById('score-box');sb.classList.remove('show');sb.innerHTML='';document.getElementById('questions-container').scrollIntoView({behavior:'smooth',block:'start'})}
+function checkAllAnswers(){let ok=0,bad=0,skip=0;data.questions.forEach(q=>{const s=document.querySelector(`input[name="${q.id}"]:checked`),b=document.getElementById(`result-${q.id}`),f=document.getElementById(`feedback-${q.id}`);if(!s){skip++;f.innerText="Cavab seçilməyib!";f.className="feedback-title";b.className="result-box show";document.getElementById(`correct-text-${q.id}`).style.display="block";return}if(s.value===q.correct){ok++;f.innerText="Düzdür!";f.className="feedback-title correct";b.className="result-box show correct"}else{bad++;f.innerText="Səhvdir!";f.className="feedback-title wrong";b.className="result-box show wrong"}document.getElementById(`correct-text-${q.id}`).style.display="block"});
+const sb=document.getElementById('score-box');sb.innerHTML=`<div class="score-main">Nəticə: ${ok} / ${data.questions.length}</div><div class="score-row"><span class="score-ok"><i class="fas fa-check-circle"></i> Düz: ${ok}</span><span class="score-bad"><i class="fas fa-times-circle"></i> Səhv: ${bad}</span><span class="score-skip"><i class="fas fa-minus-circle"></i> Cavabsız: ${skip}</span></div>${ok+bad>0?'<div class="score-note">Mətn bölməsi açıldı.</div>':''}<button class="retry-btn" onclick="retryQuiz()"><i class="fas fa-rotate-right"></i> Yenidən cəhd et</button>`;sb.classList.add('show');
+if(ok+bad>0){prog={ok,total:data.questions.length};save(PK,prog);if(!attemptLogged){hist.push({t:Date.now(),ok,bad,skip,total:data.questions.length});save(HK,hist);attemptLogged=true}updateLock();renderResults()}
+sb.scrollIntoView({behavior:'smooth',block:'center'})}
+function adjustTooltip(e){const t=e.querySelector('.tooltip');if(!t)return;t.style.left='50%';t.style.right='auto';t.style.transform='translateX(-50%) translateY(-10px)';const r=t.getBoundingClientRect(),w=window.innerWidth;if(r.left<10){t.style.left=`calc(50% + ${10-r.left}px)`}else if(r.right>w-10){t.style.left=`calc(50% - ${r.right-(w-10)}px)`}}
+function toggleTip(e){const was=e.classList.contains('open');document.querySelectorAll('.sentence-wrapper.open').forEach(x=>x.classList.remove('open'));if(!was){e.classList.add('open');adjustTooltip(e)}}
+function render(){const d=data;document.title=d.title;document.getElementById('audio-player').src=d.audioSrc;
+const q=document.getElementById('questions-container');q.innerHTML='';d.questions.forEach(item=>{const o=item.options.map(x=>`<label class="option-label"><input type="radio" name="${item.id}" value="${x}"><span>${x}</span></label>`).join('');q.innerHTML+=`<div class="question-card"><div class="question-text">${item.q}</div><div class="options-list">${o}</div><div class="result-box" id="result-${item.id}"><div class="feedback-title" id="feedback-${item.id}"></div><div class="correct-answer-text" id="correct-text-${item.id}" style="display:none;">Düzgün cavab: ${item.correctText}</div><div class="explanation-text"><strong>İzah:</strong> ${item.explanation}</div></div></div>`});
+const v=document.getElementById('vocab-list');v.innerHTML='';d.vocabulary.forEach(item=>{v.innerHTML+=`<li class="vocab-item"><div class="vocab-en" onclick="speakWord('${item.en.replace(/'/g,"\\'")}')"><i class="fas fa-volume-up"></i> ${item.en}</div><div class="vocab-az">${item.az}</div></li>`});
+const t=document.getElementById('dialogue-container');t.innerHTML='';const u=[...new Set(d.text.map(i=>i.speaker))],c={};u.forEach((s,i)=>c[s]=speakerColors[i%speakerColors.length]);const g=[];d.text.forEach(i=>{if(g.length>0&&g[g.length-1].speaker===i.speaker)g[g.length-1].sentences.push(i);else g.push({speaker:i.speaker,sentences:[i]})});
+g.forEach(x=>{const h=x.sentences.map(s=>`<span class="sentence-wrapper" onmouseenter="adjustTooltip(this)" onclick="toggleTip(this)">${s.en}<span class="tooltip">${s.az}</span></span>`).join(' ');t.innerHTML+=`<div class="dialogue-block"><span class="speaker-name" style="color:${c[x.speaker]};">${x.speaker}:</span> <span class="speaker-text">${h}</span></div>`});
+updateLock();renderResults()}
+window.onload=()=>{render();document.getElementById('questions-container').addEventListener('change',()=>{attemptLogged=false});
+try{const sp=parseFloat(localStorage.getItem('audioSpeed'));if([0.75,1,1.25].includes(sp))applySpeed(sp)}catch(e){}};
+</script>
+</body>
+</html>
