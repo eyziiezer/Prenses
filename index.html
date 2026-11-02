@@ -380,7 +380,12 @@ const STATIC_PAGES=Array.from({length:19},(_,i)=>({key:'listening'+(i+12),file:'
 STATIC_PAGES.push({key:'grammar1',file:'grammar1.html',title:'Pronouns I'});
 STATIC_PAGES.push({key:'grammar2',file:'grammar2.html',title:'Pronouns II'});
 STATIC_PAGES.push({key:'grammar3',file:'grammar3.html',title:'Tenses I'});
-STATIC_PAGES.push({key:'grammar4',file:'grammar4.html',title:'Tenses II'}); /* Grammar */
+STATIC_PAGES.push({key:'grammar4',file:'grammar4.html',title:'Tenses II'});
+STATIC_PAGES.push({key:'grammar5',file:'grammar5.html',title:'Passive Voice'});
+STATIC_PAGES.push({key:'grammar6',file:'grammar6.html',title:'Modal Verbs'});
+STATIC_PAGES.push({key:'grammar7',file:'grammar7.html',title:'Complex Object'});
+STATIC_PAGES.push({key:'grammar8',file:'grammar8.html',title:'Question Sentences'});
+STATIC_PAGES.push({key:'grammar9',file:'grammar9.html',title:'Negative Sentences'}); /* Grammar */
 const staticState={};
 function fetchFirst(names){let i=0;const tryNext=()=>{const n=names[i++];return fetch(n,{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status+' ('+n+')');return r.text()}).catch(e=>{if(i<names.length)return tryNext();throw e})};return tryNext()}
 function loadStatic(){STATIC_PAGES.forEach(p=>{ensureItem(typeOf(p.key),numOf(p.key));if(p.title&&appData[p.key])appData[p.key].title=p.title;if(titles[p.key]&&appData[p.key])appData[p.key].title=titles[p.key];staticState[p.key]='loading';const n=numOf(p.key),names=(p.key.indexOf('listening')===0&&n<=13)?[p.file,'Listening'+n+'.html','Listening '+n+'.html','listening '+n+'.html']:[p.file];fetchFirst(names).then(h=>{staticState[p.key]='ok';if(!customHtml[p.key]||customHtml[p.key].fromRepo)customHtml[p.key]={name:p.file,html:h,fromRepo:true};buildToc();if(currentListeningId===p.key)loadListening(p.key)}).catch(e=>{staticState[p.key]='Fayl tapılmadı: '+p.file+' — '+(e&&e.message||'xəta');if(currentListeningId===p.key)loadListening(p.key)})})}
