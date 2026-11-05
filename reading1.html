@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reading 1</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+    color-scheme: dark;
+    --bg-color: #1a1a2e; --text-color: #e0e0e0; --panel-bg: #16213e;
+    --primary-color: #0f3460; --border-color: #2a2a4a; --vocab-en-color: #60a5fa;
+    --highlight-bg: rgba(96,165,250,.2); --success-color: #4ade80;
+    --error-color: #f87171; --tooltip-bg: rgba(15,23,42,.95);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; transition: background-color .3s, color .3s; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color); color: var(--text-color); padding: 20px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.tab-btn { padding: 10px 20px; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; color: var(--text-color); font-weight: 600; font-size: 1rem; }
+.tab-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+.tab-content { display: none; background: var(--panel-bg); padding: 20px; border-radius: 10px; }
+.tab-content.active { display: block; }
+
+/* Split Layout */
+.reading-layout { display: flex; gap: 20px; align-items: flex-start; }
+@media(max-width: 800px) { .reading-layout { flex-direction: column; } }
+
+/* Text Section */
+.text-section { flex: 1; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+.text-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+.lock-btn { background: var(--border-color); border: none; padding: 8px 15px; border-radius: 8px; color: var(--text-color); cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+.lock-btn.unlocked { background: var(--success-color); color: #000; }
+.paragraph { line-height: 1.8; font-size: 1.05rem; }
+
+/* Tooltip Logic */
+.sentence-wrapper { position: relative; cursor: default; border-bottom: 1px dashed transparent; }
+.unlocked .sentence-wrapper { cursor: pointer; border-bottom-color: var(--border-color); }
+.unlocked .sentence-wrapper:hover { background: var(--highlight-bg); border-bottom-color: var(--primary-color); }
+.tooltip { visibility: hidden; width: max-content; max-width: min(400px, 80vw); white-space: normal; background: var(--tooltip-bg); color: #fff; text-align: center; border-radius: 8px; padding: 10px 16px; position: absolute; z-index: 10; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(10px); opacity: 0; transition: opacity .2s, transform .2s; font-size: .95rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,.5); pointer-events: none; line-height: 1.5; }
+.unlocked .sentence-wrapper:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-5px); }
+.tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: var(--tooltip-bg) transparent transparent transparent; }
+
+/* Questions Section */
+.questions-section { flex: 1; }
+.question-card { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+.question-text { font-weight: bold; margin-bottom: 10px; }
+.option-label { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px; border-radius: 5px; margin-bottom: 5px; }
+.option-label:hover { background: var(--highlight-bg); }
+.option-label input[type="radio"] { cursor: pointer; width: 18px; height: 18px; }
+.result-box { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; border-left: 5px solid; }
+.result-box.show { display: block; animation: fadeIn .3s; }
+.result-box.correct { background: rgba(74,222,128,.1); border-color: var(--success-color); }
+.result-box.wrong { background: rgba(248,113,113,.1); border-color: var(--error-color); }
+.feedback-title { font-weight: bold; margin-bottom: 5px; }
+.feedback-title.correct { color: var(--success-color); }
+.feedback-title.wrong { color: var(--error-color); }
+.correct-answer-text { font-weight: bold; color: var(--success-color); margin-bottom: 10px; }
+.explanation-text { font-size: .95rem; opacity: .9; font-style: italic; }
+.check-all-btn { display: block; width: 100%; padding: 15px; background: var(--primary-color); color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
+.check-all-btn:hover { opacity: .9; }
+.score-box { display: none; margin-top: 20px; padding: 20px; border-radius: 10px; border: 2px solid var(--primary-color); background: var(--panel-bg); text-align: center; }
+.score-box.show { display: block; }
+.score-main { font-size: 1.4rem; font-weight: bold; margin-bottom: 12px; }
+.score-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; font-weight: 600; }
+.score-ok { color: var(--success-color); } .score-bad { color: var(--error-color); } .score-skip { opacity: .7; }
+.retry-btn { margin-top: 15px; padding: 10px 22px; background: var(--primary-color); color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+.retry-btn:hover { opacity: .9; }
+
+/* Vocab */
+.vocab-list { list-style: none; }
+.vocab-item { display: flex; padding: 12px 10px; border-bottom: 1px solid var(--border-color); align-items: center; }
+.vocab-item:hover { background: var(--highlight-bg); }
+.vocab-en { font-weight: bold; width: 50%; cursor: pointer; color: var(--vocab-en-color); display: flex; align-items: center; gap: 10px; }
+.vocab-az { width: 50%; }
+
+/* Results */
+.res-row { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 14px 16px; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 10px; flex-wrap: wrap; }
+.res-no { font-weight: bold; font-size: 1.05rem; }
+.res-date { opacity: .8; font-size: .9rem; margin-top: 3px; }
+.res-right { text-align: right; }
+.res-score { font-weight: bold; font-size: 1.2rem; color: var(--success-color); }
+.res-detail { opacity: .75; font-size: .85rem; margin-top: 3px; }
+.lock-box { text-align: center; padding: 40px 20px; opacity: .85; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="openTab('questions', this)">1. Suallar və Mətn</button>
+    <button class="tab-btn" onclick="openTab('vocabulary', this)">2. Lüğət</button>
+    <button class="tab-btn" onclick="openTab('results', this)">3. Nəticələr</button>
+</div>
+
+<div id="questions" class="tab-content active">
+    <div class="reading-layout">
+        <div class="text-section" id="text-section">
+            <div class="text-controls">
+                <span style="font-weight:bold;">Mətn</span>
+                <button id="lock-btn" class="lock-btn" onclick="toggleLock()"><i class="fas fa-lock"></i> Tərcümə: Qıfıllı</button>
+            </div>
+            <div id="text-container" class="paragraph"></div>
+        </div>
+        <div class="questions-section">
+            <div style="font-weight:bold; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;">Decide whether the statements are true or false.</div>
+            <div id="questions-container"></div>
+            <button class="check-all-btn" onclick="checkAnswers()">Cavabları Yoxla</button>
+            <div class="score-box" id="score-box"></div>
+        </div>
+    </div>
+</div>
+
+<div id="vocabulary" class="tab-content">
+    <ul id="vocab-list" class="vocab-list"></ul>
+</div>
+
+<div id="results" class="tab-content">
+    <div id="results-container"></div>
+</div>
+
+<script>
+const data = {
+    text: [
+        { en: "My neighborhood is very peaceful and quiet.", az: "Mənim məhəlləm çox dinc və sakitdir." },
+        { en: "It is a new neighborhood, and there are a lot of big houses and some apartment buildings.", az: "Bura yeni bir məhəllədir və burada çoxlu böyük evlər və bəzi çoxmənzilli binalar var." },
+        { en: "The streets are very clean, and there aren’t many cars.", az: "Küçələr çox təmizdir və çox maşın yoxdur." },
+        { en: "My school is near my house.", az: "Mənim məktəbim evimə yaxındır." },
+        { en: "I can walk there in 10 minutes.", az: "Oraya 10 dəqiqəyə piyada gedə bilirəm." },
+        { en: "There’s also a park, which has a small playground for children and a large field.", az: "Orada həmçinin uşaqlar üçün kiçik bir oyun meydançası və geniş sahəsi olan park var." },
+        { en: "I like to play baseball there with my friends after school.", az: "Mən məktəbdən sonra orada dostlarımla beyzbol oynamağı xoşlayıram." },
+        { en: "All of the houses have a small front yard but big back yards.", az: "Bütün evlərin kiçik ön həyəti, lakin böyük arxa həyətləri var." },
+        { en: "Most of my neighbors have a swimming pool, and some even have a trampoline!", az: "Qonşularımın əksəriyyətinin üzgüçülük hovuzu var və bəzilərinin hətta batutu da var!" },
+        { en: "Everyone has a flower garden, and in the spring, it is very beautiful.", az: "Hər kəsin gül bağçası var və yazda o, çox gözəl olur." },
+        { en: "My road is called Maple Road.", az: "Mənim yolumun adı Ağcaqayın yoludur." },
+        { en: "It is not in the city.", az: "O, şəhərdə deyil." },
+        { en: "It’s in the suburbs.", az: "O, şəhər ətrafındadır." },
+        { en: "There aren’t any restaurants, bars or cinemas on my road.", az: "Mənim yolumda heç bir restoran, bar və ya kinoteatr yoxdur." },
+        { en: "But, if you go to Main street, you can find a lot of things to do.", az: "Amma, əsas küçəyə getsəniz, etmək üçün çox şey tapa bilərsiniz." },
+        { en: "My favorite store is there.", az: "Mənim sevimli mağazam oradadır." },
+        { en: "It’s called Knick-Knack, and they sell everything you can imagine.", az: "O, “Knick-Knack” adlanır və onlar təsəvvür edə biləcəyiniz hər şeyi satırlar." },
+        { en: "I like my neighborhood because it is very safe.", az: "Mən məhəlləmi xoşlayıram, çünki o, çox təhlükəsizdir." },
+        { en: "There is no crime, and all of my neighbors take care of each other.", az: "Orada heç bir cinayət yoxdur və bütün qonşularım bir-birinin qayğısına qalır." },
+        { en: "The police station is next to the school, which is very nice.", az: "Polis bölməsi məktəbin yanındadır, bu da çox yaxşıdır." },
+        { en: "However, the hospital is quite far.", az: "Lakin, xəstəxana olduqca uzaqdır." },
+        { en: "It is in the city, and we have to drive 30 minutes to get there.", az: "O, şəhərdədir və ora çatmaq üçün 30 dəqiqə maşın sürməliyik." },
+        { en: "My friends live near me, and we often meet up to play or just talk.", az: "Dostlarım mənə yaxın yaşayır və biz tez-tez oynamaq və ya sadəcə söhbət etmək üçün görüşürük." },
+        { en: "We love playing hockey in the street because there isn’t any traffic.", az: "Biz küçədə xokkey oynamağı sevirik, çünki heç bir nəqliyyat hərəkəti yoxdur." },
+        { en: "I think I am lucky to live in my neighborhood.", az: "Düşünürəm ki, məhəlləmdə yaşadığıma görə şanslıyam." }
+    ],
+    questions: [
+        { id: "q1", q: "1. It’s a busy neighborhood with lots of activity.", correct: "A", explanation: "Mətnin ikinci abzasında yer alan fikirlər (məhəllədə uşaqlar üçün oyun meydançasının olması, habelə evlərdə üzgüçülük hovuzlarının və batutların olması və s.) verilən cümləni təsdiqləyir." },
+        { id: "q2", q: "2. There are only a few cars on the streets.", correct: "A", explanation: "Mətndə “The streets are very clean, and there aren’t many cars” (Küçələr çox təmizdir və çox maşın yoxdur) ifadəsi bu fikri təsdiqləyir." },
+        { id: "q3", q: "3. People decorate their flower gardens in the fall to make them beautiful.", correct: "B", explanation: "Mətndə “Everyone has a flower garden, and in the spring, it is very beautiful” (Hər kəsin gül bağçası var və yazda o, çox gözəl olur) deyilir. Bağçaların payızda deyil, yazda gözəl olduğu vurğulanır." },
+        { id: "q4", q: "4. He lives in the city.", correct: "B", explanation: "Mətndə “It is not in the city. It’s in the suburbs” (O, şəhərdə deyil. Şəhər ətrafındadır) cümləsi bu fikrin səhv olduğunu göstərir." },
+        { id: "q5", q: "5. He lives on Main Street.", correct: "B", explanation: "Mətndə “My road is called Maple Road” (Mənim yolumun adı Ağcaqayın yoludur) deyilir. Əsas küçə (Main street) isə əyləncə və alış-veriş üçün gedilən yer kimi təsvir edilir." },
+        { id: "q6", q: "6. He’s very happy with his neighborhood.", correct: "A", explanation: "Mətnin son cümləsi olan “I think I am lucky to live in my neighborhood” (Düşünürəm ki, məhəlləmdə yaşadığıma görə şanslıyam) onun məmnuniyyətini açıq şəkildə ifadə edir." }
+    ],
+    vocabulary: [
+        { en: "Apartment buildings", az: "çoxmənzilli binalar" }, { en: "Back yard", az: "arxa həyət" },
+        { en: "Beautiful", az: "gözəl" }, { en: "City", az: "şəhər" }, { en: "Clean", az: "təmiz" },
+        { en: "Crime", az: "cinayət" }, { en: "Drive", az: "maşın sürmək" }, { en: "Far", az: "uzaq" },
+        { en: "Field", az: "sahə, meydan, ərazi" }, { en: "Flower garden", az: "gül bağçası" },
+        { en: "Front yard", az: "ön həyət" }, { en: "Hospital", az: "xəstəxana" }, { en: "However", az: "lakin, ancaq, amma" },
+        { en: "Imagine", az: "təsəvvür etmək" }, { en: "Lucky", az: "şanslı" }, { en: "Meet up", az: "görüşmək" },
+        { en: "Near", az: "yaxın" }, { en: "Neighborhood", az: "məhəllə" }, { en: "Peaceful", az: "dinc, sakit" },
+        { en: "Playground", az: "oyun meydançası" }, { en: "Police station", az: "polis bölməsi" },
+        { en: "Quiet", az: "sakit" }, { en: "Road", az: "yol" }, { en: "Safe", az: "təhlükəsiz" },
+        { en: "Spring", az: "yaz (fəsil)" }, { en: "Store", az: "mağaza" }, { en: "Street", az: "küçə" },
+        { en: "Suburbs", az: "şəhərətrafı" }, { en: "Swimming pool", az: "üzgüçülük hovuzu" },
+        { en: "Take care of", az: "qayğısına qalmaq" }, { en: "Traffic", az: "nəqliyyatın hərəkəti" },
+        { en: "Trampoline", az: "batut" }, { en: "Walk", az: "piyada getmək, gəzmək" }
+    ]
+};
+
+const HK = 'sa:reading1:history';
+
+function openTab(tabId, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    if(btn) btn.classList.add('active');
+}
+
+function toggleLock() {
+    const section = document.getElementById('text-section');
+    const btn = document.getElementById('lock-btn');
+    if(section.classList.contains('unlocked')) {
+        section.classList.remove('unlocked');
+        btn.classList.remove('unlocked');
+        btn.innerHTML = '<i class="fas fa-lock"></i> Tərcümə: Qıfıllı';
+    } else {
+        section.classList.add('unlocked');
+        btn.classList.add('unlocked');
+        btn.innerHTML = '<i class="fas fa-lock-open"></i> Tərcümə: Açıq';
+    }
+}
+
+function renderText() {
+    const container = document.getElementById('text-container');
+    let html = '';
+    data.text.forEach(item => {
+        html += `<span class="sentence-wrapper">${item.en}<span class="tooltip">${item.az}</span></span> `;
+    });
+    container.innerHTML = html;
+}
+
+function renderQuestions() {
+    const container = document.getElementById('questions-container');
+    let html = '';
+    data.questions.forEach(item => {
+        html += `
+        <div class="question-card">
+            <div class="question-text">${item.q}</div>
+            <div class="options-list">
+                <label class="option-label"><input type="radio" name="${item.id}" value="A"> A) True</label>
+                <label class="option-label"><input type="radio" name="${item.id}" value="B"> B) False</label>
+            </div>
+            <div class="result-box" id="result-${item.id}">
+                <div class="feedback-title" id="feedback-${item.id}"></div>
+                <div class="correct-answer-text" id="correct-text-${item.id}" style="display:none;">Düzgün cavab: ${item.correct === 'A' ? 'A) True' : 'B) False'}</div>
+                <div class="explanation-text"><strong>İzah:</strong> ${item.explanation}</div>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function renderVocab() {
+    const container = document.getElementById('vocab-list');
+    let html = '';
+    data.vocabulary.forEach(item => {
+        html += `<li class="vocab-item"><div class="vocab-en" onclick="speakWord('${item.en}')"><i class="fas fa-volume-up"></i> ${item.en}</div><div class="vocab-az">${item.az}</div></li>`;
+    });
+    container.innerHTML = html;
+}
+
+function speakWord(word) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(word);
+        u.lang = 'en-US';
+        window.speechSynthesis.speak(u);
+    }
+}
+
+function checkAnswers() {
+    let ok = 0, bad = 0, skip = 0;
+    data.questions.forEach(q => {
+        const selected = document.querySelector(`input[name="${q.id}"]:checked`);
+        const resultBox = document.getElementById(`result-${q.id}`);
+        const feedbackTitle = document.getElementById(`feedback-${q.id}`);
+        
+        if (resultBox) resultBox.classList.add('show');
+        if (document.getElementById(`correct-text-${q.id}`)) document.getElementById(`correct-text-${q.id}`).style.display = "block";
+        
+        if (!selected) {
+            skip++;
+            if (feedbackTitle) { feedbackTitle.innerText = "Cavab seçilməyib!"; feedbackTitle.className = "feedback-title"; }
+        } else if (selected.value === q.correct) {
+            ok++;
+            if (feedbackTitle) { feedbackTitle.innerText = "Düzdür!"; feedbackTitle.className = "feedback-title correct"; }
+            if (resultBox) resultBox.className = "result-box show correct";
+        } else {
+            bad++;
+            if (feedbackTitle) { feedbackTitle.innerText = "Səhvdir!"; feedbackTitle.className = "feedback-title wrong"; }
+            if (resultBox) resultBox.className = "result-box show wrong";
+        }
+    });
+
+    const scoreBox = document.getElementById('score-box');
+    scoreBox.innerHTML = `
+        <div class="score-main">Nəticə: ${ok} / ${data.questions.length}</div>
+        <div class="score-row">
+            <span class="score-ok"><i class="fas fa-check-circle"></i> Düz: ${ok}</span>
+            <span class="score-bad"><i class="fas fa-times-circle"></i> Səhv: ${bad}</span>
+            <span class="score-skip"><i class="fas fa-minus-circle"></i> Cavabsız: ${skip}</span>
+        </div>
+        <button class="retry-btn" onclick="retryQuiz()"><i class="fas fa-rotate-right"></i> Yenidən cəhd et</button>`;
+    scoreBox.classList.add('show');
+
+    // AUTO UNLOCK
+    const lockBtn = document.getElementById('lock-btn');
+    const textSection = document.getElementById('text-section');
+    textSection.classList.add('unlocked');
+    lockBtn.classList.add('unlocked');
+    lockBtn.innerHTML = '<i class="fas fa-lock-open"></i> Tərcümə: Açıq';
+
+    if (ok + bad > 0) saveHistory(ok, bad, skip);
+}
+
+function saveHistory(ok, bad, skip) {
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HK)) || []; } catch(e) { hist = []; }
+    hist.push({ t: Date.now(), ok: ok, bad: bad, skip: skip, total: data.questions.length });
+    try { localStorage.setItem(HK, JSON.stringify(hist)); } catch(e) {}
+    renderResults();
+}
+
+function renderResults() {
+    const c = document.getElementById('results-container');
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HK)) || []; } catch(e) { hist = []; }
+    if(!hist.length) { c.innerHTML = '<div class="lock-box"><i class="fas fa-clipboard-list"></i>Hələ nəticə yoxdur.</div>'; return; }
+    
+    let html = '';
+    hist.slice().reverse().forEach((x, i) => {
+        const d = new Date(x.t);
+        const p = n => String(n).padStart(2, '0');
+        const dateStr = `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}, ${p(d.getHours())}:${p(d.getMinutes())}`;
+        html += `<div class="res-row"><div><div class="res-no">Cəhd ${hist.length - i}</div><div class="res-date"><i class="fas fa-clock"></i> ${dateStr}</div></div><div class="res-right"><div class="res-score">${x.ok} / ${x.total}</div><div class="res-detail">Düz: ${x.ok} · Səhv: ${x.bad} · Cavabsız: ${x.skip}</div></div></div>`;
+    });
+    c.innerHTML = html;
+}
+
+function retryQuiz() {
+    document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+    document.querySelectorAll('.result-box').forEach(b => b.className = 'result-box');
+    document.querySelectorAll('.correct-answer-text').forEach(e => e.style.display = 'none');
+    document.getElementById('score-box').classList.remove('show');
+    document.getElementById('score-box').innerHTML = '';
+    
+    // RE-LOCK
+    const lockBtn = document.getElementById('lock-btn');
+    const textSection = document.getElementById('text-section');
+    textSection.classList.remove('unlocked');
+    lockBtn.classList.remove('unlocked');
+    lockBtn.innerHTML = '<i class="fas fa-lock"></i> Tərcümə: Qıfıllı';
+}
+
+// Initialize
+renderText();
+renderQuestions();
+renderVocab();
+renderResults();
+</script>
+</body>
+</html>
