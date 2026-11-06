@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reading 6</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+    color-scheme: dark;
+    --bg-color: #1a1a2e; --text-color: #e0e0e0; --panel-bg: #16213e;
+    --primary-color: #0f3460; --border-color: #2a2a4a; --vocab-en-color: #60a5fa;
+    --highlight-bg: rgba(96,165,250,.2); --success-color: #4ade80;
+    --error-color: #f87171; --tooltip-bg: rgba(15,23,42,.95);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; transition: background-color .3s, color .3s; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color); color: var(--text-color); padding: 20px; }
+
+.tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.tab-btn { padding: 10px 20px; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; color: var(--text-color); font-weight: 600; font-size: 1rem; }
+.tab-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+.tab-content { display: none; background: var(--panel-bg); padding: 20px; border-radius: 10px; }
+.tab-content.active { display: block; }
+
+.reading-layout { display: flex; gap: 20px; align-items: flex-start; }
+@media(max-width: 800px) { .reading-layout { flex-direction: column; } }
+
+.text-section { flex: 1; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+.text-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+.lock-btn { background: var(--border-color); border: none; padding: 8px 15px; border-radius: 8px; color: var(--text-color); cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+.lock-btn.unlocked { background: var(--success-color); color: #000; }
+.paragraph { line-height: 1.8; font-size: 1.05rem; }
+
+.sentence-wrapper { position: relative; cursor: default; border-bottom: 1px dashed transparent; }
+.unlocked .sentence-wrapper { cursor: pointer; border-bottom-color: var(--border-color); }
+.unlocked .sentence-wrapper:hover { background: var(--highlight-bg); border-bottom-color: var(--primary-color); }
+.unlocked .sentence-wrapper:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-5px); }
+
+.questions-section { flex: 1; }
+.question-card { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+.question-text { font-weight: bold; margin-bottom: 10px; }
+.option-label { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px; border-radius: 5px; margin-bottom: 5px; }
+.option-label:hover { background: var(--highlight-bg); }
+.option-label input[type="radio"] { cursor: pointer; width: 18px; height: 18px; }
+.result-box { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; border-left: 5px solid; }
+.result-box.show { display: block; animation: fadeIn .3s; }
+.result-box.correct { background: rgba(74,222,128,.1); border-color: var(--success-color); }
+.result-box.wrong { background: rgba(248,113,113,.1); border-color: var(--error-color); }
+.feedback-title { font-weight: bold; margin-bottom: 5px; }
+.feedback-title.correct { color: var(--success-color); }
+.feedback-title.wrong { color: var(--error-color); }
+.correct-answer-text { font-weight: bold; color: var(--success-color); margin-bottom: 10px; }
+.explanation-text { font-size: .95rem; opacity: .9; font-style: italic; }
+.check-all-btn { display: block; width: 100%; padding: 15px; background: var(--primary-color); color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
+.check-all-btn:hover { opacity: .9; }
+.score-box { display: none; margin-top: 20px; padding: 20px; border-radius: 10px; border: 2px solid var(--primary-color); background: var(--panel-bg); text-align: center; }
+.score-box.show { display: block; }
+.score-main { font-size: 1.4rem; font-weight: bold; margin-bottom: 12px; }
+.score-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; font-weight: 600; }
+.score-ok { color: var(--success-color); } .score-bad { color: var(--error-color); } .score-skip { opacity: .7; }
+.retry-btn { margin-top: 15px; padding: 10px 22px; background: var(--primary-color); color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+.retry-btn:hover { opacity: .9; }
+
+.vocab-list { list-style: none; }
+.vocab-item { display: flex; padding: 12px 10px; border-bottom: 1px solid var(--border-color); align-items: center; }
+.vocab-item:hover { background: var(--highlight-bg); }
+.vocab-en { font-weight: bold; width: 50%; cursor: pointer; color: var(--vocab-en-color); display: flex; align-items: center; gap: 10px; }
+.vocab-az { width: 50%; }
+
+.res-row { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 14px 16px; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 10px; flex-wrap: wrap; }
+.res-no { font-weight: bold; font-size: 1.05rem; }
+.res-date { opacity: .8; font-size: .9rem; margin-top: 3px; }
+.res-right { text-align: right; }
+.res-score { font-weight: bold; font-size: 1.2rem; color: var(--success-color); }
+.res-detail { opacity: .75; font-size: .85rem; margin-top: 3px; }
+.lock-box { text-align: center; padding: 40px 20px; opacity: .85; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+html{-webkit-text-size-adjust:100%}
+button,label,.sentence-wrapper{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.text-section{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;overscroll-behavior:contain}
+.sentence-wrapper.active{background:var(--highlight-bg);border-bottom-color:var(--primary-color)}
+.tr-hint{display:none;font-size:.85rem;opacity:.7;margin:-5px 0 12px}
+.tip{display:none;position:absolute;z-index:20;width:max-content;max-width:calc(100% - 16px);background:var(--tooltip-bg);color:#fff;text-align:center;border-radius:8px;padding:10px 14px;font-size:.95rem;line-height:1.5;box-shadow:0 10px 25px -5px rgba(0,0,0,.5);border:1px solid var(--border-color);pointer-events:none}
+.tip::after{content:"";position:absolute;left:var(--ax,50%);top:100%;margin-left:-6px;border:6px solid transparent;border-top-color:var(--tooltip-bg)}
+.tip.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--tooltip-bg)}
+.section-title{font-weight:bold;margin:0 0 15px;padding-bottom:10px;border-bottom:1px solid var(--border-color)}
+.multi-hint{font-size:.85rem;opacity:.7;margin-bottom:8px}
+.option-label{border:1px solid var(--border-color);min-height:44px;padding:10px;margin-bottom:6px;align-items:center}
+.option-label input{cursor:pointer;width:20px;height:20px;flex:none}
+.option-label input:disabled{cursor:default}
+.option-label.opt-correct{background:rgba(74,222,128,.15);border-color:var(--success-color)}
+.option-label.opt-wrong{background:rgba(248,113,113,.15);border-color:var(--error-color)}
+.check-all-btn:disabled{opacity:.4;cursor:not-allowed}
+.notice{display:none;margin-top:10px;padding:10px 14px;border-radius:8px;background:rgba(248,113,113,.12);border-left:4px solid var(--error-color)}
+@media(max-width:800px){
+ body{padding:12px}
+ .tab-content{padding:14px}
+ .tabs{flex-wrap:nowrap;overflow-x:auto;gap:8px}
+ .tab-btn{padding:10px 14px;font-size:.9rem;white-space:nowrap;flex:1 0 auto}
+ .text-section{position:relative;max-height:none;overflow:visible;padding:14px}
+ .text-controls{flex-wrap:wrap;gap:8px}
+ .paragraph{font-size:1.02rem;line-height:1.85}
+ .vocab-item{padding:10px 4px;font-size:.95rem;gap:8px}
+ .check-all-btn{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="openTab('questions', this)">1. Suallar və Mətn</button>
+    <button class="tab-btn" onclick="openTab('vocabulary', this)">2. Lüğət</button>
+    <button class="tab-btn" onclick="openTab('results', this)">3. Nəticələr</button>
+</div>
+
+<div id="questions" class="tab-content active">
+    <div class="reading-layout">
+        <div class="text-section" id="text-section">
+            <div class="text-controls">
+                <span style="font-weight:bold;">Mətn</span>
+                <button id="lock-btn" class="lock-btn" onclick="toggleLock()"><i class="fas fa-lock"></i> Tərcümə: Qıfıllı</button>
+            </div>
+            <div id="tr-hint" class="tr-hint"></div>
+            <div id="text-container" class="paragraph"></div>
+            <div id="tip" class="tip" role="tooltip"></div>
+        </div>
+        <div class="questions-section">
+            <div id="questions-container"></div>
+            <button id="check-btn" class="check-all-btn" onclick="checkAnswers()">Cavabları Yoxla</button>
+            <div class="notice" id="notice"></div>
+            <div class="score-box" id="score-box"></div>
+        </div>
+    </div>
+</div>
+
+<div id="vocabulary" class="tab-content">
+    <ul id="vocab-list" class="vocab-list"></ul>
+</div>
+
+<div id="results" class="tab-content">
+    <div id="results-container"></div>
+</div>
+
+<script>
+const data = {
+    text: [
+        { en: "The invention with the biggest impact was probably the television.", az: "Yəqin ki, ən böyük təsirə malik ixtira televizor idi." },
+        { en: "It was invented by a Scottish man, John Logie Baird.", az: "O, şotlandiyalı Con Louci Berd tərəfindən ixtira edilib." },
+        { en: "The first televised pictures were sent over a short distance in 1924, and his invention was formally demonstrated at the Royal Institute two years later.", az: "İlk televiziya şəkilləri 1924-cü ildə qısa məsafəyə göndərildi və onun ixtirası iki il sonra Kral İnstitutunda rəsmi olaraq nümayiş etdirildi." },
+        { en: "The pictures on the screen were not clear, but the viewers could see that they were human faces, and they could see their eyes opening and closing.", az: "Ekrandakı şəkillər aydın deyildi, lakin tamaşaçılar onların insan üzləri olduğunu görə bilir, gözlərinin açılıb-yumulduğunu seçə bilirdilər." },
+        { en: "In 1928, images were sent from Britain to America, and later, to a ship 1,500 miles out to sea.", az: "1928-ci ildə təsvirlər Britaniyadan Amerikaya, daha sonra isə dənizdə 1500 mil uzaqlıqda olan bir gəmiyə göndərildi." },
+        { en: "In the same year, the first colour images were sent.", az: "Həmin ildə ilk rəngli təsvirlər göndərildi." },
+        { en: "The first 'seeing-in sets' were sold that same year.", az: "İlk televizorlar həmin il satıldı." },
+        { en: "For £25 (£1000 in today's money), people in their homes could watch moving images that were sent from a broadcasting station.", az: "25 funt sterlinqə (bugünkü pulla 1000 funt sterlinq) insanlar öz evlərində yayım stansiyasından göndərilən hərəkətli təsvirlərə baxa bilirdilər." },
+        { en: "Another invention that became popular in the 1920s was the home refrigerator.", az: "1920-ci illərdə məşhurlaşan başqa bir ixtira ev soyuducusu idi." },
+        { en: "People used different ways to keep food cool and fresh long before the 1900s, but home fridges weren't invented until 1913 in the USA.", az: "İnsanlar 1900-cü illərdən çox əvvəl yeməkləri sərin və təzə saxlamaq üçün müxtəlif üsullardan istifadə edirdilər, lakin ev soyuducuları ABŞ-də 1913-cü ilə qədər ixtira edilməmişdi." },
+        { en: "Home fridges became very popular in the USA in the 1920s.", az: "Ev soyuducuları 1920-ci illərdə ABŞ-də çox məşhur oldu." },
+        { en: "Sales of the popular 'Frigidaire' model increased from 5,000 in 1921 to 750,000 in 1926.", az: "Məşhur “Frigidaire” modelinin satışları 1921-ci ildə 5000-dən 1926-cı ildə 750000-ə yüksəldi." },
+        { en: "British people were less interested in fridges than Americans.", az: "Britaniyalılar soyuducularla amerikalılardan daha az maraqlanırdılar." },
+        { en: "They thought that they were unnecessary because the weather in Britain was cooler.", az: "Onlar düşünürdülər ki, Britaniyada hava daha sərin olduğu üçün soyuducular lazımsızdır." },
+        { en: "But fridges were heavily advertised, and their advantages were described in detail.", az: "Lakin soyuducular güclü şəkildə reklam olunurdu və onların üstünlükləri detallı şəkildə təsvir edilirdi." },
+        { en: "Soon, more fridges were sold, and the price decreased.", az: "Tezliklə daha çox soyuducu satıldı və qiymət aşağı düşdü." },
+        { en: "Another interesting invention of the 1920s was the polygraph, or lie detector.", az: "1920-ci illərin digər bir maraqlı ixtirası poliqraf və ya yalan detektoru idi." },
+        { en: "It was invented in 1921 by a Californian policeman, John Larson.", az: "O, 1921-ci ildə kaliforniyalı polis Con Larson tərəfindən ixtira edilib." },
+        { en: "He used the ideas of other psychologists to make a machine that measured people's heart rate, breathing and blood pressure while they were asked questions.", az: "O, insanlara suallar verilərkən onların ürək döyüntüsünü, tənəffüsünü və qan təzyiqini ölçən bir maşın düzəltmək üçün digər psixoloqların ideyalarından istifadə etdi." },
+        { en: "The experts believed that sudden changes in these measurements showed that someone was lying.", az: "Mütəxəssislər inanırdılar ki, bu ölçmələrdəki ani dəyişikliklər kiminsə yalan danışdığını göstərir." },
+        { en: "Although this invention is well-known, it can't really detect lies.", az: "Bu ixtira çox tanınsa da, əslində yalanları aşkar edə bilmir." },
+        { en: "Marston tried to use measurements from his polygraph in a court case in 1923, but they weren't accepted as evidence and never have been since then.", az: "Marston 1923-cü ildə bir məhkəmə işində öz poliqrafının ölçmələrindən istifadə etməyə çalışdı, lakin onlar sübut kimi qəbul edilmədi və o vaxtdan bəri heç vaxt qəbul edilməyib." },
+        { en: "However, polygraphs are still used by some police forces and the FBI because many people believe they work, so they tell the truth to avoid the machine.", az: "Lakin poliqraflar hələ də bəzi polis qüvvələri və FTB tərəfindən istifadə olunur, çünki bir çox insanlar onların işlədiyinə inanır və buna görə də maşından yayınmaq üçün həqiqəti söyləyirlər." }
+    ],
+    questions: [
+        {
+            id: "q1", title: "Decide whether the statements are true or false.",
+            q: "1. The television was demonstrated at the Royal Institute in 1926.",
+            correct: "A",
+            explanation: "Mətndə deyilir ki, ilk şəkillər 1924-cü ildə göndərilib və “...his invention was formally demonstrated at the Royal Institute two years later.” (onun ixtirası iki il sonra Kral İnstitutunda rəsmi olaraq nümayiş etdirildi). 1924 + 2 = 1926."
+        },
+        {
+            id: "q2",
+            q: "2. Colour images were not possible after the 1920s.",
+            correct: "B",
+            explanation: "Mətndə deyilir: “In the same year, the first colour images were sent.” (Həmin ildə ilk rəngli təsvirlər göndərildi). Bu, rəngli təsvirlərin 1920-ci illərdə mümkün olduğunu göstərir. Cümlə isə bunun əksini iddia edir."
+        },
+        {
+            id: "q3",
+            q: "3. Television images were first sent across the Atlantic Ocean in 1928.",
+            correct: "A",
+            explanation: "Mətndə qeyd olunur: “In 1928, images were sent from Britain to America...” (1928-ci ildə təsvirlər Britaniyadan Amerikaya göndərildi). Bu, Atlantik okeanının bir sahilindən digərinə göndərilməsi deməkdir."
+        },
+        {
+            id: "q4",
+            q: "4. Home refrigerators were invented in the 1920s.",
+            correct: "B",
+            explanation: "Mətndə aydın şəkildə yazılıb: “...home fridges weren't invented until 1913 in the USA.” (ev soyuducuları ABŞ-da 1913-cü ilə qədər ixtira edilməmişdi). Onlar 1920-ci illərdə məşhurlaşıb, lakin daha əvvəl ixtira olunub."
+        },
+        {
+            id: "q5",
+            q: "5. Fridges became popular in the USA before they were popular in the UK.",
+            correct: "A",
+            explanation: "Mətndə ABŞ-da 1920-ci illərdə çox populyar olduğu (“became very popular in the USA in the 1920s”), lakin Britaniyalıların daha az maraq göstərdiyi (“British people were less interested”) qeyd olunur."
+        },
+        {
+            id: "q6",
+            q: "6. Some psychologists helped John Larson to build his invention.",
+            correct: "B",
+            explanation: "Mətndə deyilir: “He used the ideas of other psychologists to make a machine...” (O, maşını yaratmaq üçün digər psixoloqların ideyalarından istifadə etdi). Bu, onların ideyalarının ona kömək olduğunu göstərir, lakin bilavasitə psixoloqların özləri Con Larsona kömək etməmişdilər."
+        },
+        {
+            id: "q7",
+            q: "7. On some occasions, lie detectors have been used as evidence in court.",
+            correct: "B",
+            explanation: "Mətn bunun əksini deyir: “...they weren't accepted as evidence and never have been since then.” (...onlar sübut kimi qəbul edilmədi və o vaxtdan bəri heç vaxt qəbul edilməyib)."
+        },
+        {
+            id: "q8",
+            q: "8. Today, lie detectors are never used by the police.",
+            correct: "B",
+            explanation: "Mətndə açıq şəkildə yazılıb: “...polygraphs are still used by some police forces and the FBI...” (...poliqraflar hələ də bəzi polis qüvvələri və FTB tərəfindən istifadə olunur)."
+        }
+    ],
+    vocabulary: [
+        { en: "Advantage", az: "üstünlük" },
+        { en: "Blood", az: "qan" },
+        { en: "Breath", az: "nəfəs, tənəffüs" },
+        { en: "Broadcast", az: "yayımlamaq" },
+        { en: "Change", az: "dəyişiklik" },
+        { en: "Court case", az: "məhkəmə işi" },
+        { en: "Evidence", az: "sübut, dəlil" },
+        { en: "Force", az: "qüvvə (feil kimi: məcbur etmək)" },
+        { en: "Fresh", az: "təzə, təravətli" },
+        { en: "Heart rate", az: "ürək döyüntüsü" },
+        { en: "Impact", az: "təsir" },
+        { en: "Invention", az: "ixtira" },
+        { en: "Police", az: "polislər" },
+        { en: "Polygraph / lie detector", az: "poliqraf / yalan detektoru" },
+        { en: "Pressure", az: "təzyiq" },
+        { en: "Refrigerator (fridge)", az: "soyuducu" },
+        { en: "Screen", az: "ekran" },
+        { en: "Station", az: "stansiya, dayanacaq" },
+        { en: "Sudden", az: "ani, qəfil" },
+        { en: "To accept", az: "qəbul etmək" },
+        { en: "To advertise", az: "reklam etmək" },
+        { en: "To decrease", az: "azalmaq, azaltmaq" },
+        { en: "To demonstrate", az: "nümayiş etdirmək" },
+        { en: "To detect", az: "aşkar etmək" },
+        { en: "To increase", az: "artmaq, artırmaq" },
+        { en: "To lie", az: "yalan danışmaq" },
+        { en: "To measure", az: "ölçmək" },
+        { en: "Unnecessary", az: "lazımsız, gərəksiz" },
+        { en: "Viewer", az: "tamaşaçı, izləyici" }
+    ]
+};
+
+const HK = 'sa:reading6:history';
+
+function openTab(tabId, btn) {
+    hideTip();
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    if(btn) btn.classList.add('active');
+}
+
+const canHover = matchMedia('(hover:hover)').matches;
+let tipActive = null, pinned = false;
+const sec = () => document.getElementById('text-section');
+
+function setLock(open) {
+    const b = document.getElementById('lock-btn');
+    sec().classList.toggle('unlocked', open);
+    b.classList.toggle('unlocked', open);
+    b.innerHTML = open ? '<i class="fas fa-lock-open"></i> Tərcümə: Açıq' : '<i class="fas fa-lock"></i> Tərcümə: Qıfıllı';
+    document.getElementById('tr-hint').style.display = open ? 'block' : 'none';
+    hideTip();
+}
+function toggleLock() { setLock(!sec().classList.contains('unlocked')); }
+
+function renderText() {
+    document.getElementById('tr-hint').textContent = canHover ? 'Tərcümə üçün cümlənin üzərinə gətir.' : 'Tərcümə üçün cümləyə toxun.';
+    document.getElementById('text-container').innerHTML = data.text.map((t, i) => `<span class="sentence-wrapper" data-i="${i}" tabindex="0">${t.en}</span> `).join('');
+}
+
+function showTip(el) {
+    const s = sec(), tip = document.getElementById('tip');
+    if (!s.classList.contains('unlocked')) return;
+    if (tipActive) tipActive.classList.remove('active');
+    tipActive = el; el.classList.add('active');
+    tip.textContent = data.text[el.dataset.i].az;
+    tip.style.visibility = 'hidden'; tip.style.display = 'block';
+    const sr = s.getBoundingClientRect(), rs = el.getClientRects(), first = rs[0], last = rs[rs.length - 1];
+    const w = tip.offsetWidth, h = tip.offsetHeight, cw = s.clientWidth, pad = 8;
+    const cx = first.left + first.width / 2 - sr.left - s.clientLeft;
+    const left = Math.min(Math.max(cx - w / 2, pad), cw - w - pad);
+    let top = first.top - sr.top - s.clientTop + s.scrollTop - h - 8, below = false;
+    if (top < s.scrollTop + pad) { top = last.bottom - sr.top - s.clientTop + s.scrollTop + 8; below = true; }
+    tip.style.left = left + 'px'; tip.style.top = top + 'px';
+    tip.style.setProperty('--ax', Math.min(Math.max(cx - left, 14), w - 14) + 'px');
+    tip.classList.toggle('below', below);
+    tip.style.visibility = 'visible';
+}
+function hideTip() {
+    const t = document.getElementById('tip');
+    if (t) t.style.display = 'none';
+    if (tipActive) tipActive.classList.remove('active');
+    tipActive = null; pinned = false;
+}
+
+function renderQuestions() {
+    let n = 0;
+    document.getElementById('questions-container').innerHTML = data.questions.map(item => {
+        n++;
+        const type = item.type || 'tf', multi = type === 'multi';
+        const opts = type === 'tf' ? ['True', 'False'] : item.options;
+        const keys = opts.map((_, i) => multi ? String(i + 1) : 'ABCDEFGH'[i]);
+        const inputs = opts.map((o, i) => `<label class="option-label" data-k="${keys[i]}"><input type="${multi ? 'checkbox' : 'radio'}" name="${item.id}" value="${keys[i]}"><span>${keys[i]}) ${o}</span></label>`).join('');
+        return `${item.title ? `<div class="section-title">${item.title}</div>` : ''}
+        <div class="question-card">
+            <div class="question-text">${n}. ${item.q.replace(/^\d+\.\s*/, '')}</div>
+            ${multi ? '<div class="multi-hint">Bir neçə variant seçə bilərsən</div>' : ''}
+            <div class="options-list">${inputs}</div>
+            <div class="result-box" id="result-${item.id}">
+                <div class="feedback-title" id="feedback-${item.id}"></div>
+                <div class="correct-answer-text" id="correct-text-${item.id}" style="display:none;"></div>
+                ${item.explanation ? `<div class="explanation-text"><strong>İzah:</strong> ${item.explanation}</div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderVocab() {
+    const container = document.getElementById('vocab-list');
+    let html = '';
+    data.vocabulary.forEach(item => {
+        html += `<li class="vocab-item"><div class="vocab-en" onclick="speakWord('${item.en.replace(/'/g, "\\'")}')"><i class="fas fa-volume-up"></i> ${item.en}</div><div class="vocab-az">${item.az}</div></li>`;
+    });
+    container.innerHTML = html;
+}
+
+function speakWord(word) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(word);
+        u.lang = 'en-US';
+        window.speechSynthesis.speak(u);
+    }
+}
+
+function notice(m) {
+    const n = document.getElementById('notice');
+    n.textContent = m; n.style.display = 'block';
+    clearTimeout(n._t); n._t = setTimeout(() => n.style.display = 'none', 3000);
+}
+
+function checkAnswers() {
+    if (document.getElementById('check-btn').disabled) return;
+    const picks = data.questions.map(q => [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(i => i.value));
+    if (!picks.some(p => p.length)) { notice('Əvvəlcə ən azı bir suala cavab seç.'); return; }
+    document.getElementById('notice').style.display = 'none';
+    let ok = 0, bad = 0, skip = 0;
+    data.questions.forEach((q, i) => {
+        const sel = picks[i], multi = q.type === 'multi';
+        const cor = (Array.isArray(q.correct) ? q.correct : [q.correct]).map(String);
+        const box = document.getElementById('result-' + q.id), fb = document.getElementById('feedback-' + q.id), ct = document.getElementById('correct-text-' + q.id);
+        const card = box.closest('.question-card');
+        let cls = '';
+        if (!sel.length) { skip++; fb.innerText = 'Cavab seçilməyib!'; fb.className = 'feedback-title'; }
+        else if (sel.length === cor.length && cor.every(c => sel.includes(c))) { ok++; cls = ' correct'; fb.innerText = 'Düzdür!'; fb.className = 'feedback-title correct'; }
+        else { bad++; cls = ' wrong'; fb.innerText = 'Səhvdir!'; fb.className = 'feedback-title wrong'; }
+        ct.innerText = 'Düzgün cavab: ' + (multi ? cor.slice().sort((x, y) => x - y).join(', ') : cor.map(c => card.querySelector(`label[data-k="${c}"] span`).textContent).join(', '));
+        ct.style.display = 'block';
+        card.querySelectorAll('.option-label').forEach(l => {
+            if (cor.includes(l.dataset.k)) l.classList.add('opt-correct');
+            else if (sel.includes(l.dataset.k)) l.classList.add('opt-wrong');
+        });
+        card.querySelectorAll('input').forEach(inp => inp.disabled = true);
+        box.className = 'result-box show' + cls;
+    });
+    document.getElementById('check-btn').disabled = true;
+
+    const scoreBox = document.getElementById('score-box');
+    scoreBox.innerHTML = `
+        <div class="score-main">Nəticə: ${ok} / ${data.questions.length}</div>
+        <div class="score-row">
+            <span class="score-ok"><i class="fas fa-check-circle"></i> Düz: ${ok}</span>
+            <span class="score-bad"><i class="fas fa-times-circle"></i> Səhv: ${bad}</span>
+            <span class="score-skip"><i class="fas fa-minus-circle"></i> Cavabsız: ${skip}</span>
+        </div>
+        <button class="retry-btn" onclick="retryQuiz()"><i class="fas fa-rotate-right"></i> Yenidən cəhd et</button>`;
+    scoreBox.classList.add('show');
+    setLock(true);
+    saveHistory(ok, bad, skip);
+    scoreBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function saveHistory(ok, bad, skip) {
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HK)) || []; } catch(e) { hist = []; }
+    hist.push({ t: Date.now(), ok: ok, bad: bad, skip: skip, total: data.questions.length });
+    try { localStorage.setItem(HK, JSON.stringify(hist)); } catch(e) {}
+    renderResults();
+}
+
+function renderResults() {
+    const c = document.getElementById('results-container');
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HK)) || []; } catch(e) { hist = []; }
+    if(!hist.length) { c.innerHTML = '<div class="lock-box"><i class="fas fa-clipboard-list"></i> Hələ nəticə yoxdur.</div>'; return; }
+    
+    let html = '';
+    hist.slice().reverse().forEach((x, i) => {
+        const d = new Date(x.t);
+        const p = n => String(n).padStart(2, '0');
+        const dateStr = `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}, ${p(d.getHours())}:${p(d.getMinutes())}`;
+        html += `<div class="res-row"><div><div class="res-no">Cəhd ${hist.length - i}</div><div class="res-date"><i class="fas fa-clock"></i> ${dateStr}</div></div><div class="res-right"><div class="res-score">${x.ok} / ${x.total}</div><div class="res-detail">Düz: ${x.ok} · Səhv: ${x.bad} · Cavabsız: ${x.skip}</div></div></div>`;
+    });
+    c.innerHTML = html;
+}
+
+function retryQuiz() {
+    document.querySelectorAll('#questions-container input').forEach(r => { r.checked = false; r.disabled = false; });
+    document.querySelectorAll('.option-label').forEach(l => l.classList.remove('opt-correct', 'opt-wrong'));
+    document.querySelectorAll('.result-box').forEach(b => b.className = 'result-box');
+    document.querySelectorAll('.correct-answer-text').forEach(e => e.style.display = 'none');
+    const sb = document.getElementById('score-box');
+    sb.classList.remove('show'); sb.innerHTML = '';
+    document.getElementById('check-btn').disabled = false;
+    setLock(false);
+    sec().scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+const tc = document.getElementById('text-container');
+tc.addEventListener('click', e => {
+    const el = e.target.closest('.sentence-wrapper');
+    if (!el || !sec().classList.contains('unlocked') || (canHover && e.detail)) return;
+    if (tipActive === el && pinned) hideTip(); else { showTip(el); pinned = true; }
+});
+tc.addEventListener('mouseover', e => {
+    const el = canHover && e.target.closest('.sentence-wrapper');
+    if (el) { pinned = false; showTip(el); }
+});
+tc.addEventListener('mouseout', e => { if (canHover && !pinned && e.target.closest('.sentence-wrapper')) hideTip(); });
+tc.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); } });
+document.addEventListener('click', e => { if (!e.target.closest('.sentence-wrapper')) hideTip(); });
+sec().addEventListener('scroll', hideTip);
+addEventListener('resize', hideTip);
+
+renderText();
+renderQuestions();
+renderVocab();
+renderResults();
+</script>
+</body>
+</html>
