@@ -116,6 +116,8 @@ nav{flex-shrink:0}
 .score-chip.bad{color:var(--error-color);background:var(--error-bg)}
 .score-chip.skip{opacity:.75}
 .centered #main-content{max-width:900px;margin:0 auto;width:100%}
+/* Reading/custom HTML açılanda səhifə tam enə yayılsın */
+body.custom-mode.centered #main-content{max-width:none;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))}
 nav{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:var(--panel-bg);border-bottom:1px solid var(--border-color);margin-bottom:20px;border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,.02)}
 .nav-left,.nav-right{display:flex;align-items:center;gap:15px}
 .btn{background:none;border:none;color:var(--text-color);font-size:1.2rem;cursor:pointer;padding:8px;border-radius:5px}
