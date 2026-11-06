@@ -25,18 +25,18 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color);
 .reading-layout { display: flex; gap: 20px; align-items: flex-start; }
 @media(max-width: 800px) { .reading-layout { flex-direction: column; } }
 
-.text-section { flex: 1; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+.text-section { flex: 3 1 0; min-width: 0; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
 .text-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
 .lock-btn { background: var(--border-color); border: none; padding: 8px 15px; border-radius: 8px; color: var(--text-color); cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
 .lock-btn.unlocked { background: var(--success-color); color: #000; }
-.paragraph { line-height: 1.8; font-size: 1.05rem; }
+.paragraph { line-height: 1.9; font-size: 1.2rem; }
 
 .sentence-wrapper { position: relative; cursor: default; border-bottom: 1px dashed transparent; }
 .unlocked .sentence-wrapper { cursor: pointer; border-bottom-color: var(--border-color); }
 .unlocked .sentence-wrapper:hover { background: var(--highlight-bg); border-bottom-color: var(--primary-color); }
 .unlocked .sentence-wrapper:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-5px); }
 
-.questions-section { flex: 1; }
+.questions-section { flex: 2 1 0; min-width: 0; }
 .question-card { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
 .question-text { font-weight: bold; margin-bottom: 10px; }
 .option-label { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px; border-radius: 5px; margin-bottom: 5px; }
@@ -101,7 +101,7 @@ button,label,.sentence-wrapper{-webkit-tap-highlight-color:transparent;touch-act
  .tab-btn{padding:10px 14px;font-size:.9rem;white-space:nowrap;flex:1 0 auto}
  .text-section{position:relative;max-height:none;overflow:visible;padding:14px}
  .text-controls{flex-wrap:wrap;gap:8px}
- .paragraph{font-size:1.02rem;line-height:1.85}
+ .paragraph{font-size:1.12rem;line-height:1.85}
  .vocab-item{padding:10px 4px;font-size:.95rem;gap:8px}
  .check-all-btn{padding:16px}
 }
