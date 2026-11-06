@@ -25,7 +25,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color);
 .reading-layout { display: flex; gap: 20px; align-items: flex-start; }
 @media(max-width: 800px) { .reading-layout { flex-direction: column; } }
 
-.text-section { flex: 1; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+.text-section { flex: 1.3; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
 .text-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
 .lock-btn { background: var(--border-color); border: none; padding: 8px 15px; border-radius: 8px; color: var(--text-color); cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
 .lock-btn.unlocked { background: var(--success-color); color: #000; }
@@ -34,9 +34,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color);
 .sentence-wrapper { position: relative; cursor: default; border-bottom: 1px dashed transparent; }
 .unlocked .sentence-wrapper { cursor: pointer; border-bottom-color: var(--border-color); }
 .unlocked .sentence-wrapper:hover { background: var(--highlight-bg); border-bottom-color: var(--primary-color); }
-.tooltip { visibility: hidden; width: max-content; max-width: min(400px, 80vw); white-space: normal; background: var(--tooltip-bg); color: #fff; text-align: center; border-radius: 8px; padding: 10px 16px; position: absolute; z-index: 10; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(10px); opacity: 0; transition: opacity .2s, transform .2s; font-size: .95rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,.5); pointer-events: none; line-height: 1.5; }
 .unlocked .sentence-wrapper:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-5px); }
-.tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: var(--tooltip-bg) transparent transparent transparent; }
 
 .questions-section { flex: 1; }
 .question-card { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
@@ -78,6 +76,35 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color);
 .lock-box { text-align: center; padding: 40px 20px; opacity: .85; }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+html{-webkit-text-size-adjust:100%}
+button,label,.sentence-wrapper{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.text-section{position:relative;top:20px}
+.sentence-wrapper.active{background:var(--highlight-bg);border-bottom-color:var(--primary-color)}
+.tr-hint{display:none;font-size:.85rem;opacity:.7;margin:-5px 0 12px}
+.tip{display:none;position:absolute;z-index:20;width:max-content;max-width:calc(100% - 16px);background:var(--tooltip-bg);color:#fff;text-align:center;border-radius:8px;padding:10px 14px;font-size:.95rem;line-height:1.5;box-shadow:0 10px 25px -5px rgba(0,0,0,.5);border:1px solid var(--border-color);pointer-events:none}
+.tip::after{content:"";position:absolute;left:var(--ax,50%);top:100%;margin-left:-6px;border:6px solid transparent;border-top-color:var(--tooltip-bg)}
+.tip.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--tooltip-bg)}
+.section-title{font-weight:bold;margin:0 0 15px;padding-bottom:10px;border-bottom:1px solid var(--border-color)}
+.multi-hint{font-size:.85rem;opacity:.7;margin-bottom:8px}
+.option-label{border:1px solid var(--border-color);min-height:44px;padding:10px;margin-bottom:6px;align-items:center}
+.option-label input{cursor:pointer;width:20px;height:20px;flex:none}
+.option-label input:disabled{cursor:default}
+.option-label.opt-correct{background:rgba(74,222,128,.15);border-color:var(--success-color)}
+.option-label.opt-wrong{background:rgba(248,113,113,.15);border-color:var(--error-color)}
+.check-all-btn:disabled{opacity:.4;cursor:not-allowed}
+.notice{display:none;margin-top:10px;padding:10px 14px;border-radius:8px;background:rgba(248,113,113,.12);border-left:4px solid var(--error-color)}
+@media(max-width:800px){
+ body{padding:12px}
+ .tab-content{padding:14px}
+ .tabs{flex-wrap:nowrap;overflow-x:auto;gap:8px}
+ .tab-btn{padding:10px 14px;font-size:.9rem;white-space:nowrap;flex:1 0 auto}
+ .text-section{position:relative;max-height:none;overflow:visible;padding:14px}
+ .text-controls{flex-wrap:wrap;gap:8px}
+ .paragraph{font-size:1.02rem;line-height:1.85}
+ .vocab-item{padding:10px 4px;font-size:.95rem;gap:8px}
+ .check-all-btn{padding:16px}
+}
 </style>
 </head>
 <body>
@@ -95,12 +122,14 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color);
                 <span style="font-weight:bold;">Mətn</span>
                 <button id="lock-btn" class="lock-btn" onclick="toggleLock()"><i class="fas fa-lock"></i> Tərcümə: Qıfıllı</button>
             </div>
+            <div id="tr-hint" class="tr-hint"></div>
             <div id="text-container" class="paragraph"></div>
+            <div id="tip" class="tip" role="tooltip"></div>
         </div>
         <div class="questions-section">
-            <div style="font-weight:bold; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;">Decide whether the statements are true or false.</div>
             <div id="questions-container"></div>
-            <button class="check-all-btn" onclick="checkAnswers()">Cavabları Yoxla</button>
+            <button id="check-btn" class="check-all-btn" onclick="checkAnswers()">Cavabları Yoxla</button>
+            <div class="notice" id="notice"></div>
             <div class="score-box" id="score-box"></div>
         </div>
     </div>
@@ -138,38 +167,38 @@ const data = {
     ],
     questions: [
         {
-            id: "q1",
-            q: "1. Francis forgot to write because the trip was too long.",
+            id: "q1", title: "Decide whether the statements are true or false.", no: "1.",
+            q: "Francis forgot to write because the trip was too long.",
             correct: "B",
             explanation: "Məktubda Frensis yazmağın uzun çəkdiyi üçün üzr istəyir, lakin bunun səbəbini səfərin uzunluğu ilə deyil, çox əylənmələri və məşğul olmaları ilə əlaqələndirir (“Everything has been so much fun... we immediately... began our sightseeing trip!”)."
         },
         {
-            id: "q2",
-            q: "2. Francis isn't happy about only spending one day in NYC.",
+            id: "q2", no: "2.",
+            q: "Francis isn't happy about only spending one day in NYC.",
             correct: "A",
             explanation: "Mətndə “Unfortunately, we could only spend that one day in New York...” (Təəssüf ki, Nyu-Yorkda yalnız o bir günü keçirə bildik...) cümləsi işlədilir. “Unfortunately” (təəssüf ki) sözü onun bu vəziyyətdən tam məmnun olmadığını göstərir."
         },
         {
-            id: "q3",
-            q: "3. They get off the train very late at night.",
+            id: "q3", no: "3.",
+            q: "They get off the train very late at night.",
             correct: "A",
             explanation: "Məktubda yazılıb: “...it will be past midnight when we arrive.” (...çatanda gecə yarısından keçmiş olacaq.). Bu da gecənin çox gec bir vaxtı deməkdir."
         },
         {
-            id: "q4",
-            q: "4. They are going to visit another country apart from the USA.",
+            id: "q4", no: "4.",
+            q: "They are going to visit another country apart from the USA.",
             correct: "A",
             explanation: "Mətndə açıq şəkildə “After Niagara Falls, we're going to visit Toronto in Canada...” (Niaqara şəlaləsindən sonra Kanadadakı Toronto şəhərinə baş çəkəcəyik...) deyilir. Kanada ABŞ-dan fərqli bir ölkədir."
         },
         {
-            id: "q5",
-            q: "5. Francis really wants to go to an amusement park.",
+            id: "q5", no: "5.",
+            q: "Francis really wants to go to an amusement park.",
             correct: "B",
             explanation: "Mətndə deyilir: “I think Sam wants to go to Disneyland...” (Düşünürəm, Sem Disneylendə getmək istəyir...). İstəyən şəxs Frensis deyil, Semdir."
         },
         {
-            id: "q6",
-            q: "6. Francis will certainly write again.",
+            id: "q6", no: "6.",
+            q: "Francis will certainly write again.",
             correct: "B",
             explanation: "Məktubun sonunda Frensis yazır: “I will try to write again soon, but ... I can't make any promises.” (Tezliklə yenidən yazmağa çalışacağam, amma ... heç bir söz verə bilmərəm.). Bu, onun mütləq yazacağına zəmanət vermədiyini göstərir."
         }
@@ -195,7 +224,7 @@ const data = {
         { en: "To ride", az: "getmək (nəqliyyatda)" },
         { en: "To spend", az: "sərf etmək, (vaxt) keçirmək" },
         { en: "To surf", az: "sörf etmək" },
-        { en: "To take shower", az: "duş almaq" },
+        { en: "To take a shower", az: "duş almaq" },
         { en: "To visit", az: "baş çəkmək, ziyarət etmək" },
         { en: "Train", az: "qatar" },
         { en: "Trip", az: "səyahət" },
@@ -206,54 +235,91 @@ const data = {
 const HK = 'sa:reading2:history';
 
 function openTab(tabId, btn) {
+    hideTip();
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     if(btn) btn.classList.add('active');
+    fitSticky(); sendHeight();
 }
 
-function toggleLock() {
-    const section = document.getElementById('text-section');
-    const btn = document.getElementById('lock-btn');
-    if(section.classList.contains('unlocked')) {
-        section.classList.remove('unlocked');
-        btn.classList.remove('unlocked');
-        btn.innerHTML = '<i class="fas fa-lock"></i> Tərcümə: Qıfıllı';
-    } else {
-        section.classList.add('unlocked');
-        btn.classList.add('unlocked');
-        btn.innerHTML = '<i class="fas fa-lock-open"></i> Tərcümə: Açıq';
-    }
+const canHover = matchMedia('(hover:hover)').matches;
+
+function fitSticky() {
+    const s = document.getElementById('text-section');
+    if (!s || !s.offsetHeight) return;
+    s.style.position = (innerWidth > 800 && s.offsetHeight < innerHeight - 40) ? 'sticky' : 'relative';
 }
+function sendHeight() {
+    try { parent.postMessage({ type: 'iframe-height', h: document.body.offsetHeight }, '*'); } catch(e) {}
+}
+addEventListener('resize', () => { fitSticky(); sendHeight(); });
+addEventListener('load', () => { fitSticky(); sendHeight(); });
+if (window.ResizeObserver) new ResizeObserver(() => { fitSticky(); sendHeight(); }).observe(document.body);
+
+let tipActive = null, pinned = false;
+const sec = () => document.getElementById('text-section');
+
+function setLock(open) {
+    const b = document.getElementById('lock-btn');
+    sec().classList.toggle('unlocked', open);
+    b.classList.toggle('unlocked', open);
+    b.innerHTML = open ? '<i class="fas fa-lock-open"></i> Tərcümə: Açıq' : '<i class="fas fa-lock"></i> Tərcümə: Qıfıllı';
+    document.getElementById('tr-hint').style.display = open ? 'block' : 'none';
+    hideTip();
+}
+function toggleLock() { setLock(!sec().classList.contains('unlocked')); }
 
 function renderText() {
-    const container = document.getElementById('text-container');
-    let html = '';
-    data.text.forEach(item => {
-        html += `<span class="sentence-wrapper">${item.en}<span class="tooltip">${item.az}</span></span> `;
-    });
-    container.innerHTML = html;
+    document.getElementById('tr-hint').textContent = canHover ? 'Tərcümə üçün cümlənin üzərinə gətir.' : 'Tərcümə üçün cümləyə toxun.';
+    document.getElementById('text-container').innerHTML = data.text.map((t, i) => `<span class="sentence-wrapper" data-i="${i}" tabindex="0">${t.en}</span> `).join('');
+}
+
+function showTip(el) {
+    const s = sec(), tip = document.getElementById('tip');
+    if (!s.classList.contains('unlocked')) return;
+    if (tipActive) tipActive.classList.remove('active');
+    tipActive = el; el.classList.add('active');
+    tip.textContent = data.text[el.dataset.i].az;
+    tip.style.visibility = 'hidden'; tip.style.display = 'block';
+    const sr = s.getBoundingClientRect(), rs = el.getClientRects(), first = rs[0], last = rs[rs.length - 1];
+    const w = tip.offsetWidth, h = tip.offsetHeight, cw = s.clientWidth, pad = 8;
+    const cx = first.left + first.width / 2 - sr.left - s.clientLeft;
+    const left = Math.min(Math.max(cx - w / 2, pad), cw - w - pad);
+    let top = first.top - sr.top - s.clientTop + s.scrollTop - h - 8, below = false;
+    if (top < s.scrollTop + pad) { top = last.bottom - sr.top - s.clientTop + s.scrollTop + 8; below = true; }
+    tip.style.left = left + 'px'; tip.style.top = top + 'px';
+    tip.style.setProperty('--ax', Math.min(Math.max(cx - left, 14), w - 14) + 'px');
+    tip.classList.toggle('below', below);
+    tip.style.visibility = 'visible';
+}
+function hideTip() {
+    const t = document.getElementById('tip');
+    if (t) t.style.display = 'none';
+    if (tipActive) tipActive.classList.remove('active');
+    tipActive = null; pinned = false;
 }
 
 function renderQuestions() {
-    const container = document.getElementById('questions-container');
-    let html = '';
-    data.questions.forEach(item => {
-        html += `
+    let n = 0;
+    document.getElementById('questions-container').innerHTML = data.questions.map(item => {
+        n++;
+        const type = item.type || 'tf', multi = type === 'multi';
+        const opts = type === 'tf' ? ['True', 'False'] : item.options;
+        const keys = opts.map((_, i) => multi ? String(i + 1) : 'ABCDEFGH'[i]);
+        const inputs = opts.map((o, i) => `<label class="option-label" data-k="${keys[i]}"><input type="${multi ? 'checkbox' : 'radio'}" name="${item.id}" value="${keys[i]}"><span>${keys[i]}) ${o}</span></label>`).join('');
+        return `${item.title ? `<div class="section-title">${item.title}</div>` : ''}
         <div class="question-card">
-            <div class="question-text">${item.q}</div>
-            <div class="options-list">
-                <label class="option-label"><input type="radio" name="${item.id}" value="A"> A) True</label>
-                <label class="option-label"><input type="radio" name="${item.id}" value="B"> B) False</label>
-            </div>
+            ${item.q ? `<div class="question-text">${item.no ? item.no + ' ' : ''}${item.q}</div>` : ''}
+            ${multi ? '<div class="multi-hint">Bir neçə variant seçə bilərsən</div>' : ''}
+            <div class="options-list">${inputs}</div>
             <div class="result-box" id="result-${item.id}">
                 <div class="feedback-title" id="feedback-${item.id}"></div>
-                <div class="correct-answer-text" id="correct-text-${item.id}" style="display:none;">Düzgün cavab: ${item.correct === 'A' ? 'A) True' : 'B) False'}</div>
-                <div class="explanation-text"><strong>İzah:</strong> ${item.explanation}</div>
+                <div class="correct-answer-text" id="correct-text-${item.id}" style="display:none;"></div>
+                ${item.explanation ? `<div class="explanation-text"><strong>İzah:</strong> ${item.explanation}</div>` : ''}
             </div>
         </div>`;
-    });
-    container.innerHTML = html;
+    }).join('');
 }
 
 function renderVocab() {
@@ -274,30 +340,37 @@ function speakWord(word) {
     }
 }
 
+function notice(m) {
+    const n = document.getElementById('notice');
+    n.textContent = m; n.style.display = 'block';
+    clearTimeout(n._t); n._t = setTimeout(() => n.style.display = 'none', 3000);
+}
+
 function checkAnswers() {
+    if (document.getElementById('check-btn').disabled) return;
+    const picks = data.questions.map(q => [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(i => i.value));
+    if (!picks.some(p => p.length)) { notice('Əvvəlcə ən azı bir suala cavab seç.'); return; }
+    document.getElementById('notice').style.display = 'none';
     let ok = 0, bad = 0, skip = 0;
-    data.questions.forEach(q => {
-        const selected = document.querySelector(`input[name="${q.id}"]:checked`);
-        const resultBox = document.getElementById(`result-${q.id}`);
-        const feedbackTitle = document.getElementById(`feedback-${q.id}`);
-        
-        if (resultBox) resultBox.classList.add('show');
-        if (document.getElementById(`correct-text-${q.id}`)) document.getElementById(`correct-text-${q.id}`).style.display = "block";
-        
-        if (!selected) {
-            skip++;
-            if (feedbackTitle) { feedbackTitle.innerText = "Cavab seçilməyib!"; feedbackTitle.className = "feedback-title"; }
-            if (resultBox) resultBox.className = "result-box show";
-        } else if (selected.value === q.correct) {
-            ok++;
-            if (feedbackTitle) { feedbackTitle.innerText = "Düzdür!"; feedbackTitle.className = "feedback-title correct"; }
-            if (resultBox) resultBox.className = "result-box show correct";
-        } else {
-            bad++;
-            if (feedbackTitle) { feedbackTitle.innerText = "Səhvdir!"; feedbackTitle.className = "feedback-title wrong"; }
-            if (resultBox) resultBox.className = "result-box show wrong";
-        }
+    data.questions.forEach((q, i) => {
+        const sel = picks[i], multi = q.type === 'multi';
+        const cor = (Array.isArray(q.correct) ? q.correct : [q.correct]).map(String);
+        const box = document.getElementById('result-' + q.id), fb = document.getElementById('feedback-' + q.id), ct = document.getElementById('correct-text-' + q.id);
+        const card = box.closest('.question-card');
+        let cls = '';
+        if (!sel.length) { skip++; fb.innerText = 'Cavab seçilməyib!'; fb.className = 'feedback-title'; }
+        else if (sel.length === cor.length && cor.every(c => sel.includes(c))) { ok++; cls = ' correct'; fb.innerText = 'Düzdür!'; fb.className = 'feedback-title correct'; }
+        else { bad++; cls = ' wrong'; fb.innerText = 'Səhvdir!'; fb.className = 'feedback-title wrong'; }
+        ct.innerText = 'Düzgün cavab: ' + (multi ? cor.slice().sort((x, y) => x - y).join(', ') : cor.map(c => card.querySelector(`label[data-k="${c}"] span`).textContent).join(', '));
+        ct.style.display = 'block';
+        card.querySelectorAll('.option-label').forEach(l => {
+            if (cor.includes(l.dataset.k)) l.classList.add('opt-correct');
+            else if (sel.includes(l.dataset.k)) l.classList.add('opt-wrong');
+        });
+        card.querySelectorAll('input').forEach(inp => inp.disabled = true);
+        box.className = 'result-box show' + cls;
     });
+    document.getElementById('check-btn').disabled = true;
 
     const scoreBox = document.getElementById('score-box');
     scoreBox.innerHTML = `
@@ -309,14 +382,9 @@ function checkAnswers() {
         </div>
         <button class="retry-btn" onclick="retryQuiz()"><i class="fas fa-rotate-right"></i> Yenidən cəhd et</button>`;
     scoreBox.classList.add('show');
-
-    const lockBtn = document.getElementById('lock-btn');
-    const textSection = document.getElementById('text-section');
-    textSection.classList.add('unlocked');
-    lockBtn.classList.add('unlocked');
-    lockBtn.innerHTML = '<i class="fas fa-lock-open"></i> Tərcümə: Açıq';
-
-    if (ok + bad > 0) saveHistory(ok, bad, skip);
+    setLock(true);
+    saveHistory(ok, bad, skip);
+    scoreBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function saveHistory(ok, bad, skip) {
@@ -344,18 +412,33 @@ function renderResults() {
 }
 
 function retryQuiz() {
-    document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+    document.querySelectorAll('#questions-container input').forEach(r => { r.checked = false; r.disabled = false; });
+    document.querySelectorAll('.option-label').forEach(l => l.classList.remove('opt-correct', 'opt-wrong'));
     document.querySelectorAll('.result-box').forEach(b => b.className = 'result-box');
     document.querySelectorAll('.correct-answer-text').forEach(e => e.style.display = 'none');
-    document.getElementById('score-box').classList.remove('show');
-    document.getElementById('score-box').innerHTML = '';
-    
-    const lockBtn = document.getElementById('lock-btn');
-    const textSection = document.getElementById('text-section');
-    textSection.classList.remove('unlocked');
-    lockBtn.classList.remove('unlocked');
-    lockBtn.innerHTML = '<i class="fas fa-lock"></i> Tərcümə: Qıfıllı';
+    const sb = document.getElementById('score-box');
+    sb.classList.remove('show'); sb.innerHTML = '';
+    document.getElementById('check-btn').disabled = false;
+    setLock(false);
+    sec().scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+const tc = document.getElementById('text-container');
+tc.addEventListener('click', e => {
+    const el = e.target.closest('.sentence-wrapper');
+    if (!el || !sec().classList.contains('unlocked') || (canHover && e.detail)) return;
+    if (tipActive === el && pinned) hideTip(); else { showTip(el); pinned = true; }
+});
+tc.addEventListener('mouseover', e => {
+    const el = canHover && e.target.closest('.sentence-wrapper');
+    if (el) { pinned = false; showTip(el); }
+});
+tc.addEventListener('mouseout', e => { if (canHover && !pinned && e.target.closest('.sentence-wrapper')) hideTip(); });
+tc.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); } });
+document.addEventListener('click', e => { if (!e.target.closest('.sentence-wrapper')) hideTip(); });
+sec().addEventListener('scroll', hideTip);
+addEventListener('resize', hideTip);
 
 renderText();
 renderQuestions();
