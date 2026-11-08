@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reading 14</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+    color-scheme: dark;
+    --bg-color: #1a1a2e; --text-color: #e0e0e0; --panel-bg: #16213e;
+    --primary-color: #0f3460; --border-color: #2a2a4a; --vocab-en-color: #60a5fa;
+    --highlight-bg: rgba(96,165,250,.2); --success-color: #4ade80;
+    --error-color: #f87171; --tooltip-bg: rgba(15,23,42,.95);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; transition: background-color .3s, color .3s; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color); color: var(--text-color); padding: 20px; }
+
+.tabs { display: flex; gap: 10px; margin: -8px 0 12px; padding: 8px 0; flex-wrap: wrap; position: sticky; top: 0; z-index: 30; background: var(--bg-color); }
+.tab-btn { padding: 10px 20px; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; color: var(--text-color); font-weight: 600; font-size: 1rem; }
+.tab-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+.tab-content { display: none; background: var(--panel-bg); padding: 20px; border-radius: 10px; }
+.tab-content.active { display: block; }
+
+.reading-layout { display: flex; gap: 20px; align-items: flex-start; }
+@media(max-width: 800px) { .reading-layout { flex-direction: column; } }
+
+.text-section { flex: 1; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+.text-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+.lock-btn { background: var(--border-color); border: none; padding: 8px 15px; border-radius: 8px; color: var(--text-color); cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+.lock-btn.unlocked { background: var(--success-color); color: #000; }
+.paragraph { line-height: 1.8; font-size: 1.05rem; }
+
+.sentence-wrapper { position: relative; cursor: default; border-bottom: 1px dashed transparent; }
+.unlocked .sentence-wrapper { cursor: pointer; border-bottom-color: var(--border-color); }
+.unlocked .sentence-wrapper:hover { background: var(--highlight-bg); border-bottom-color: var(--primary-color); }
+.unlocked .sentence-wrapper:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-5px); }
+
+.questions-section { flex: 1; }
+.question-card { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+.question-text { font-weight: bold; margin-bottom: 10px; }
+.option-label { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px; border-radius: 5px; margin-bottom: 5px; }
+.option-label:hover { background: var(--highlight-bg); }
+.option-label input[type="radio"] { cursor: pointer; width: 18px; height: 18px; }
+.result-box { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; border-left: 5px solid; }
+.result-box.show { display: block; animation: fadeIn .3s; }
+.result-box.correct { background: rgba(74,222,128,.1); border-color: var(--success-color); }
+.result-box.wrong { background: rgba(248,113,113,.1); border-color: var(--error-color); }
+.feedback-title { font-weight: bold; margin-bottom: 5px; }
+.feedback-title.correct { color: var(--success-color); }
+.feedback-title.wrong { color: var(--error-color); }
+.correct-answer-text { font-weight: bold; color: var(--success-color); margin-bottom: 10px; }
+.explanation-text { font-size: .95rem; opacity: .9; font-style: italic; }
+.check-all-btn { display: block; width: 100%; padding: 15px; background: var(--primary-color); color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
+.check-all-btn:hover { opacity: .9; }
+.score-box { display: none; margin-top: 20px; padding: 20px; border-radius: 10px; border: 2px solid var(--primary-color); background: var(--panel-bg); text-align: center; }
+.score-box.show { display: block; }
+.score-main { font-size: 1.4rem; font-weight: bold; margin-bottom: 12px; }
+.score-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; font-weight: 600; }
+.score-ok { color: var(--success-color); } .score-bad { color: var(--error-color); } .score-skip { opacity: .7; }
+.retry-btn { margin-top: 15px; padding: 10px 22px; background: var(--primary-color); color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+.retry-btn:hover { opacity: .9; }
+
+.vocab-list { list-style: none; }
+.vocab-item { display: flex; padding: 12px 10px; border-bottom: 1px solid var(--border-color); align-items: center; }
+.vocab-item:hover { background: var(--highlight-bg); }
+.vocab-en { font-weight: bold; width: 50%; cursor: pointer; color: var(--vocab-en-color); display: flex; align-items: center; gap: 10px; }
+.vocab-az { width: 50%; }
+
+.res-row { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 14px 16px; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 10px; flex-wrap: wrap; }
+.res-no { font-weight: bold; font-size: 1.05rem; }
+.res-date { opacity: .8; font-size: .9rem; margin-top: 3px; }
+.res-right { text-align: right; }
+.res-score { font-weight: bold; font-size: 1.2rem; color: var(--success-color); }
+.res-detail { opacity: .75; font-size: .85rem; margin-top: 3px; }
+.lock-box { text-align: center; padding: 40px 20px; opacity: .85; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+html{-webkit-text-size-adjust:100%}
+button,label,.sentence-wrapper{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.text-section{position:relative}
+.text-section.is-sticky{position:sticky;top:var(--stick-top,76px)}
+.sentence-wrapper.active{background:var(--highlight-bg);border-bottom-color:var(--primary-color)}
+.tr-hint{display:none;font-size:.85rem;opacity:.7;margin:-5px 0 12px}
+.tip{display:none;position:absolute;z-index:20;width:max-content;max-width:calc(100% - 16px);background:var(--tooltip-bg);color:#fff;text-align:center;border-radius:8px;padding:10px 14px;font-size:.95rem;line-height:1.5;box-shadow:0 10px 25px -5px rgba(0,0,0,.5);border:1px solid var(--border-color);pointer-events:none}
+.tip::after{content:"";position:absolute;left:var(--ax,50%);top:100%;margin-left:-6px;border:6px solid transparent;border-top-color:var(--tooltip-bg)}
+.tip.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--tooltip-bg)}
+.section-title{font-weight:bold;margin:0 0 15px;padding-bottom:10px;border-bottom:1px solid var(--border-color)}
+.multi-hint{font-size:.85rem;opacity:.7;margin-bottom:8px}
+.option-label{border:1px solid var(--border-color);min-height:44px;padding:10px;margin-bottom:6px;align-items:center}
+.option-label input{cursor:pointer;width:20px;height:20px;flex:none}
+.option-label input:disabled{cursor:default}
+.option-label.opt-correct{background:rgba(74,222,128,.15);border-color:var(--success-color)}
+.option-label.opt-wrong{background:rgba(248,113,113,.15);border-color:var(--error-color)}
+.check-all-btn:disabled{opacity:.4;cursor:not-allowed}
+.notice{display:none;margin-top:10px;padding:10px 14px;border-radius:8px;background:rgba(248,113,113,.12);border-left:4px solid var(--error-color)}
+@media(max-width:800px){
+ body{padding:12px}
+ .tab-content{padding:14px}
+ .tabs{flex-wrap:nowrap;overflow-x:auto;gap:8px}
+ .tab-btn{padding:10px 14px;font-size:.9rem;white-space:nowrap;flex:1 0 auto}
+ .text-section{position:relative;max-height:none;overflow:visible;padding:14px}
+ .text-controls{flex-wrap:wrap;gap:8px}
+ .paragraph{font-size:1.02rem;line-height:1.85}
+ .vocab-item{padding:10px 4px;font-size:.95rem;gap:8px}
+ .check-all-btn{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="openTab('questions', this)">1. Suallar və Mətn</button>
+    <button class="tab-btn" onclick="openTab('vocabulary', this)">2. Lüğət</button>
+    <button class="tab-btn" onclick="openTab('results', this)">3. Nəticələr</button>
+</div>
+
+<div id="questions" class="tab-content active">
+    <div class="reading-layout">
+        <div class="text-section" id="text-section">
+            <div class="text-controls">
+                <span style="font-weight:bold;">Mətn</span>
+                <button id="lock-btn" class="lock-btn" onclick="toggleLock()"><i class="fas fa-lock"></i> Tərcümə: Qıfıllı</button>
+            </div>
+            <div id="tr-hint" class="tr-hint"></div>
+            <div id="text-container" class="paragraph"></div>
+            <div id="tip" class="tip" role="tooltip"></div>
+        </div>
+        <div class="questions-section">
+            <div id="questions-container"></div>
+            <button id="check-btn" class="check-all-btn" onclick="checkAnswers()">Cavabları Yoxla</button>
+            <div class="notice" id="notice"></div>
+            <div class="score-box" id="score-box"></div>
+        </div>
+    </div>
+</div>
+
+<div id="vocabulary" class="tab-content">
+    <ul id="vocab-list" class="vocab-list"></ul>
+</div>
+
+<div id="results" class="tab-content">
+    <div id="results-container"></div>
+</div>
+
+<script>
+const data = {
+    text: [
+        { en: "The famous Trans-Siberian railway line runs from Moscow to Vladivostok, but there's another line about 650 kilometres north of the Trans-Siberian.", az: "Məşhur Trans-Sibir dəmir yolu xətti Moskvadan Vladivostoka qədər uzanır, lakin Trans-Sibirdən təxminən 650 kilometr şimalda başqa bir xətt var." },
+        { en: "This is the Baikal-Amur Mainline (BAM) and a special train, the Matvei Mudrov medical train, travels along its 4,000 kilometres.", az: "Bu, Baykal-Amur Magistralıdır (BAM) və xüsusi bir qatar, “Matvey Mudrov” tibb qatarı onun 4000 kilometri boyunca səyahət edir." },
+        { en: "The train, with its twelve to fifteen doctors, spends a day in each of the small towns and villages along the BAM.", az: "On iki-on beş həkimi olan qatar BAM boyunca yerləşən kiçik şəhər və kəndlərin hər birində bir gün keçirir." },
+        { en: "The inhabitants of these remote places depend on this service because they mostly don't have regular access to any other health care.", az: "Bu ucqar yerlərin sakinləri bu xidmətdən asılıdırlar, çünki onların əksər hallarda hər hansı digər səhiyyə xidmətinə müntəzəm çıxışı yoxdur." },
+        { en: "The Matvei Mudrov was named after a Russian doctor in the nineteenth century.", az: "“Matvey Mudrov” adı on doqquzuncu əsrdə yaşamış bir rus həkiminin şərəfinə qoyulub." },
+        { en: "He was one of the first doctors to believe that you shouldn't only look at the disease, but you should also treat the individual patient.", az: "O, təkcə xəstəliyə baxmaq lazım olmadığına, həm də fərdi xəstəni müalicə etmək lazım olduğuna inanan ilk həkimlərdən biri idi." },
+        { en: "Nowadays, the Matvei Mudrov stops in each town or village on the BAM twice a year.", az: "İndiki vaxtda “Matvey Mudrov” BAM üzərindəki hər şəhər və ya kənddə ildə iki dəfə dayanır." },
+        { en: "In the village of Khani (population 742) the patients include a man who has broken both ankles and a teenage girl who needs a check-up after surgery for appendicitis.", az: "Xani kəndində (əhalisi 742) xəstələr arasında hər iki topuğunu sındırmış bir kişi və appendisit əməliyyatından sonra yoxlanışa ehtiyacı olan yeniyetmə bir qız var." },
+        { en: "Luckily, she was able to get to a town three hours away for the operation.", az: "Xoşbəxtlikdən, o, əməliyyat üçün üç saatlıq məsafədə olan bir şəhərə gedə bilib." },
+        { en: "Although the Matvei Mudrov can't offer surgery, the train has a laboratory for blood and urine tests, heart monitors, an ultrasound and an x-ray machine.", az: "“Matvey Mudrov” cərrahiyyə əməliyyatı təklif edə bilməsə də, qatarda qan və sidik analizləri üçün laboratoriya, ürək monitorları, ultrasəs və rentgen aparatı var." },
+        { en: "The medical staff includes specialists, such as neurologists, and they can diagnose and recommend treatment for their patients.", az: "Tibb heyətinə nevroloqlar kimi mütəxəssislər daxildir və onlar öz xəstələrinə diaqnoz qoyub müalicə tövsiyə edə bilirlər." },
+        { en: "The patients say they respect the doctors' honesty and skill.", az: "Xəstələr həkimlərin dürüstlüyünə və bacarığına hörmət etdiklərini söyləyirlər." },
+        { en: "At another of the train's stops, a town of about 4,000 people, there is already a queue of people waiting.", az: "Qatarın başqa bir dayanacağında, təxminən 4000 nəfərlik bir şəhərdə artıq gözləyən insanların növbəsi var." },
+        { en: "61-year-old Mikhail Zdanovich is one of them.", az: "61 yaşlı Mixail Zdanoviç onlardan biridir." },
+        { en: "He originally came to this town, Berkakit, in 1976.", az: "O, əslən bu şəhərə, Berkaqitə 1976-cı ildə gəlib." },
+        { en: "At the time it was a new town, with only about a hundred young people living in camp conditions.", az: "O vaxt bura yalnız yüzə yaxın gəncin düşərgə şəraitində yaşadığı yeni bir şəhər idi." },
+        { en: "It was part of a Soviet Union expansion plan.", az: "Bu, Sovet İttifaqının genişlənmə planının bir hissəsi idi." },
+        { en: "Zdanovich married a woman who worked at the town bakery and they settled in the town.", az: "Zdanoviç şəhər çörəkxanasında işləyən bir qadınla evləndi və onlar şəhərdə məskunlaşdılar." },
+        { en: "As soon as Zdanovich goes into the office, the doctor, Yelena Miroshnichenko, cries 'Oh, Mikhail, I recognised your voice.'", az: "Zdanoviç ofisə girən kimi həkim Yelena Miroşniçenko “Ah, Mixail, səsinizi tanıdım” deyə qışqırır." },
+        { en: "He has a dislocated shoulder.", az: "Onun çiyni çıxıb." },
+        { en: "The doctor writes a letter to say that he can't work while he's waiting for his shoulder to be treated.", az: "Həkim onun çiyni müalicə olunana qədər işləyə bilməyəcəyinə dair bir məktub yazır." },
+        { en: "He leaves, happy, and then he returns a few minutes later.", az: "O, xoşbəxt halda gedir və bir neçə dəqiqə sonra geri qayıdır." },
+        { en: "He brings freshly baked pies and a jar of goat's milk.", az: "O, təzə bişmiş piroqlar və bir banka keçi südü gətirir." },
+        { en: "It's clear that after years on the Matvei Mudrov, the doctors and their patients know each other well.", az: "Aydındır ki, “Matvey Mudrov”da keçirilən illərdən sonra həkimlər və onların xəstələri bir-birlərini yaxşı tanıyırlar." },
+        { en: "And, in fact, for these people living in this remote part of Russia, the Matvei Mudrov is more than just a health service.", az: "Və əslində, Rusiyanın bu ucqar hissəsində yaşayan bu insanlar üçün “Matvey Mudrov” sadəcə bir səhiyyə xidmətindən daha artığıdır." },
+        { en: "It's a connection to the rest of their country, a confirmation that they are not forgotten.", az: "Bu, onların ölkələrinin qalan hissəsi ilə bir əlaqə, unudulmadıqlarının bir təsdiqidir." }
+    ],
+    questions: [
+        {
+            id: "q1", title: "1. Decide whether the statements are true or false.", no: "1.1.",
+            q: "The patients are very satisfied with the service.",
+            correct: "A",
+            explanation: "Mətndə deyilir ki, xəstələr həkimlərin dürüstlüyünə və bacarığına hörmət edirlər (“respect the doctors' honesty and skill”). Həmçinin, Mixail Zdanoviçin hədiyyə gətirməsi də məmnuniyyətin göstəricisidir."
+        },
+        {
+            id: "q2", no: "1.2.",
+            q: "The train's doctors are trained in general medicine only.",
+            correct: "B",
+            explanation: "Mətn bunun əksini deyir: “The medical staff includes specialists, such as neurologists...” (Tibb heyətinə nevroloqlar kimi mütəxəssislər daxildir...)."
+        },
+        {
+            id: "q3", no: "1.3.",
+            q: "The train's facilities are extremely bad to help people.",
+            correct: "B",
+            explanation: "Mətndə qatarda laboratoriya, ürək monitorları, ultrasəs və rentgen aparatı kimi müasir avadanlıqların olduğu qeyd edilir ki, bu da şəraitin pis olmadığını göstərir."
+        },
+        {
+            id: "q4", no: "1.4.",
+            q: "There are a dozen or more doctors on the train.",
+            correct: "A",
+            explanation: "Mətndə qeyd olunur ki, qatarda on iki-on beş həkim var (“twelve to fifteen doctors”). “A dozen” on iki deməkdir, buna görə də bu ifadə doğrudur."
+        },
+        {
+            id: "q5",
+            title: "2. The word “<u><i>inhabitant</i></u>” means",
+            q: "",
+            type: "single",
+            options: [
+                "a line of people who are waiting for something",
+                "a group of people who work for the same organisation",
+                "a person who is being treated for an illness or injury",
+                "a person who lives in a place",
+                "a person who has knowledge or skill in a subject"
+            ],
+            correct: "D",
+            explanation: "Mətndə “The inhabitants of these remote places” ifadəsi “bu ucqar yerlərin sakinləri” deməkdir."
+        },
+        {
+            id: "q6",
+            title: "3. What's the purpose of the train?",
+            q: "",
+            type: "single",
+            options: [
+                "to help patients who have emergency health problems",
+                "to provide health care to remote communities",
+                "to support local hospitals with specialist treatment",
+                "to help doctors to find solutions of diseases easily",
+                "to treat all patients individually"
+            ],
+            correct: "B",
+            explanation: "İlk paraqrafda açıq şəkildə deyilir ki, bu ucqar yerlərin sakinləri başqa səhiyyə xidmətinə çıxışları olmadığı üçün bu qatardan asılıdırlar."
+        },
+        {
+            id: "q7",
+            title: "4. Which of these services can a patient get on the train?",
+            q: "",
+            type: "single",
+            options: [
+                "a brain scan",
+                "a check-up of their heart",
+                "a minor operation",
+                "rehabilitation",
+                "cosmetic services"
+            ],
+            correct: "B",
+            explanation: "Mətndə qatarda “heart monitors” (ürək monitorları) olduğu qeyd edilir ki, bu da ürək yoxlanışının mümkün olduğunu göstərir. Mətndə cərrahiyyə əməliyyatının mümkün olmadığı da vurğulanır."
+        },
+        {
+            id: "q8",
+            title: "5. Which questions have answers in the passage?",
+            q: "",
+            type: "multi",
+            options: [
+                "Who was Matvei Mudrov?",
+                "What was the name of the woman who was married to Zdanovich?",
+                "What were the ages of doctors?",
+                "What's the name of the train which is the subject of the article?",
+                "How often are people able to see the train's doctors?"
+            ],
+            correct: [1, 4, 5],
+            explanation: "1) Cavab var — mətn onu “on doqquzuncu əsrdə yaşamış rus həkimi” kimi təsvir edir. 2) Cavab yoxdur — onun “şəhər çörəkxanasında işləyən bir qadınla” evləndiyi deyilir, lakin adı çəkilmir. 3) Cavab yoxdur — həkimlərin yaşı haqqında məlumat yoxdur. 4) Cavab var: “the Matvei Mudrov medical train”. 5) Cavab var: “...the Matvei Mudrov stops in each town or village on the BAM twice a year.” (ildə iki dəfə)."
+        }
+    ],
+    vocabulary: [
+        { en: "Access", az: "çıxış, əlçatanlıq" },
+        { en: "Check-up", az: "yoxlanış, müayinə" },
+        { en: "Confirmation", az: "təsdiq" },
+        { en: "Connection", az: "əlaqə" },
+        { en: "Dislocated shoulder", az: "çıxmış çiyin" },
+        { en: "Expansion plan", az: "genişlənmə planı" },
+        { en: "Health care", az: "səhiyyə" },
+        { en: "Honesty", az: "dürüstlük" },
+        { en: "Inhabitant", az: "sakin" },
+        { en: "Laboratory", az: "laboratoriya" },
+        { en: "Patient", az: "xəstə" },
+        { en: "Queue", az: "növbə" },
+        { en: "Railway line", az: "dəmir yolu xətti" },
+        { en: "Remote", az: "ucqar" },
+        { en: "Skill", az: "bacarıq" },
+        { en: "Surgery", az: "cərrahiyyə" },
+        { en: "To diagnose", az: "diaqnoz qoymaq" },
+        { en: "To recognise", az: "tanımaq" },
+        { en: "To respect", az: "hörmət etmək" },
+        { en: "To settle", az: "məskunlaşmaq" },
+        { en: "To treat", az: "müalicə etmək" },
+        { en: "Treatment", az: "müalicə" }
+    ]
+};
+
+const HK = 'sa:reading14:history';
+
+function openTab(tabId, btn) {
+    hideTip();
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    if(btn) btn.classList.add('active');
+    fitSticky(); sendHeight();
+}
+
+const canHover = matchMedia('(hover:hover)').matches;
+
+function fitSticky() {
+    const s = document.getElementById('text-section'), t = document.querySelector('.tabs');
+    const th = t ? t.offsetHeight : 0;
+    document.documentElement.style.setProperty('--stick-top', (th + 12) + 'px');
+    if (!s || !s.offsetHeight) return;
+    s.classList.toggle('is-sticky', innerWidth > 800 && s.offsetHeight < innerHeight - th - 32);
+}
+function sendHeight() {
+    try { parent.postMessage({ type: 'iframe-height', h: document.body.offsetHeight }, '*'); } catch(e) {}
+}
+addEventListener('resize', () => { fitSticky(); sendHeight(); });
+addEventListener('load', () => { fitSticky(); sendHeight(); });
+if (window.ResizeObserver) new ResizeObserver(() => { fitSticky(); sendHeight(); }).observe(document.body);
+let tipActive = null, pinned = false;
+const sec = () => document.getElementById('text-section');
+
+function setLock(open) {
+    const b = document.getElementById('lock-btn');
+    sec().classList.toggle('unlocked', open);
+    b.classList.toggle('unlocked', open);
+    b.innerHTML = open ? '<i class="fas fa-lock-open"></i> Tərcümə: Açıq' : '<i class="fas fa-lock"></i> Tərcümə: Qıfıllı';
+    document.getElementById('tr-hint').style.display = open ? 'block' : 'none';
+    hideTip();
+}
+function toggleLock() { setLock(!sec().classList.contains('unlocked')); }
+
+function renderText() {
+    document.getElementById('tr-hint').textContent = canHover ? 'Tərcümə üçün cümlənin üzərinə gətir.' : 'Tərcümə üçün cümləyə toxun.';
+    document.getElementById('text-container').innerHTML = data.text.map((t, i) => `<span class="sentence-wrapper" data-i="${i}" tabindex="0">${t.en}</span> `).join('');
+}
+
+function showTip(el) {
+    const s = sec(), tip = document.getElementById('tip');
+    if (!s.classList.contains('unlocked')) return;
+    if (tipActive) tipActive.classList.remove('active');
+    tipActive = el; el.classList.add('active');
+    tip.textContent = data.text[el.dataset.i].az;
+    tip.style.visibility = 'hidden'; tip.style.display = 'block';
+    const sr = s.getBoundingClientRect(), rs = el.getClientRects(), first = rs[0], last = rs[rs.length - 1];
+    const w = tip.offsetWidth, h = tip.offsetHeight, cw = s.clientWidth, pad = 8;
+    const cx = first.left + first.width / 2 - sr.left - s.clientLeft;
+    const left = Math.min(Math.max(cx - w / 2, pad), cw - w - pad);
+    let top = first.top - sr.top - s.clientTop + s.scrollTop - h - 8, below = false;
+    if (top < s.scrollTop + pad) { top = last.bottom - sr.top - s.clientTop + s.scrollTop + 8; below = true; }
+    tip.style.left = left + 'px'; tip.style.top = top + 'px';
+    tip.style.setProperty('--ax', Math.min(Math.max(cx - left, 14), w - 14) + 'px');
+    tip.classList.toggle('below', below);
+    tip.style.visibility = 'visible';
+}
+function hideTip() {
+    const t = document.getElementById('tip');
+    if (t) t.style.display = 'none';
+    if (tipActive) tipActive.classList.remove('active');
+    tipActive = null; pinned = false;
+}
+
+function renderQuestions() {
+    let n = 0;
+    document.getElementById('questions-container').innerHTML = data.questions.map(item => {
+        n++;
+        const type = item.type || 'tf', multi = type === 'multi';
+        const opts = type === 'tf' ? ['True', 'False'] : item.options;
+        const keys = opts.map((_, i) => multi ? String(i + 1) : 'ABCDEFGH'[i]);
+        const inputs = opts.map((o, i) => `<label class="option-label" data-k="${keys[i]}"><input type="${multi ? 'checkbox' : 'radio'}" name="${item.id}" value="${keys[i]}"><span>${keys[i]}) ${o}</span></label>`).join('');
+        return `${item.title ? `<div class="section-title">${item.title}</div>` : ''}
+        <div class="question-card">
+            ${item.q ? `<div class="question-text">${item.no ? item.no + ' ' : ''}${item.q}</div>` : ''}
+            ${multi ? '<div class="multi-hint">Bir neçə variant seçə bilərsən</div>' : ''}
+            <div class="options-list">${inputs}</div>
+            <div class="result-box" id="result-${item.id}">
+                <div class="feedback-title" id="feedback-${item.id}"></div>
+                <div class="correct-answer-text" id="correct-text-${item.id}" style="display:none;"></div>
+                ${item.explanation ? `<div class="explanation-text"><strong>İzah:</strong> ${item.explanation}</div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderVocab() {
+    const container = document.getElementById('vocab-list');
+    let html = '';
+    data.vocabulary.forEach(item => {
+        html += `<li class="vocab-item"><div class="vocab-en" onclick="speakWord('${item.en.replace(/'/g, "\\'")}')"><i class="fas fa-volume-up"></i> ${item.en}</div><div class="vocab-az">${item.az}</div></li>`;
+    });
+    container.innerHTML = html;
+}
+
+function speakWord(word) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(word);
+        u.lang = 'en-US';
+        window.speechSynthesis.speak(u);
+    }
+}
+
+function notice(m) {
+    const n = document.getElementById('notice');
+    n.textContent = m; n.style.display = 'block';
+    clearTimeout(n._t); n._t = setTimeout(() => n.style.display = 'none', 3000);
+}
+
+function checkAnswers() {
+    if (document.getElementById('check-btn').disabled) return;
+    const picks = data.questions.map(q => [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(i => i.value));
+    if (!picks.some(p => p.length)) { notice('Əvvəlcə ən azı bir suala cavab seç.'); return; }
+    document.getElementById('notice').style.display = 'none';
+    let ok = 0, bad = 0, skip = 0;
+    data.questions.forEach((q, i) => {
+        const sel = picks[i], multi = q.type === 'multi';
+        const cor = (Array.isArray(q.correct) ? q.correct : [q.correct]).map(String);
+        const box = document.getElementById('result-' + q.id), fb = document.getElementById('feedback-' + q.id), ct = document.getElementById('correct-text-' + q.id);
+        const card = box.closest('.question-card');
+        let cls = '';
+        if (!sel.length) { skip++; fb.innerText = 'Cavab seçilməyib!'; fb.className = 'feedback-title'; }
+        else if (sel.length === cor.length && cor.every(c => sel.includes(c))) { ok++; cls = ' correct'; fb.innerText = 'Düzdür!'; fb.className = 'feedback-title correct'; }
+        else { bad++; cls = ' wrong'; fb.innerText = 'Səhvdir!'; fb.className = 'feedback-title wrong'; }
+        ct.innerText = 'Düzgün cavab: ' + (multi ? cor.slice().sort((x, y) => x - y).join(', ') : cor.map(c => card.querySelector(`label[data-k="${c}"] span`).textContent).join(', '));
+        ct.style.display = 'block';
+        card.querySelectorAll('.option-label').forEach(l => {
+            if (cor.includes(l.dataset.k)) l.classList.add('opt-correct');
+            else if (sel.includes(l.dataset.k)) l.classList.add('opt-wrong');
+        });
+        card.querySelectorAll('input').forEach(inp => inp.disabled = true);
+        box.className = 'result-box show' + cls;
+    });
+    document.getElementById('check-btn').disabled = true;
+
+    const scoreBox = document.getElementById('score-box');
+    scoreBox.innerHTML = `
+        <div class="score-main">Nəticə: ${ok} / ${data.questions.length}</div>
+        <div class="score-row">
+            <span class="score-ok"><i class="fas fa-check-circle"></i> Düz: ${ok}</span>
+            <span class="score-bad"><i class="fas fa-times-circle"></i> Səhv: ${bad}</span>
+            <span class="score-skip"><i class="fas fa-minus-circle"></i> Cavabsız: ${skip}</span>
+        </div>
+        <button class="retry-btn" onclick="retryQuiz()"><i class="fas fa-rotate-right"></i> Yenidən cəhd et</button>`;
+    scoreBox.classList.add('show');
+    setLock(true);
+    saveHistory(ok, bad, skip);
+    scoreBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function saveHistory(ok, bad, skip) {
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HK)) || []; } catch(e) { hist = []; }
+    hist.push({ t: Date.now(), ok: ok, bad: bad, skip: skip, total: data.questions.length });
+    try { localStorage.setItem(HK, JSON.stringify(hist)); } catch(e) {}
+    renderResults();
+}
+
+function renderResults() {
+    const c = document.getElementById('results-container');
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HK)) || []; } catch(e) { hist = []; }
+    if(!hist.length) { c.innerHTML = '<div class="lock-box"><i class="fas fa-clipboard-list"></i> Hələ nəticə yoxdur.</div>'; return; }
+    
+    let html = '';
+    hist.slice().reverse().forEach((x, i) => {
+        const d = new Date(x.t);
+        const p = n => String(n).padStart(2, '0');
+        const dateStr = `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}, ${p(d.getHours())}:${p(d.getMinutes())}`;
+        html += `<div class="res-row"><div><div class="res-no">Cəhd ${hist.length - i}</div><div class="res-date"><i class="fas fa-clock"></i> ${dateStr}</div></div><div class="res-right"><div class="res-score">${x.ok} / ${x.total}</div><div class="res-detail">Düz: ${x.ok} · Səhv: ${x.bad} · Cavabsız: ${x.skip}</div></div></div>`;
+    });
+    c.innerHTML = html;
+}
+
+function retryQuiz() {
+    document.querySelectorAll('#questions-container input').forEach(r => { r.checked = false; r.disabled = false; });
+    document.querySelectorAll('.option-label').forEach(l => l.classList.remove('opt-correct', 'opt-wrong'));
+    document.querySelectorAll('.result-box').forEach(b => b.className = 'result-box');
+    document.querySelectorAll('.correct-answer-text').forEach(e => e.style.display = 'none');
+    const sb = document.getElementById('score-box');
+    sb.classList.remove('show'); sb.innerHTML = '';
+    document.getElementById('check-btn').disabled = false;
+    setLock(false);
+    sec().scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+const tc = document.getElementById('text-container');
+tc.addEventListener('click', e => {
+    const el = e.target.closest('.sentence-wrapper');
+    if (!el || !sec().classList.contains('unlocked') || (canHover && e.detail)) return;
+    if (tipActive === el && pinned) hideTip(); else { showTip(el); pinned = true; }
+});
+tc.addEventListener('mouseover', e => {
+    const el = canHover && e.target.closest('.sentence-wrapper');
+    if (el) { pinned = false; showTip(el); }
+});
+tc.addEventListener('mouseout', e => { if (canHover && !pinned && e.target.closest('.sentence-wrapper')) hideTip(); });
+tc.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); } });
+document.addEventListener('click', e => { if (!e.target.closest('.sentence-wrapper')) hideTip(); });
+sec().addEventListener('scroll', hideTip);
+addEventListener('resize', hideTip);
+
+renderText();
+renderQuestions();
+renderVocab();
+renderResults();
+</script>
+</body>
+</html>
