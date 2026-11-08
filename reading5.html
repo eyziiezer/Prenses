@@ -16,7 +16,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; transition: background-color .3s, color .3s; }
 body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color); color: var(--text-color); padding: 20px; }
 
-.tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 10px; margin: -8px 0 12px; padding: 8px 0; flex-wrap: wrap; position: sticky; top: 0; z-index: 30; background: var(--bg-color); }
 .tab-btn { padding: 10px 20px; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; color: var(--text-color); font-weight: 600; font-size: 1rem; }
 .tab-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
 .tab-content { display: none; background: var(--panel-bg); padding: 20px; border-radius: 10px; }
@@ -79,7 +79,8 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color);
 
 html{-webkit-text-size-adjust:100%}
 button,label,.sentence-wrapper{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.text-section{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;overscroll-behavior:contain}
+.text-section{position:relative}
+.text-section.is-sticky{position:sticky;top:var(--stick-top,76px)}
 .sentence-wrapper.active{background:var(--highlight-bg);border-bottom-color:var(--primary-color)}
 .tr-hint{display:none;font-size:.85rem;opacity:.7;margin:-5px 0 12px}
 .tip{display:none;position:absolute;z-index:20;width:max-content;max-width:calc(100% - 16px);background:var(--tooltip-bg);color:#fff;text-align:center;border-radius:8px;padding:10px 14px;font-size:.95rem;line-height:1.5;box-shadow:0 10px 25px -5px rgba(0,0,0,.5);border:1px solid var(--border-color);pointer-events:none}
@@ -164,38 +165,38 @@ const data = {
     ],
     questions: [
         {
-            id: "q1", title: "Decide whether the statements are true or false.",
-            q: "1. The age of marriage in Nepal depends on the money the families have.",
+            id: "q1", title: "Decide whether the statements are true or false.", no: "1.",
+            q: "The age of marriage in Nepal depends on the money the families have.",
             correct: "A",
             explanation: "Mətndə açıq şəkildə deyilir: “Girls from the wealthiest families marry 2 years later than those from the poorest...” (Ən varlı ailələrdən olan qızlar ən kasıb ailələrdən olanlardan 2 il sonra ərə gedirlər...). Bu, ailənin maddi vəziyyətinin evlilik yaşına birbaşa təsir etdiyini göstərir."
         },
         {
-            id: "q2",
-            q: "2. Families want to marry their daughters soon to earn money.",
+            id: "q2", no: "2.",
+            q: "Families want to marry their daughters soon to earn money.",
             correct: "B",
             explanation: "Mətn bunun əksini deyir. Ailələr qızlarını “economic burden” (iqtisadi yük) olaraq gördükləri və “decrease the financial burden” (maliyyə yükünü azaltmaq) üçün ərə verirlər. Həmçinin, cehiz (dowry) məsələsində qızın yaşı artdıqca bəyin ailəsinə daha çox pul ödəməli olurlar. Deməli, məqsəd pul qazanmaq deyil, xərci azaltmaqdır."
         },
         {
-            id: "q3",
-            q: "3. According to the law, people aren't allowed to marry until they are 18.",
+            id: "q3", no: "3.",
+            q: "According to the law, people aren't allowed to marry until they are 18.",
             correct: "A",
             explanation: "Mətndə qeyd olunur ki, qanuni evlilik yaşı 20-dir, lakin valideyn icazəsi ilə 18 yaşda evlənmək mümkündür (“18 with parental consent”). Bu o deməkdir ki, 18 yaş evlənmək üçün minimum yaş həddidir. 18 yaşından əvvəl evlənməyə icazə verilmir."
         },
         {
-            id: "q4",
-            q: "4. Parents who marry their children before the allowed age pay a fine and imprisonment for up to three years.",
+            id: "q4", no: "4.",
+            q: "Parents who marry their children before the allowed age pay a fine and imprisonment for up to three years.",
             correct: "A",
             explanation: "Mətn qanunu təsvir edir: “The law states that punishment for child marriage is imprisonment for up to three years and a fine...” (Qanunda uşaq nikahının cəzasının üç ilə qədər həbs və cərimə olduğu bildirilir). Qanunun nadir hallarda tətbiq olunması onun məzmununu dəyişdirmir."
         },
         {
-            id: "q5",
-            q: "5. The government is not doing much to put an end to child marriage.",
+            id: "q5", no: "5.",
+            q: "The government is not doing much to put an end to child marriage.",
             correct: "B",
             explanation: "Mətn hökumətin bu istiqamətdə fəaliyyətini vurğulayır: “...a clear government commitment to ending child marriage...” (uşaq nikahına son qoymaq üçün aydın hökumət öhdəliyi) və Nazirliyin UNICEF ilə birlikdə milli strategiya hazırladığını qeyd edir."
         },
         {
-            id: "q6",
-            q: "6. The recent earthquake was negative for the eradication of child marriage.",
+            id: "q6", no: "6.",
+            q: "The recent earthquake was negative for the eradication of child marriage.",
             correct: "A",
             explanation: "Mətnin sonunda deyilir: “...the post-earthquake ... environment has meant progress is slow and the national strategy has been delayed.” (Zəlzələdən sonrakı mühit tərəqqinin yavaşlaması və milli strategiyanın gecikməsi demək oldu). Bu, zəlzələnin prosesə mənfi təsir etdiyini göstərir."
         }
@@ -250,9 +251,24 @@ function openTab(tabId, btn) {
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     if(btn) btn.classList.add('active');
+    fitSticky(); sendHeight();
 }
 
 const canHover = matchMedia('(hover:hover)').matches;
+
+function fitSticky() {
+    const s = document.getElementById('text-section'), t = document.querySelector('.tabs');
+    const th = t ? t.offsetHeight : 0;
+    document.documentElement.style.setProperty('--stick-top', (th + 12) + 'px');
+    if (!s || !s.offsetHeight) return;
+    s.classList.toggle('is-sticky', innerWidth > 800 && s.offsetHeight < innerHeight - th - 32);
+}
+function sendHeight() {
+    try { parent.postMessage({ type: 'iframe-height', h: document.body.offsetHeight }, '*'); } catch(e) {}
+}
+addEventListener('resize', () => { fitSticky(); sendHeight(); });
+addEventListener('load', () => { fitSticky(); sendHeight(); });
+if (window.ResizeObserver) new ResizeObserver(() => { fitSticky(); sendHeight(); }).observe(document.body);
 let tipActive = null, pinned = false;
 const sec = () => document.getElementById('text-section');
 
@@ -306,7 +322,7 @@ function renderQuestions() {
         const inputs = opts.map((o, i) => `<label class="option-label" data-k="${keys[i]}"><input type="${multi ? 'checkbox' : 'radio'}" name="${item.id}" value="${keys[i]}"><span>${keys[i]}) ${o}</span></label>`).join('');
         return `${item.title ? `<div class="section-title">${item.title}</div>` : ''}
         <div class="question-card">
-            <div class="question-text">${n}. ${item.q.replace(/^\d+\.\s*/, '')}</div>
+            ${item.q ? `<div class="question-text">${item.no ? item.no + ' ' : ''}${item.q}</div>` : ''}
             ${multi ? '<div class="multi-hint">Bir neçə variant seçə bilərsən</div>' : ''}
             <div class="options-list">${inputs}</div>
             <div class="result-box" id="result-${item.id}">

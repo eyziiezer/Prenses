@@ -16,7 +16,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; transition: background-color .3s, color .3s; }
 body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color); color: var(--text-color); padding: 20px; }
 
-.tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 10px; margin: -8px 0 12px; padding: 8px 0; flex-wrap: wrap; position: sticky; top: 0; z-index: 30; background: var(--bg-color); }
 .tab-btn { padding: 10px 20px; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; color: var(--text-color); font-weight: 600; font-size: 1rem; }
 .tab-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
 .tab-content { display: none; background: var(--panel-bg); padding: 20px; border-radius: 10px; }
@@ -79,7 +79,8 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color);
 
 html{-webkit-text-size-adjust:100%}
 button,label,.sentence-wrapper{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.text-section{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;overscroll-behavior:contain}
+.text-section{position:relative}
+.text-section.is-sticky{position:sticky;top:var(--stick-top,76px)}
 .sentence-wrapper.active{background:var(--highlight-bg);border-bottom-color:var(--primary-color)}
 .tr-hint{display:none;font-size:.85rem;opacity:.7;margin:-5px 0 12px}
 .tip{display:none;position:absolute;z-index:20;width:max-content;max-width:calc(100% - 16px);background:var(--tooltip-bg);color:#fff;text-align:center;border-radius:8px;padding:10px 14px;font-size:.95rem;line-height:1.5;box-shadow:0 10px 25px -5px rgba(0,0,0,.5);border:1px solid var(--border-color);pointer-events:none}
@@ -172,50 +173,50 @@ const data = {
     ],
     questions: [
         {
-            id: "q1", title: "Decide whether the statements are true or false.",
-            q: "1. The television was demonstrated at the Royal Institute in 1926.",
+            id: "q1", title: "Decide whether the statements are true or false.", no: "1.",
+            q: "The television was demonstrated at the Royal Institute in 1926.",
             correct: "A",
             explanation: "Mətndə deyilir ki, ilk şəkillər 1924-cü ildə göndərilib və “...his invention was formally demonstrated at the Royal Institute two years later.” (onun ixtirası iki il sonra Kral İnstitutunda rəsmi olaraq nümayiş etdirildi). 1924 + 2 = 1926."
         },
         {
-            id: "q2",
-            q: "2. Colour images were not possible after the 1920s.",
+            id: "q2", no: "2.",
+            q: "Colour images were not possible after the 1920s.",
             correct: "B",
             explanation: "Mətndə deyilir: “In the same year, the first colour images were sent.” (Həmin ildə ilk rəngli təsvirlər göndərildi). Bu, rəngli təsvirlərin 1920-ci illərdə mümkün olduğunu göstərir. Cümlə isə bunun əksini iddia edir."
         },
         {
-            id: "q3",
-            q: "3. Television images were first sent across the Atlantic Ocean in 1928.",
+            id: "q3", no: "3.",
+            q: "Television images were first sent across the Atlantic Ocean in 1928.",
             correct: "A",
             explanation: "Mətndə qeyd olunur: “In 1928, images were sent from Britain to America...” (1928-ci ildə təsvirlər Britaniyadan Amerikaya göndərildi). Bu, Atlantik okeanının bir sahilindən digərinə göndərilməsi deməkdir."
         },
         {
-            id: "q4",
-            q: "4. Home refrigerators were invented in the 1920s.",
+            id: "q4", no: "4.",
+            q: "Home refrigerators were invented in the 1920s.",
             correct: "B",
             explanation: "Mətndə aydın şəkildə yazılıb: “...home fridges weren't invented until 1913 in the USA.” (ev soyuducuları ABŞ-da 1913-cü ilə qədər ixtira edilməmişdi). Onlar 1920-ci illərdə məşhurlaşıb, lakin daha əvvəl ixtira olunub."
         },
         {
-            id: "q5",
-            q: "5. Fridges became popular in the USA before they were popular in the UK.",
+            id: "q5", no: "5.",
+            q: "Fridges became popular in the USA before they were popular in the UK.",
             correct: "A",
             explanation: "Mətndə ABŞ-da 1920-ci illərdə çox populyar olduğu (“became very popular in the USA in the 1920s”), lakin Britaniyalıların daha az maraq göstərdiyi (“British people were less interested”) qeyd olunur."
         },
         {
-            id: "q6",
-            q: "6. Some psychologists helped John Larson to build his invention.",
+            id: "q6", no: "6.",
+            q: "Some psychologists helped John Larson to build his invention.",
             correct: "B",
             explanation: "Mətndə deyilir: “He used the ideas of other psychologists to make a machine...” (O, maşını yaratmaq üçün digər psixoloqların ideyalarından istifadə etdi). Bu, onların ideyalarının ona kömək olduğunu göstərir, lakin bilavasitə psixoloqların özləri Con Larsona kömək etməmişdilər."
         },
         {
-            id: "q7",
-            q: "7. On some occasions, lie detectors have been used as evidence in court.",
+            id: "q7", no: "7.",
+            q: "On some occasions, lie detectors have been used as evidence in court.",
             correct: "B",
             explanation: "Mətn bunun əksini deyir: “...they weren't accepted as evidence and never have been since then.” (...onlar sübut kimi qəbul edilmədi və o vaxtdan bəri heç vaxt qəbul edilməyib)."
         },
         {
-            id: "q8",
-            q: "8. Today, lie detectors are never used by the police.",
+            id: "q8", no: "8.",
+            q: "Today, lie detectors are never used by the police.",
             correct: "B",
             explanation: "Mətndə açıq şəkildə yazılıb: “...polygraphs are still used by some police forces and the FBI...” (...poliqraflar hələ də bəzi polis qüvvələri və FTB tərəfindən istifadə olunur)."
         }
@@ -261,9 +262,24 @@ function openTab(tabId, btn) {
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     if(btn) btn.classList.add('active');
+    fitSticky(); sendHeight();
 }
 
 const canHover = matchMedia('(hover:hover)').matches;
+
+function fitSticky() {
+    const s = document.getElementById('text-section'), t = document.querySelector('.tabs');
+    const th = t ? t.offsetHeight : 0;
+    document.documentElement.style.setProperty('--stick-top', (th + 12) + 'px');
+    if (!s || !s.offsetHeight) return;
+    s.classList.toggle('is-sticky', innerWidth > 800 && s.offsetHeight < innerHeight - th - 32);
+}
+function sendHeight() {
+    try { parent.postMessage({ type: 'iframe-height', h: document.body.offsetHeight }, '*'); } catch(e) {}
+}
+addEventListener('resize', () => { fitSticky(); sendHeight(); });
+addEventListener('load', () => { fitSticky(); sendHeight(); });
+if (window.ResizeObserver) new ResizeObserver(() => { fitSticky(); sendHeight(); }).observe(document.body);
 let tipActive = null, pinned = false;
 const sec = () => document.getElementById('text-section');
 
@@ -317,7 +333,7 @@ function renderQuestions() {
         const inputs = opts.map((o, i) => `<label class="option-label" data-k="${keys[i]}"><input type="${multi ? 'checkbox' : 'radio'}" name="${item.id}" value="${keys[i]}"><span>${keys[i]}) ${o}</span></label>`).join('');
         return `${item.title ? `<div class="section-title">${item.title}</div>` : ''}
         <div class="question-card">
-            <div class="question-text">${n}. ${item.q.replace(/^\d+\.\s*/, '')}</div>
+            ${item.q ? `<div class="question-text">${item.no ? item.no + ' ' : ''}${item.q}</div>` : ''}
             ${multi ? '<div class="multi-hint">Bir neçə variant seçə bilərsən</div>' : ''}
             <div class="options-list">${inputs}</div>
             <div class="result-box" id="result-${item.id}">

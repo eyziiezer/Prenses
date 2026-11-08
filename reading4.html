@@ -16,7 +16,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; transition: background-color .3s, color .3s; }
 body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color); color: var(--text-color); padding: 20px; }
 
-.tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 10px; margin: -8px 0 12px; padding: 8px 0; flex-wrap: wrap; position: sticky; top: 0; z-index: 30; background: var(--bg-color); }
 .tab-btn { padding: 10px 20px; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; color: var(--text-color); font-weight: 600; font-size: 1rem; }
 .tab-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
 .tab-content { display: none; background: var(--panel-bg); padding: 20px; border-radius: 10px; }
@@ -79,7 +79,8 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color);
 
 html{-webkit-text-size-adjust:100%}
 button,label,.sentence-wrapper{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.text-section{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;overscroll-behavior:contain}
+.text-section{position:relative}
+.text-section.is-sticky{position:sticky;top:var(--stick-top,76px)}
 .sentence-wrapper.active{background:var(--highlight-bg);border-bottom-color:var(--primary-color)}
 .tr-hint{display:none;font-size:.85rem;opacity:.7;margin:-5px 0 12px}
 .tip{display:none;position:absolute;z-index:20;width:max-content;max-width:calc(100% - 16px);background:var(--tooltip-bg);color:#fff;text-align:center;border-radius:8px;padding:10px 14px;font-size:.95rem;line-height:1.5;box-shadow:0 10px 25px -5px rgba(0,0,0,.5);border:1px solid var(--border-color);pointer-events:none}
@@ -161,50 +162,50 @@ const data = {
     ],
     questions: [
         {
-            id: "q1", title: "Decide whether the statements are true or false.",
-            q: "1. The mummy was found in Egypt on Wednesday.",
+            id: "q1", title: "Decide whether the statements are true or false.", no: "1.",
+            q: "The mummy was found in Egypt on Wednesday.",
             correct: "B",
             explanation: "Mətndə deyilir ki, çərşənbə günü arxeoloqlar mumiyanın kimliyini elan ediblər (“announced on Wednesday”). Mumiyanın özü isə 1903-cü ildə tapılmışdı (“discovered in 1903”)."
         },
         {
-            id: "q2",
-            q: "2. Hatshepsut's mummy was found near the River Nile.",
+            id: "q2", no: "2.",
+            q: "Hatshepsut's mummy was found near the River Nile.",
             correct: "A",
             explanation: "Mətndə mumiyanın Krallar Vadisində tapıldığı və bu vadinin Nil çayının qərb sahilində yerləşdiyi qeyd olunur (“located on the west bank of the Nile River”)."
         },
         {
-            id: "q3",
-            q: "3. The mummy has been in a museum since it was discovered.",
+            id: "q3", no: "3.",
+            q: "The mummy has been in a museum since it was discovered.",
             correct: "B",
             explanation: "Mətndə bunun əksi yazılıb: “...it remained in a tomb until this past spring...” (...o, keçən yaza qədər məqbərədə qaldı...). Yalnız bu yaxınlarda test üçün Qahirə Muzeyinə gətirilib."
         },
         {
-            id: "q4",
-            q: "4. She was the only queen of Egypt.",
+            id: "q4", no: "4.",
+            q: "She was the only queen of Egypt.",
             correct: "B",
             explanation: "Mətndə digər qadın fironların da adı çəkilir: “Of all the female pharaohs–including Cleopatra and Nefertiti...” (Bütün qadın fironların, o cümlədən Kleopatra və Nefertitinin...)."
         },
         {
-            id: "q5",
-            q: "5. She built all her temples in the Valley of the Kings.",
+            id: "q5", no: "5.",
+            q: "She built all her temples in the Valley of the Kings.",
             correct: "B",
             explanation: "Mətndə deyilir ki, o, yüzlərlə abidə və məbədi bütün Misir boyunca tikdirib (“built hundreds of monuments and temples throughout Egypt”), təkcə bir yerdə yox."
         },
         {
-            id: "q6",
-            q: "6. Historians don't know many things about her.",
+            id: "q6", no: "6.",
+            q: "Historians don't know many things about her.",
             correct: "A",
             explanation: "Mətndə onun irsinin Misir tarixindən demək olar ki, silindiyi qeyd olunur (“her legacy were virtually erased from Egyptian history”). Bu da onun haqqında məlumatların az olmasına işarə edir."
         },
         {
-            id: "q7",
-            q: "7. Tuthmose III killed the queen.",
+            id: "q7", no: "7.",
+            q: "Tuthmose III killed the queen.",
             correct: "B",
             explanation: "Mətndə III Tutmosun onun adını daşıyan abidələri və qeydləri məhv etdiyi güman edilir (“destroyed records and monuments”), lakin onun kraliçanı öldürdüyü barədə heç bir məlumat verilmir."
         },
         {
-            id: "q8",
-            q: "8. Her mummy may help historians to understand what happened.",
+            id: "q8", no: "8.",
+            q: "Her mummy may help historians to understand what happened.",
             correct: "A",
             explanation: "Mətnin son cümləsi bunu birbaşa təsdiqləyir: “Finding the mummy of this powerful queen may provide details about an important part of Egyptian history.” (Bu güclü kraliçanın mumiyasının tapılması Misir tarixinin vacib bir hissəsi haqqında detallar verə bilər.)"
         }
@@ -262,9 +263,24 @@ function openTab(tabId, btn) {
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     if(btn) btn.classList.add('active');
+    fitSticky(); sendHeight();
 }
 
 const canHover = matchMedia('(hover:hover)').matches;
+
+function fitSticky() {
+    const s = document.getElementById('text-section'), t = document.querySelector('.tabs');
+    const th = t ? t.offsetHeight : 0;
+    document.documentElement.style.setProperty('--stick-top', (th + 12) + 'px');
+    if (!s || !s.offsetHeight) return;
+    s.classList.toggle('is-sticky', innerWidth > 800 && s.offsetHeight < innerHeight - th - 32);
+}
+function sendHeight() {
+    try { parent.postMessage({ type: 'iframe-height', h: document.body.offsetHeight }, '*'); } catch(e) {}
+}
+addEventListener('resize', () => { fitSticky(); sendHeight(); });
+addEventListener('load', () => { fitSticky(); sendHeight(); });
+if (window.ResizeObserver) new ResizeObserver(() => { fitSticky(); sendHeight(); }).observe(document.body);
 let tipActive = null, pinned = false;
 const sec = () => document.getElementById('text-section');
 
@@ -318,7 +334,7 @@ function renderQuestions() {
         const inputs = opts.map((o, i) => `<label class="option-label" data-k="${keys[i]}"><input type="${multi ? 'checkbox' : 'radio'}" name="${item.id}" value="${keys[i]}"><span>${keys[i]}) ${o}</span></label>`).join('');
         return `${item.title ? `<div class="section-title">${item.title}</div>` : ''}
         <div class="question-card">
-            <div class="question-text">${n}. ${item.q.replace(/^\d+\.\s*/, '')}</div>
+            ${item.q ? `<div class="question-text">${item.no ? item.no + ' ' : ''}${item.q}</div>` : ''}
             ${multi ? '<div class="multi-hint">Bir neçə variant seçə bilərsən</div>' : ''}
             <div class="options-list">${inputs}</div>
             <div class="result-box" id="result-${item.id}">
