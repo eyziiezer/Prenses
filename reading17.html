@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reading 17</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+    color-scheme: dark;
+    --bg-color: #1a1a2e; --text-color: #e0e0e0; --panel-bg: #16213e;
+    --primary-color: #0f3460; --border-color: #2a2a4a; --vocab-en-color: #60a5fa;
+    --highlight-bg: rgba(96,165,250,.2); --success-color: #4ade80;
+    --error-color: #f87171; --tooltip-bg: rgba(15,23,42,.95);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; transition: background-color .3s, color .3s; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color); color: var(--text-color); padding: 20px; }
+
+.tabs { display: flex; gap: 10px; margin: -8px 0 12px; padding: 8px 0; flex-wrap: wrap; position: sticky; top: 0; z-index: 30; background: var(--bg-color); }
+.tab-btn { padding: 10px 20px; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; color: var(--text-color); font-weight: 600; font-size: 1rem; }
+.tab-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+.tab-content { display: none; background: var(--panel-bg); padding: 20px; border-radius: 10px; }
+.tab-content.active { display: block; }
+
+.reading-layout { display: flex; gap: 20px; align-items: flex-start; }
+@media(max-width: 800px) { .reading-layout { flex-direction: column; } }
+
+.text-section { flex: 1; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+.text-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+.lock-btn { background: var(--border-color); border: none; padding: 8px 15px; border-radius: 8px; color: var(--text-color); cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+.lock-btn.unlocked { background: var(--success-color); color: #000; }
+.paragraph { line-height: 1.8; font-size: 1.05rem; }
+
+.sentence-wrapper { position: relative; cursor: default; border-bottom: 1px dashed transparent; }
+.unlocked .sentence-wrapper { cursor: pointer; border-bottom-color: var(--border-color); }
+.unlocked .sentence-wrapper:hover { background: var(--highlight-bg); border-bottom-color: var(--primary-color); }
+.unlocked .sentence-wrapper:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-5px); }
+
+.questions-section { flex: 1; }
+.question-card { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+.question-text { font-weight: bold; margin-bottom: 10px; }
+.option-label { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px; border-radius: 5px; margin-bottom: 5px; }
+.option-label:hover { background: var(--highlight-bg); }
+.option-label input[type="radio"] { cursor: pointer; width: 18px; height: 18px; }
+.result-box { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; border-left: 5px solid; }
+.result-box.show { display: block; animation: fadeIn .3s; }
+.result-box.correct { background: rgba(74,222,128,.1); border-color: var(--success-color); }
+.result-box.wrong { background: rgba(248,113,113,.1); border-color: var(--error-color); }
+.feedback-title { font-weight: bold; margin-bottom: 5px; }
+.feedback-title.correct { color: var(--success-color); }
+.feedback-title.wrong { color: var(--error-color); }
+.correct-answer-text { font-weight: bold; color: var(--success-color); margin-bottom: 10px; }
+.explanation-text { font-size: .95rem; opacity: .9; font-style: italic; }
+.check-all-btn { display: block; width: 100%; padding: 15px; background: var(--primary-color); color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
+.check-all-btn:hover { opacity: .9; }
+.score-box { display: none; margin-top: 20px; padding: 20px; border-radius: 10px; border: 2px solid var(--primary-color); background: var(--panel-bg); text-align: center; }
+.score-box.show { display: block; }
+.score-main { font-size: 1.4rem; font-weight: bold; margin-bottom: 12px; }
+.score-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; font-weight: 600; }
+.score-ok { color: var(--success-color); } .score-bad { color: var(--error-color); } .score-skip { opacity: .7; }
+.retry-btn { margin-top: 15px; padding: 10px 22px; background: var(--primary-color); color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+.retry-btn:hover { opacity: .9; }
+
+.vocab-list { list-style: none; }
+.vocab-item { display: flex; padding: 12px 10px; border-bottom: 1px solid var(--border-color); align-items: center; }
+.vocab-item:hover { background: var(--highlight-bg); }
+.vocab-en { font-weight: bold; width: 50%; cursor: pointer; color: var(--vocab-en-color); display: flex; align-items: center; gap: 10px; }
+.vocab-az { width: 50%; }
+
+.res-row { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 14px 16px; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 10px; flex-wrap: wrap; }
+.res-no { font-weight: bold; font-size: 1.05rem; }
+.res-date { opacity: .8; font-size: .9rem; margin-top: 3px; }
+.res-right { text-align: right; }
+.res-score { font-weight: bold; font-size: 1.2rem; color: var(--success-color); }
+.res-detail { opacity: .75; font-size: .85rem; margin-top: 3px; }
+.lock-box { text-align: center; padding: 40px 20px; opacity: .85; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+html{-webkit-text-size-adjust:100%}
+button,label,.sentence-wrapper{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.text-section{position:relative}
+.text-section.is-sticky{position:sticky;top:var(--stick-top,76px)}
+.sentence-wrapper.active{background:var(--highlight-bg);border-bottom-color:var(--primary-color)}
+.tr-hint{display:none;font-size:.85rem;opacity:.7;margin:-5px 0 12px}
+.tip{display:none;position:absolute;z-index:20;width:max-content;max-width:calc(100% - 16px);background:var(--tooltip-bg);color:#fff;text-align:center;border-radius:8px;padding:10px 14px;font-size:.95rem;line-height:1.5;box-shadow:0 10px 25px -5px rgba(0,0,0,.5);border:1px solid var(--border-color);pointer-events:none}
+.tip::after{content:"";position:absolute;left:var(--ax,50%);top:100%;margin-left:-6px;border:6px solid transparent;border-top-color:var(--tooltip-bg)}
+.tip.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--tooltip-bg)}
+.section-title{font-weight:bold;margin:0 0 15px;padding-bottom:10px;border-bottom:1px solid var(--border-color)}
+.multi-hint{font-size:.85rem;opacity:.7;margin-bottom:8px}
+.option-label{border:1px solid var(--border-color);min-height:44px;padding:10px;margin-bottom:6px;align-items:center}
+.option-label input{cursor:pointer;width:20px;height:20px;flex:none}
+.option-label input:disabled{cursor:default}
+.option-label.opt-correct{background:rgba(74,222,128,.15);border-color:var(--success-color)}
+.option-label.opt-wrong{background:rgba(248,113,113,.15);border-color:var(--error-color)}
+.check-all-btn:disabled{opacity:.4;cursor:not-allowed}
+.notice{display:none;margin-top:10px;padding:10px 14px;border-radius:8px;background:rgba(248,113,113,.12);border-left:4px solid var(--error-color)}
+@media(max-width:800px){
+ body{padding:12px}
+ .tab-content{padding:14px}
+ .tabs{flex-wrap:nowrap;overflow-x:auto;gap:8px}
+ .tab-btn{padding:10px 14px;font-size:.9rem;white-space:nowrap;flex:1 0 auto}
+ .text-section{position:relative;max-height:none;overflow:visible;padding:14px}
+ .text-controls{flex-wrap:wrap;gap:8px}
+ .paragraph{font-size:1.02rem;line-height:1.85}
+ .vocab-item{padding:10px 4px;font-size:.95rem;gap:8px}
+ .check-all-btn{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="openTab('questions', this)">1. Suallar və Mətn</button>
+    <button class="tab-btn" onclick="openTab('vocabulary', this)">2. Lüğət</button>
+    <button class="tab-btn" onclick="openTab('results', this)">3. Nəticələr</button>
+</div>
+
+<div id="questions" class="tab-content active">
+    <div class="reading-layout">
+        <div class="text-section" id="text-section">
+            <div class="text-controls">
+                <span style="font-weight:bold;">Mətn</span>
+                <button id="lock-btn" class="lock-btn" onclick="toggleLock()"><i class="fas fa-lock"></i> Tərcümə: Qıfıllı</button>
+            </div>
+            <div id="tr-hint" class="tr-hint"></div>
+            <div id="text-container" class="paragraph"></div>
+            <div id="tip" class="tip" role="tooltip"></div>
+        </div>
+        <div class="questions-section">
+            <div id="questions-container"></div>
+            <button id="check-btn" class="check-all-btn" onclick="checkAnswers()">Cavabları Yoxla</button>
+            <div class="notice" id="notice"></div>
+            <div class="score-box" id="score-box"></div>
+        </div>
+    </div>
+</div>
+
+<div id="vocabulary" class="tab-content">
+    <ul id="vocab-list" class="vocab-list"></ul>
+</div>
+
+<div id="results" class="tab-content">
+    <div id="results-container"></div>
+</div>
+
+<script>
+const data = {
+    text: [
+        { en: "The wheel is probably the most important mechanical invention of all time.", az: "Təkər yəqin ki, bütün zamanların ən vacib mexaniki ixtirasıdır." },
+        { en: "Nearly every machine built since the Industrial Revolution involves this single, basic invention.", az: "Sənaye inqilabından bəri düzəldilən demək olar ki, hər bir maşın bu tək, əsas ixtiranı ehtiva edir." },
+        { en: "It's hard to imagine any mechanized system that would be possible without a wheel.", az: "Təkərsiz mümkün ola biləcək hər hansı bir mexanikləşdirilmiş sistemi təsəvvür etmək çətindir." },
+        { en: "If there is no wheel, there is a symmetrical part moving in a circular motion on an axis.", az: "Əgər təkər yoxdursa, ox üzərində dairəvi hərəkət edən simmetrik bir hissə var." },
+        { en: "From tiny watch gears to automobiles, jet engines and computer disk drives, the principle is the same.", az: "Kiçik saat dişlilərindən tutmuş avtomobillərə, reaktiv mühərriklərə və kompüter disk drayverlərinə qədər prinsip eynidir." },
+        { en: "The earliest known use of the wheel was a potter's wheel in Mesopotamia as early as 3500 BC.", az: "Təkərin bilinən ən erkən istifadəsi eramızdan əvvəl 3500-cü ildə Mesopotamiyada dulusçu çarxı olub." },
+        { en: "The first use of the wheel for transportation was probably on Mesopotamian chariots in 3200 BC.", az: "Təkərin nəqliyyat üçün ilk istifadəsi yəqin ki, eramızdan əvvəl 3200-cü ildə Mesopotamiya döyüş arabalarında olub." },
+        { en: "It is interesting that wheels may have had industrial or manufacturing uses before they were used on vehicles.", az: "Maraqlıdır ki, təkərlər nəqliyyat vasitələrində istifadə edilməzdən əvvəl sənaye və ya istehsalat məqsədləri üçün istifadə edilmiş ola bilər." },
+        { en: "A wheel with spokes first appeared on Egyptian chariots in around 2000 BC.", az: "Tilləri olan təkər ilk dəfə eramızdan əvvəl təxminən 2000-ci ildə Misir döyüş arabalarında peyda olub." },
+        { en: "Interestingly, wheels seem to have developed in Europe by 1400 BC.", az: "Maraqlıdır ki, təkərlər eramızdan əvvəl 1400-cü ilə qədər Avropada da inkişaf etmiş görünür." },
+        { en: "It developed in Europe without any influence from the Middle East.", az: "O, Avropada Yaxın Şərqdən heç bir təsir olmadan inkişaf edib." },
+        { en: "The idea of the wheel appears so simple, and because it is simple, it's easy to assume that the wheel would have \"happened\" in every culture.", az: "Təkər ideyası o qədər sadə görünür və sadə olduğu üçün təkərin hər mədəniyyətdə “baş verəcəyini” güman etmək asandır." },
+        { en: "Once a culture reached a particular level of sophistication, the wheel should appear.", az: "Bir mədəniyyət müəyyən bir inkişaf səviyyəsinə çatdıqdan sonra təkər ortaya çıxmalı idi." },
+        { en: "However, this is not the case.", az: "Ancaq vəziyyət belə deyil." },
+        { en: "The great Inca, Aztec and Maya civilizations reached an extremely high level of development, yet they never used the wheel.", az: "Böyük İnka, Astek və Mayya sivilizasiyaları son dərəcə yüksək inkişaf səviyyəsinə çatmışdılar, lakin heç vaxt təkərdən istifadə etmədilər." },
+        { en: "In fact, there is no evidence that the use of the wheel existed among native people anywhere in the Western Hemisphere.", az: "Əslində, Qərb Yarımkürəsinin heç bir yerində yerli xalqlar arasında təkərin istifadəsinin mövcud olduğuna dair heç bir dəlil yoxdur." },
+        { en: "The wheel was only used after contact with Europeans.", az: "Təkər yalnız avropalılarla təmasdan sonra istifadə edildi." },
+        { en: "Even in Europe, the wheel evolved little until the beginning of the nineteenth century.", az: "Hətta Avropada belə, təkər on doqquzuncu əsrin əvvəllərinə qədər az inkişaf etdi." },
+        { en: "However, then, the wheel became the central component of technology.", az: "Ancaq sonra təkər texnologiyanın mərkəzi komponentinə çevrildi." },
+        { en: "The wheel came to be used in thousands of ways in countless different mechanisms.", az: "Təkər saysız-hesabsız fərqli mexanizmlərdə minlərlə üsulla istifadə edilməyə başladı." }
+    ],
+    questions: [
+        {
+            id: "q1", title: "1. Decide whether the statements are true or false.", no: "1.1.",
+            q: "All great civilizations such as the Aztecs and Mayans used wheels of some type and material.",
+            correct: "B",
+            explanation: "Mətn bunun tam əksini deyir: “...the great Inca, Aztec and Maya civilizations... never used the wheel.”"
+        },
+        {
+            id: "q2", no: "1.2.",
+            q: "The first wheels with spokes were invented in ancient Mesopotamia.",
+            correct: "B",
+            explanation: "Mətndə deyilir ki, tilləri olan təkər ilk dəfə Misir döyüş arabalarında peyda olub (“appeared on Egyptian chariots”)."
+        },
+        {
+            id: "q3", no: "1.3.",
+            q: "The potter's wheel was used for the first time in Egypt at around 3200 BC.",
+            correct: "B",
+            explanation: "Mətnə görə, dulusçu çarxı ilk dəfə eramızdan əvvəl 3500-cü ildə Mesopotamiyada istifadə edilib (“in Mesopotamia as early as 3500 BC”)."
+        },
+        {
+            id: "q4", no: "1.4.",
+            q: "Almost all machines since the Industrial Revolution use a wheel structure of some sort.",
+            correct: "A",
+            explanation: "Mətnin ilk paraqrafında deyilir: “Nearly every machine built since the Industrial Revolution involves this single, basic invention.”"
+        },
+        {
+            id: "q5",
+            title: "2. Answer the question according to the passage.",
+            q: "<i>What was the earliest known use of the wheel?</i>",
+            type: "single",
+            options: [
+                "Transportation in Mesopotamia",
+                "Manufacturing in Mesopotamia",
+                "Transportation in Egypt",
+                "Manufacturing in Europe",
+                "Pottery making in Mesopotamia"
+            ],
+            correct: "E",
+            explanation: "Mətn bunu birbaşa qeyd edir: “The earliest known use of the wheel was a potter's wheel in Mesopotamia as early as 3500 BC.”"
+        },
+        {
+            id: "q6",
+            title: "3. Answer the question according to the passage.",
+            q: "<i>Which of the following is true of invention of the wheel?</i>",
+            type: "single",
+            options: [
+                "The earliest known use of a wheel was in a chariot.",
+                "When the wheel was invented in Mesopotamia, it was automatically used on transportation or vehicles.",
+                "Wheels were originally used Mesopotamia for art and decoration, but never for industrial purposes.",
+                "The first use of a wheel was a potter's wheel in Mesopotamia after which wheels had industrial uses before transportation.",
+                "The first wheels invented in Mesopotamia had spokes and were not solid."
+            ],
+            correct: "D",
+            explanation: "Bu cavab mətndəki iki faktı birləşdirir: ən erkən istifadənin dulusçu çarxı olması və təkərlərin nəqliyyat vasitələrində istifadədən əvvəl sənaye və ya istehsalat məqsədləri üçün istifadə edilməsi ehtimalı."
+        },
+        {
+            id: "q7",
+            title: "4. Complete the sentence according to the passage.",
+            q: "The wheel was developed ...",
+            type: "single",
+            options: [
+                "in every culture when that society reached at a certain level of sophistication and development",
+                "only when different cultures come into contact with each other and shared information",
+                "in some cultures, but not others as the wheel were not thought to be helpful or necessary to that culture",
+                "in some cultures, but not other cultures regardless of the level of sophistication of the culture",
+                "in the Western Hemisphere without contact with Europeans"
+            ],
+            correct: "D",
+            explanation: "Mətn həm təkərin bəzi mədəniyyətlərdə (Mesopotamiya, Avropa) yarandığını, həm də çox inkişaf etmiş bəzi mədəniyyətlərdə (İnka, Astek, Mayya) heç vaxt istifadə edilmədiyini göstərir. Bu da göstərir ki, təkərin yaranması inkişaf səviyyəsindən birbaşa asılı olmayıb."
+        },
+        {
+            id: "q8",
+            title: "5. Which of the following questions does the passage answer?",
+            q: "",
+            type: "multi",
+            options: [
+                "How did the absence of the wheel impact the technological landscape of the civilizations in the Western Hemisphere?",
+                "What specific limitations hindered the adoption of the wheel in certain regions or cultures?",
+                "When and where was the earliest known use of the wheel for transportation?",
+                "What was the earliest known use of the wheel?",
+                "What was the turning point in the development and use of the wheel?"
+            ],
+            correct: [3, 4],
+            explanation: "1) Cavab yoxdur — mətn təkərin olmamasının texnologiyaya necə təsir etdiyini izah etmir. 2) Cavab yoxdur — təkərin mənimsənilməməsinin səbəbi izah edilmir. 3) Cavab var: “...on Mesopotamian chariots in 3200 BC.” 4) Cavab var: “...a potter's wheel in Mesopotamia as early as 3500 BC.” 5) Cavab yoxdur — mətn dönüş nöqtəsinin nə olduğunu (səbəbini) izah etmir."
+        }
+    ],
+    vocabulary: [
+        { en: "Absence", az: "yoxluq" },
+        { en: "Adoption", az: "mənimsəmə" },
+        { en: "Axis", az: "ox" },
+        { en: "Chariot", az: "döyüş arabası" },
+        { en: "Circular", az: "dairəvi" },
+        { en: "Component", az: "komponent, tərkib hissəsi" },
+        { en: "Contact", az: "əlaqə" },
+        { en: "Countless", az: "saysız-hesabsız" },
+        { en: "Evidence", az: "dəlil, sübut" },
+        { en: "Gear", az: "dişli çarx" },
+        { en: "Hemisphere", az: "yarımkürə" },
+        { en: "Influence", az: "təsir" },
+        { en: "Invention", az: "ixtira" },
+        { en: "Landscape", az: "mənzərə" },
+        { en: "Manufacturing", az: "istehsalat" },
+        { en: "Mechanical", az: "mexaniki" },
+        { en: "Mechanized", az: "mexanikləşdirilmiş" },
+        { en: "Motion", az: "hərəkət" },
+        { en: "Native people", az: "yerli xalq" },
+        { en: "Potter's wheel", az: "dulusçu çarxı" },
+        { en: "Principle", az: "prinsip" },
+        { en: "Regardless of something", az: "nədənsə asılı olmayaraq" },
+        { en: "Solid", az: "möhkəm, bərk" },
+        { en: "Sophistication", az: "inkişaf səviyyəsi, mürəkkəblik" },
+        { en: "Spoke", az: "til (təkərin)" },
+        { en: "Symmetrical", az: "simmetrik" },
+        { en: "To assume", az: "güman etmək, fərz etmək" },
+        { en: "To evolve", az: "təkamül etmək, inkişaf etmək" },
+        { en: "To hinder", az: "mane olmaq" },
+        { en: "To involve", az: "ehtiva etmək, əhatə etmək" },
+        { en: "Transportation", az: "nəqliyyat" },
+        { en: "Turning point", az: "dönüş nöqtəsi" }
+    ]
+};
+
+const HK = 'sa:reading17:history';
+
+function openTab(tabId, btn) {
+    hideTip();
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    if(btn) btn.classList.add('active');
+    fitSticky(); sendHeight();
+}
+
+const canHover = matchMedia('(hover:hover)').matches;
+
+function fitSticky() {
+    const s = document.getElementById('text-section'), t = document.querySelector('.tabs');
+    const th = t ? t.offsetHeight : 0;
+    document.documentElement.style.setProperty('--stick-top', (th + 12) + 'px');
+    if (!s || !s.offsetHeight) return;
+    s.classList.toggle('is-sticky', innerWidth > 800 && s.offsetHeight < innerHeight - th - 32);
+}
+function sendHeight() {
+    try { parent.postMessage({ type: 'iframe-height', h: document.body.offsetHeight }, '*'); } catch(e) {}
+}
+addEventListener('resize', () => { fitSticky(); sendHeight(); });
+addEventListener('load', () => { fitSticky(); sendHeight(); });
+if (window.ResizeObserver) new ResizeObserver(() => { fitSticky(); sendHeight(); }).observe(document.body);
+let tipActive = null, pinned = false;
+const sec = () => document.getElementById('text-section');
+
+function setLock(open) {
+    const b = document.getElementById('lock-btn');
+    sec().classList.toggle('unlocked', open);
+    b.classList.toggle('unlocked', open);
+    b.innerHTML = open ? '<i class="fas fa-lock-open"></i> Tərcümə: Açıq' : '<i class="fas fa-lock"></i> Tərcümə: Qıfıllı';
+    document.getElementById('tr-hint').style.display = open ? 'block' : 'none';
+    hideTip();
+}
+function toggleLock() { setLock(!sec().classList.contains('unlocked')); }
+
+function renderText() {
+    document.getElementById('tr-hint').textContent = canHover ? 'Tərcümə üçün cümlənin üzərinə gətir.' : 'Tərcümə üçün cümləyə toxun.';
+    document.getElementById('text-container').innerHTML = data.text.map((t, i) =>
+        `${t.br ? '<br>' : ''}<span class="sentence-wrapper" data-i="${i}" tabindex="0">${t.en}</span> `
+    ).join('');
+}
+
+function showTip(el) {
+    const s = sec(), tip = document.getElementById('tip');
+    if (!s.classList.contains('unlocked')) return;
+    if (tipActive) tipActive.classList.remove('active');
+    tipActive = el; el.classList.add('active');
+    tip.textContent = data.text[el.dataset.i].az;
+    tip.style.visibility = 'hidden'; tip.style.display = 'block';
+    const sr = s.getBoundingClientRect(), rs = el.getClientRects(), first = rs[0], last = rs[rs.length - 1];
+    const w = tip.offsetWidth, h = tip.offsetHeight, cw = s.clientWidth, pad = 8;
+    const cx = first.left + first.width / 2 - sr.left - s.clientLeft;
+    const left = Math.min(Math.max(cx - w / 2, pad), cw - w - pad);
+    let top = first.top - sr.top - s.clientTop + s.scrollTop - h - 8, below = false;
+    if (top < s.scrollTop + pad) { top = last.bottom - sr.top - s.clientTop + s.scrollTop + 8; below = true; }
+    tip.style.left = left + 'px'; tip.style.top = top + 'px';
+    tip.style.setProperty('--ax', Math.min(Math.max(cx - left, 14), w - 14) + 'px');
+    tip.classList.toggle('below', below);
+    tip.style.visibility = 'visible';
+}
+function hideTip() {
+    const t = document.getElementById('tip');
+    if (t) t.style.display = 'none';
+    if (tipActive) tipActive.classList.remove('active');
+    tipActive = null; pinned = false;
+}
+
+function renderQuestions() {
+    let n = 0;
+    document.getElementById('questions-container').innerHTML = data.questions.map(item => {
+        n++;
+        const type = item.type || 'tf', multi = type === 'multi';
+        const opts = type === 'tf' ? ['True', 'False'] : item.options;
+        const keys = opts.map((_, i) => multi ? String(i + 1) : 'ABCDEFGH'[i]);
+        const inputs = opts.map((o, i) => `<label class="option-label" data-k="${keys[i]}"><input type="${multi ? 'checkbox' : 'radio'}" name="${item.id}" value="${keys[i]}"><span>${keys[i]}) ${o}</span></label>`).join('');
+        return `${item.title ? `<div class="section-title">${item.title}</div>` : ''}
+        <div class="question-card">
+            ${item.q ? `<div class="question-text">${item.no ? item.no + ' ' : ''}${item.q}</div>` : ''}
+            ${multi ? '<div class="multi-hint">Bir neçə variant seçə bilərsən</div>' : ''}
+            <div class="options-list">${inputs}</div>
+            <div class="result-box" id="result-${item.id}">
+                <div class="feedback-title" id="feedback-${item.id}"></div>
+                <div class="correct-answer-text" id="correct-text-${item.id}" style="display:none;"></div>
+                ${item.explanation ? `<div class="explanation-text"><strong>İzah:</strong> ${item.explanation}</div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderVocab() {
+    const container = document.getElementById('vocab-list');
+    let html = '';
+    data.vocabulary.forEach(item => {
+        html += `<li class="vocab-item"><div class="vocab-en" onclick="speakWord('${item.en.replace(/'/g, "\\'")}')"><i class="fas fa-volume-up"></i> ${item.en}</div><div class="vocab-az">${item.az}</div></li>`;
+    });
+    container.innerHTML = html;
+}
+
+function speakWord(word) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(word);
+        u.lang = 'en-US';
+        window.speechSynthesis.speak(u);
+    }
+}
+
+function notice(m) {
+    const n = document.getElementById('notice');
+    n.textContent = m; n.style.display = 'block';
+    clearTimeout(n._t); n._t = setTimeout(() => n.style.display = 'none', 3000);
+}
+
+function checkAnswers() {
+    if (document.getElementById('check-btn').disabled) return;
+    const picks = data.questions.map(q => [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(i => i.value));
+    if (!picks.some(p => p.length)) { notice('Əvvəlcə ən azı bir suala cavab seç.'); return; }
+    document.getElementById('notice').style.display = 'none';
+    let ok = 0, bad = 0, skip = 0;
+    data.questions.forEach((q, i) => {
+        const sel = picks[i], multi = q.type === 'multi';
+        const cor = (Array.isArray(q.correct) ? q.correct : [q.correct]).map(String);
+        const box = document.getElementById('result-' + q.id), fb = document.getElementById('feedback-' + q.id), ct = document.getElementById('correct-text-' + q.id);
+        const card = box.closest('.question-card');
+        let cls = '';
+        if (!sel.length) { skip++; fb.innerText = 'Cavab seçilməyib!'; fb.className = 'feedback-title'; }
+        else if (sel.length === cor.length && cor.every(c => sel.includes(c))) { ok++; cls = ' correct'; fb.innerText = 'Düzdür!'; fb.className = 'feedback-title correct'; }
+        else { bad++; cls = ' wrong'; fb.innerText = 'Səhvdir!'; fb.className = 'feedback-title wrong'; }
+        ct.innerText = 'Düzgün cavab: ' + (multi ? cor.slice().sort((x, y) => x - y).join(', ') : cor.map(c => card.querySelector(`label[data-k="${c}"] span`).textContent).join(', '));
+        ct.style.display = 'block';
+        card.querySelectorAll('.option-label').forEach(l => {
+            if (cor.includes(l.dataset.k)) l.classList.add('opt-correct');
+            else if (sel.includes(l.dataset.k)) l.classList.add('opt-wrong');
+        });
+        card.querySelectorAll('input').forEach(inp => inp.disabled = true);
+        box.className = 'result-box show' + cls;
+    });
+    document.getElementById('check-btn').disabled = true;
+
+    const scoreBox = document.getElementById('score-box');
+    scoreBox.innerHTML = `
+        <div class="score-main">Nəticə: ${ok} / ${data.questions.length}</div>
+        <div class="score-row">
+            <span class="score-ok"><i class="fas fa-check-circle"></i> Düz: ${ok}</span>
+            <span class="score-bad"><i class="fas fa-times-circle"></i> Səhv: ${bad}</span>
+            <span class="score-skip"><i class="fas fa-minus-circle"></i> Cavabsız: ${skip}</span>
+        </div>
+        <button class="retry-btn" onclick="retryQuiz()"><i class="fas fa-rotate-right"></i> Yenidən cəhd et</button>`;
+    scoreBox.classList.add('show');
+    setLock(true);
+    saveHistory(ok, bad, skip);
+    scoreBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function saveHistory(ok, bad, skip) {
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HK)) || []; } catch(e) { hist = []; }
+    hist.push({ t: Date.now(), ok: ok, bad: bad, skip: skip, total: data.questions.length });
+    try { localStorage.setItem(HK, JSON.stringify(hist)); } catch(e) {}
+    renderResults();
+}
+
+function renderResults() {
+    const c = document.getElementById('results-container');
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HK)) || []; } catch(e) { hist = []; }
+    if(!hist.length) { c.innerHTML = '<div class="lock-box"><i class="fas fa-clipboard-list"></i> Hələ nəticə yoxdur.</div>'; return; }
+    
+    let html = '';
+    hist.slice().reverse().forEach((x, i) => {
+        const d = new Date(x.t);
+        const p = n => String(n).padStart(2, '0');
+        const dateStr = `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}, ${p(d.getHours())}:${p(d.getMinutes())}`;
+        html += `<div class="res-row"><div><div class="res-no">Cəhd ${hist.length - i}</div><div class="res-date"><i class="fas fa-clock"></i> ${dateStr}</div></div><div class="res-right"><div class="res-score">${x.ok} / ${x.total}</div><div class="res-detail">Düz: ${x.ok} · Səhv: ${x.bad} · Cavabsız: ${x.skip}</div></div></div>`;
+    });
+    c.innerHTML = html;
+}
+
+function retryQuiz() {
+    document.querySelectorAll('#questions-container input').forEach(r => { r.checked = false; r.disabled = false; });
+    document.querySelectorAll('.option-label').forEach(l => l.classList.remove('opt-correct', 'opt-wrong'));
+    document.querySelectorAll('.result-box').forEach(b => b.className = 'result-box');
+    document.querySelectorAll('.correct-answer-text').forEach(e => e.style.display = 'none');
+    const sb = document.getElementById('score-box');
+    sb.classList.remove('show'); sb.innerHTML = '';
+    document.getElementById('check-btn').disabled = false;
+    setLock(false);
+    sec().scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+const tc = document.getElementById('text-container');
+tc.addEventListener('click', e => {
+    const el = e.target.closest('.sentence-wrapper');
+    if (!el || !sec().classList.contains('unlocked') || (canHover && e.detail)) return;
+    if (tipActive === el && pinned) hideTip(); else { showTip(el); pinned = true; }
+});
+tc.addEventListener('mouseover', e => {
+    const el = canHover && e.target.closest('.sentence-wrapper');
+    if (el) { pinned = false; showTip(el); }
+});
+tc.addEventListener('mouseout', e => { if (canHover && !pinned && e.target.closest('.sentence-wrapper')) hideTip(); });
+tc.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); } });
+document.addEventListener('click', e => { if (!e.target.closest('.sentence-wrapper')) hideTip(); });
+sec().addEventListener('scroll', hideTip);
+addEventListener('resize', hideTip);
+
+renderText();
+renderQuestions();
+renderVocab();
+renderResults();
+</script>
+</body>
+</html>

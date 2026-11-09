@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reading 19</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+    color-scheme: dark;
+    --bg-color: #1a1a2e; --text-color: #e0e0e0; --panel-bg: #16213e;
+    --primary-color: #0f3460; --border-color: #2a2a4a; --vocab-en-color: #60a5fa;
+    --highlight-bg: rgba(96,165,250,.2); --success-color: #4ade80;
+    --error-color: #f87171; --tooltip-bg: rgba(15,23,42,.95);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; transition: background-color .3s, color .3s; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color); color: var(--text-color); padding: 20px; }
+
+.tabs { display: flex; gap: 10px; margin: -8px 0 12px; padding: 8px 0; flex-wrap: wrap; position: sticky; top: 0; z-index: 30; background: var(--bg-color); }
+.tab-btn { padding: 10px 20px; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; color: var(--text-color); font-weight: 600; font-size: 1rem; }
+.tab-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+.tab-content { display: none; background: var(--panel-bg); padding: 20px; border-radius: 10px; }
+.tab-content.active { display: block; }
+
+.reading-layout { display: flex; gap: 20px; align-items: flex-start; }
+@media(max-width: 800px) { .reading-layout { flex-direction: column; } }
+
+.text-section { flex: 1; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+.text-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+.lock-btn { background: var(--border-color); border: none; padding: 8px 15px; border-radius: 8px; color: var(--text-color); cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+.lock-btn.unlocked { background: var(--success-color); color: #000; }
+.paragraph { line-height: 1.8; font-size: 1.05rem; }
+
+.sentence-wrapper { position: relative; cursor: default; border-bottom: 1px dashed transparent; }
+.unlocked .sentence-wrapper { cursor: pointer; border-bottom-color: var(--border-color); }
+.unlocked .sentence-wrapper:hover { background: var(--highlight-bg); border-bottom-color: var(--primary-color); }
+.unlocked .sentence-wrapper:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-5px); }
+
+.questions-section { flex: 1; }
+.question-card { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+.question-text { font-weight: bold; margin-bottom: 10px; }
+.option-label { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px; border-radius: 5px; margin-bottom: 5px; }
+.option-label:hover { background: var(--highlight-bg); }
+.option-label input[type="radio"] { cursor: pointer; width: 18px; height: 18px; }
+.result-box { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; border-left: 5px solid; }
+.result-box.show { display: block; animation: fadeIn .3s; }
+.result-box.correct { background: rgba(74,222,128,.1); border-color: var(--success-color); }
+.result-box.wrong { background: rgba(248,113,113,.1); border-color: var(--error-color); }
+.feedback-title { font-weight: bold; margin-bottom: 5px; }
+.feedback-title.correct { color: var(--success-color); }
+.feedback-title.wrong { color: var(--error-color); }
+.correct-answer-text { font-weight: bold; color: var(--success-color); margin-bottom: 10px; }
+.explanation-text { font-size: .95rem; opacity: .9; font-style: italic; }
+.check-all-btn { display: block; width: 100%; padding: 15px; background: var(--primary-color); color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
+.check-all-btn:hover { opacity: .9; }
+.score-box { display: none; margin-top: 20px; padding: 20px; border-radius: 10px; border: 2px solid var(--primary-color); background: var(--panel-bg); text-align: center; }
+.score-box.show { display: block; }
+.score-main { font-size: 1.4rem; font-weight: bold; margin-bottom: 12px; }
+.score-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; font-weight: 600; }
+.score-ok { color: var(--success-color); } .score-bad { color: var(--error-color); } .score-skip { opacity: .7; }
+.retry-btn { margin-top: 15px; padding: 10px 22px; background: var(--primary-color); color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+.retry-btn:hover { opacity: .9; }
+
+.vocab-list { list-style: none; }
+.vocab-item { display: flex; padding: 12px 10px; border-bottom: 1px solid var(--border-color); align-items: center; }
+.vocab-item:hover { background: var(--highlight-bg); }
+.vocab-en { font-weight: bold; width: 50%; cursor: pointer; color: var(--vocab-en-color); display: flex; align-items: center; gap: 10px; }
+.vocab-az { width: 50%; }
+
+.res-row { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 14px 16px; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 10px; flex-wrap: wrap; }
+.res-no { font-weight: bold; font-size: 1.05rem; }
+.res-date { opacity: .8; font-size: .9rem; margin-top: 3px; }
+.res-right { text-align: right; }
+.res-score { font-weight: bold; font-size: 1.2rem; color: var(--success-color); }
+.res-detail { opacity: .75; font-size: .85rem; margin-top: 3px; }
+.lock-box { text-align: center; padding: 40px 20px; opacity: .85; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+html{-webkit-text-size-adjust:100%}
+button,label,.sentence-wrapper{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.text-section{position:relative}
+.text-section.is-sticky{position:sticky;top:var(--stick-top,76px)}
+.sentence-wrapper.active{background:var(--highlight-bg);border-bottom-color:var(--primary-color)}
+.tr-hint{display:none;font-size:.85rem;opacity:.7;margin:-5px 0 12px}
+.tip{display:none;position:absolute;z-index:20;width:max-content;max-width:calc(100% - 16px);background:var(--tooltip-bg);color:#fff;text-align:center;border-radius:8px;padding:10px 14px;font-size:.95rem;line-height:1.5;box-shadow:0 10px 25px -5px rgba(0,0,0,.5);border:1px solid var(--border-color);pointer-events:none}
+.tip::after{content:"";position:absolute;left:var(--ax,50%);top:100%;margin-left:-6px;border:6px solid transparent;border-top-color:var(--tooltip-bg)}
+.tip.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--tooltip-bg)}
+.section-title{font-weight:bold;margin:0 0 15px;padding-bottom:10px;border-bottom:1px solid var(--border-color)}
+.multi-hint{font-size:.85rem;opacity:.7;margin-bottom:8px}
+.option-label{border:1px solid var(--border-color);min-height:44px;padding:10px;margin-bottom:6px;align-items:center}
+.option-label input{cursor:pointer;width:20px;height:20px;flex:none}
+.option-label input:disabled{cursor:default}
+.option-label.opt-correct{background:rgba(74,222,128,.15);border-color:var(--success-color)}
+.option-label.opt-wrong{background:rgba(248,113,113,.15);border-color:var(--error-color)}
+.check-all-btn:disabled{opacity:.4;cursor:not-allowed}
+.notice{display:none;margin-top:10px;padding:10px 14px;border-radius:8px;background:rgba(248,113,113,.12);border-left:4px solid var(--error-color)}
+@media(max-width:800px){
+ body{padding:12px}
+ .tab-content{padding:14px}
+ .tabs{flex-wrap:nowrap;overflow-x:auto;gap:8px}
+ .tab-btn{padding:10px 14px;font-size:.9rem;white-space:nowrap;flex:1 0 auto}
+ .text-section{position:relative;max-height:none;overflow:visible;padding:14px}
+ .text-controls{flex-wrap:wrap;gap:8px}
+ .paragraph{font-size:1.02rem;line-height:1.85}
+ .vocab-item{padding:10px 4px;font-size:.95rem;gap:8px}
+ .check-all-btn{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="openTab('questions', this)">1. Suallar və Mətn</button>
+    <button class="tab-btn" onclick="openTab('vocabulary', this)">2. Lüğət</button>
+    <button class="tab-btn" onclick="openTab('results', this)">3. Nəticələr</button>
+</div>
+
+<div id="questions" class="tab-content active">
+    <div class="reading-layout">
+        <div class="text-section" id="text-section">
+            <div class="text-controls">
+                <span style="font-weight:bold;">Mətn</span>
+                <button id="lock-btn" class="lock-btn" onclick="toggleLock()"><i class="fas fa-lock"></i> Tərcümə: Qıfıllı</button>
+            </div>
+            <div id="tr-hint" class="tr-hint"></div>
+            <div id="text-container" class="paragraph"></div>
+            <div id="tip" class="tip" role="tooltip"></div>
+        </div>
+        <div class="questions-section">
+            <div id="questions-container"></div>
+            <button id="check-btn" class="check-all-btn" onclick="checkAnswers()">Cavabları Yoxla</button>
+            <div class="notice" id="notice"></div>
+            <div class="score-box" id="score-box"></div>
+        </div>
+    </div>
+</div>
+
+<div id="vocabulary" class="tab-content">
+    <ul id="vocab-list" class="vocab-list"></ul>
+</div>
+
+<div id="results" class="tab-content">
+    <div id="results-container"></div>
+</div>
+
+<script>
+const data = {
+    text: [
+        { en: "By the year 2050, nearly 80% of the Earth's population will live in urban centers.", az: "2050-ci ilə qədər Yer əhalisinin təxminən 80%-i şəhər mərkəzlərində yaşayacaq." },
+        { en: "It's estimated that the human population will increase by about three billion people by then.", az: "Hesablamalara görə, o vaxta qədər insan əhalisi təxminən üç milyard nəfər artacaq." },
+        { en: "An estimated 109 hectares of new land will be needed to grow enough food to feed them, if traditional farming methods continue as they are practised today.", az: "Əgər ənənəvi əkinçilik üsulları bu gün tətbiq olunduğu kimi davam edərsə, onları qidalandırmaq üçün kifayət qədər ərzaq yetişdirmək üçün təxminən 109 hektar yeni torpaq lazım olacaq." },
+        { en: "At present, throughout the world, 80% of the land that is suitable for raising crops is in use.", az: "Hazırda bütün dünyada əkinçilik üçün yararlı olan torpaqların 80%-i istifadə olunur." },
+        { en: "Historically, some 15 percent of that has been laid waste by poor management practices.", az: "Tarixən, bunun təxminən 15 faizi pis idarəetmə təcrübələri nəticəsində yararsız hala salınıb." },
+        { en: "What can be done to ensure enough food for the world's population to live on?", az: "Dünya əhalisinin yaşaması üçün kifayət qədər ərzağı təmin etmək üçün nə etmək olar?" },
+        { en: "One such solution is the 'Vertical Farm'.", az: "Belə həll yollarından biri “Şaquli ferma”dır." },
+        { en: "The concept is of multi-storey buildings in which food crops are grown in environmentally controlled conditions.", az: "Konsepsiya, ərzaq bitkilərinin ətraf mühitin nəzarət altında saxlandığı şəraitdə becərildiyi çoxmərtəbəli binalardan ibarətdir." },
+        { en: "Situated in the heart of urban centers, they would totally reduce the amount of transportation required to bring food to consumers.", az: "Şəhər mərkəzlərinin tam mərkəzində yerləşərək, onlar ərzağı istehlakçılara çatdırmaq üçün tələb olunan nəqliyyatın miqdarını tamamilə azaldardılar." },
+        { en: "Vertical farms would need to be efficient, cheap to construct and safe to operate.", az: "Şaquli fermalar səmərəli, tikintisi ucuz və istismarı təhlükəsiz olmalıdır." },
+        { en: "If successfully implemented, vertical farms offer the promise of urban renewal, sustainable production of a safe and varied food supply, and the eventual repair of ecosystems that have been sacrificed for horizontal farming.", az: "Uğurla tətbiq olunarsa, şaquli fermalar şəhərin yenilənməsi, təhlükəsiz və çeşidli qida təchizatının davamlı istehsalı və üfüqi fermerlik üçün fəda edilmiş ekosistemlərin nəhayət bərpası vədini verir." },
+        { en: "For instance, crops would be produced all year round, as they would be kept in artificially controlled conditions.", az: "Məsələn, məhsullar süni nəzarət edilən şəraitdə saxlanılacağı üçün il boyu istehsal edilərdi." },
+        { en: "There would be no weather-related crop failures due to droughts, floods or pests.", az: "Quraqlıq, daşqın və ya zərərvericilər səbəbindən hava ilə bağlı məhsul uğursuzluqları olmazdı." },
+        { en: "All the food could be grown organically, eliminating the need for herbicides, pesticides and fertilisers.", az: "Bütün ərzaqlar orqanik şəkildə becərilə bilərdi, bu da herbisidlərə, pestisidlərə və gübrələrə olan ehtiyacı aradan qaldırardı." },
+        { en: "The system would greatly reduce the incidence of many infectious diseases such as bacterial diseases like fire blight, fungal diseases like late blight, and viral diseases like mosaic that are acquired at the agricultural interface.", az: "Sistem, kənd təsərrüfatı interfeysində yaranan “yanıqlıq” kimi bakterial xəstəliklər, “gec yanıqlıq” kimi göbələk xəstəlikləri və “mozaika” kimi viral xəstəliklər kimi bir çox yoluxucu xəstəliyin yayılmasını xeyli azaldardı." },
+        { en: "Although the system would consume energy, it would return energy via methane generation from composting non-edible parts of plants.", az: "Sistem enerji istehlak etsə də, bitkilərin yeyilməyən hissələrinin çürüdülməsindən metan istehsalı yolu ilə enerjini geri qaytarardı." },
+        { en: "It would also greatly reduce fossil fuel use.", az: "O, həmçinin fosil yanacağından istifadəni xeyli azaldardı." },
+        { en: "Vertical farming is an attempt to address the undoubted problems that we face in producing enough food for a growing population.", az: "Şaquli fermerlik artan əhali üçün kifayət qədər ərzaq istehsalında qarşılaşdığımız şübhəsiz problemləri həll etmək cəhdidir." },
+        { en: "Although at the moment more needs to be done to reduce the negative impact it would have on the environment, particularly about the use of energy.", az: "Baxmayaraq ki, hazırda onun ətraf mühitə, xüsusən də enerji istifadəsi ilə bağlı mənfi təsirini azaltmaq üçün daha çox iş görülməlidir." },
+        { en: "While it is possible that much of our food will be grown in skyscrapers in future, most experts currently believe it is far from likely that we will simply use the space available on urban rooftops.", az: "Gələcəkdə qidamızın çox hissəsinin göydələnlərdə becərilməsi mümkün olsa da, hazırda əksər mütəxəssislər bizim sadəcə şəhər damlarındakı mövcud boşluqdan istifadə edəcəyimizin heç də ehtimal olmadığını düşünürlər." }
+    ],
+    questions: [
+        {
+            id: "q1", title: "1. Decide whether the statements are true or false.", no: "1.1.",
+            q: "Four fifth of the world population will live in cities by 2050.",
+            correct: "A",
+            explanation: "Mətndə deyilir: “...nearly 80% of the Earth's population will live in urban centers.” (80% beşdə dördə bərabərdir)."
+        },
+        {
+            id: "q2", no: "1.2.",
+            q: "The number of people living on the Earth will decrease in the future.",
+            correct: "B",
+            explanation: "Mətn bunun əksini deyir: “...the human population will increase by about three billion people...” (insan əhalisi təxminən üç milyard nəfər artacaq...)."
+        },
+        {
+            id: "q3", no: "1.3.",
+            q: "Nowadays only 15% of the land is suitable for farming.",
+            correct: "B",
+            explanation: "Mətndə deyilir ki, əkinçiliyə yararlı torpaqların 80%-i istifadə olunur və bu 80%-in 15%-i pis idarəetmə nəticəsində korlanıb. Bu, yalnız 15%-in yararlı olduğu demək deyil."
+        },
+        {
+            id: "q4", no: "1.4.",
+            q: "Food crops cannot be grown in the urban centres.",
+            correct: "B",
+            explanation: "Mətnin əsas mövzusu olan “Şaquli Ferma” konsepsiyası məhz ərzaq bitkilərinin şəhər mərkəzlərində becərilməsini nəzərdə tutur (“Situated in the heart of urban centers...”)."
+        },
+        {
+            id: "q5",
+            title: "2. Choose the correct definition of the underlined word “<u><i>required</i></u>”.",
+            q: "",
+            type: "single",
+            options: [
+                "to need something or make something necessary",
+                "to become or to make something become smaller in size, amount, degree, importance",
+                "to put a plan or system into operation",
+                "to get or obtain something",
+                "to give up something for something else considered more important"
+            ],
+            correct: "A",
+            explanation: "Mətndəki “...transportation required to bring food to consumers” ifadəsi “ərzağı istehlakçılara çatdırmaq üçün tələb olunan nəqliyyat” deməkdir. Bu, nəqliyyatın zəruri olduğunu və ona ehtiyac duyulduğunu göstərir."
+        },
+        {
+            id: "q6",
+            title: "3. Which sentence can start the IV paragraph?",
+            q: "",
+            type: "single",
+            options: [
+                "A major drawback of vertical farming, however, is that the plants would require artificial light.",
+                "The concept of indoor farming is not new.",
+                "The supporters of vertical farming claim many potential advantages for the system.",
+                "Many believe an entirely new approach to indoor farming is required, employing cutting-edge technologies.",
+                "Vertical farms would be located in centers meaning that there would be less need to take them long distances to customers."
+            ],
+            correct: "C",
+            explanation: "IV paraqraf tamamilə şaquli fermerliyin üstünlüklərini sadalayır (il boyu məhsul, hava ilə bağlı uğursuzluqların olmaması, orqanik becərmə və s.). Bu cümlə həmin üstünlüklərin siyahısına mükəmməl bir girişdir."
+        },
+        {
+            id: "q7",
+            title: "4. Complete the given sentence according to the passage.",
+            q: "The disadvantage of vertical farming is that ...",
+            type: "single",
+            options: [
+                "it helps to produce different kinds of food supply",
+                "it is not dangerous to manage",
+                "it will eliminate 'horizontal farming's negative impacts",
+                "with the help of it fruits and vegetables can be grown organically",
+                "the energy usage will have detrimental effect on the environment"
+            ],
+            correct: "E",
+            explanation: "Sonuncu paraqrafda bu problem açıq şəkildə qeyd olunur: “...more needs to be done to reduce the negative impact it would have on the environment, particularly about the use of energy.”"
+        },
+        {
+            id: "q8",
+            title: "5. Which of the following questions does the passage answer?",
+            q: "",
+            type: "multi",
+            options: [
+                "How many percent of the land is in use?",
+                "What will happen by 2050?",
+                "What are the negative consequences of vertical farming?",
+                "Where was the vertical farming used first?",
+                "What kind of disease can vertical farming diminish?"
+            ],
+            correct: [1, 2, 3, 5],
+            explanation: "1) Cavab var: “...80% of the land that is suitable for raising crops is in use.” 2) Cavab var — 2050-ci ilə qədər əhalinin 80%-i şəhərlərdə yaşayacaq və əhali 3 milyard artacaq. 3) Cavab var — enerji istifadəsinin ətraf mühitə mənfi təsiri qeyd olunur. 4) Cavab yoxdur — ilk harada tətbiq olunduğu barədə məlumat yoxdur. 5) Cavab var: “...bacterial diseases like fire blight, fungal diseases like late blight, and viral diseases like mosaic...”"
+        }
+    ],
+    vocabulary: [
+        { en: "All year round", az: "bütün il boyu" },
+        { en: "Composting", az: "kompostlama (üzvi tullantıların gübrəyə çevrilməsi)" },
+        { en: "Drought", az: "quraqlıq" },
+        { en: "Flood", az: "daşqın" },
+        { en: "Fossil fuel", az: "qazıntı yanacağı" },
+        { en: "Infectious disease", az: "yoluxucu xəstəlik" },
+        { en: "Multi-storey", az: "çoxmərtəbəli" },
+        { en: "Negative impact", az: "mənfi təsir" },
+        { en: "Pest", az: "zərərverici" },
+        { en: "Rooftop", az: "damın üstü" },
+        { en: "Skyscraper", az: "göydələn" },
+        { en: "Suitable", az: "yararlı, uyğun" },
+        { en: "Sustainable", az: "davamlı, dayanıqlı" },
+        { en: "To address a problem", az: "bir problemi həll etməyə çalışmaq" },
+        { en: "To be laid waste", az: "yararsız hala salınmaq" },
+        { en: "To consume", az: "istehlak etmək" },
+        { en: "To eliminate", az: "aradan qaldırmaq" },
+        { en: "To ensure", az: "təmin etmək" },
+        { en: "To estimate", az: "hesablamaq, təxmin etmək" },
+        { en: "To generate", az: "istehsal etmək" },
+        { en: "To implement", az: "tətbiq etmək, həyata keçirmək" },
+        { en: "To raise crops", az: "məhsul becərmək" },
+        { en: "To sacrifice", az: "fəda etmək" },
+        { en: "Traditional farming", az: "ənənəvi əkinçilik" },
+        { en: "Urban center", az: "şəhər mərkəzi" },
+        { en: "Urban renewal", az: "şəhərin yenilənməsi" }
+    ]
+};
+
+const HK = 'sa:reading19:history';
+
+function openTab(tabId, btn) {
+    hideTip();
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    if(btn) btn.classList.add('active');
+    fitSticky(); sendHeight();
+}
+
+const canHover = matchMedia('(hover:hover)').matches;
+
+function fitSticky() {
+    const s = document.getElementById('text-section'), t = document.querySelector('.tabs');
+    const th = t ? t.offsetHeight : 0;
+    document.documentElement.style.setProperty('--stick-top', (th + 12) + 'px');
+    if (!s || !s.offsetHeight) return;
+    s.classList.toggle('is-sticky', innerWidth > 800 && s.offsetHeight < innerHeight - th - 32);
+}
+function sendHeight() {
+    try { parent.postMessage({ type: 'iframe-height', h: document.body.offsetHeight }, '*'); } catch(e) {}
+}
+addEventListener('resize', () => { fitSticky(); sendHeight(); });
+addEventListener('load', () => { fitSticky(); sendHeight(); });
+if (window.ResizeObserver) new ResizeObserver(() => { fitSticky(); sendHeight(); }).observe(document.body);
+let tipActive = null, pinned = false;
+const sec = () => document.getElementById('text-section');
+
+function setLock(open) {
+    const b = document.getElementById('lock-btn');
+    sec().classList.toggle('unlocked', open);
+    b.classList.toggle('unlocked', open);
+    b.innerHTML = open ? '<i class="fas fa-lock-open"></i> Tərcümə: Açıq' : '<i class="fas fa-lock"></i> Tərcümə: Qıfıllı';
+    document.getElementById('tr-hint').style.display = open ? 'block' : 'none';
+    hideTip();
+}
+function toggleLock() { setLock(!sec().classList.contains('unlocked')); }
+
+function renderText() {
+    document.getElementById('tr-hint').textContent = canHover ? 'Tərcümə üçün cümlənin üzərinə gətir.' : 'Tərcümə üçün cümləyə toxun.';
+    document.getElementById('text-container').innerHTML = data.text.map((t, i) =>
+        `${t.br ? '<br>' : ''}<span class="sentence-wrapper" data-i="${i}" tabindex="0">${t.en}</span> `
+    ).join('');
+}
+
+function showTip(el) {
+    const s = sec(), tip = document.getElementById('tip');
+    if (!s.classList.contains('unlocked')) return;
+    if (tipActive) tipActive.classList.remove('active');
+    tipActive = el; el.classList.add('active');
+    tip.textContent = data.text[el.dataset.i].az;
+    tip.style.visibility = 'hidden'; tip.style.display = 'block';
+    const sr = s.getBoundingClientRect(), rs = el.getClientRects(), first = rs[0], last = rs[rs.length - 1];
+    const w = tip.offsetWidth, h = tip.offsetHeight, cw = s.clientWidth, pad = 8;
+    const cx = first.left + first.width / 2 - sr.left - s.clientLeft;
+    const left = Math.min(Math.max(cx - w / 2, pad), cw - w - pad);
+    let top = first.top - sr.top - s.clientTop + s.scrollTop - h - 8, below = false;
+    if (top < s.scrollTop + pad) { top = last.bottom - sr.top - s.clientTop + s.scrollTop + 8; below = true; }
+    tip.style.left = left + 'px'; tip.style.top = top + 'px';
+    tip.style.setProperty('--ax', Math.min(Math.max(cx - left, 14), w - 14) + 'px');
+    tip.classList.toggle('below', below);
+    tip.style.visibility = 'visible';
+}
+function hideTip() {
+    const t = document.getElementById('tip');
+    if (t) t.style.display = 'none';
+    if (tipActive) tipActive.classList.remove('active');
+    tipActive = null; pinned = false;
+}
+
+function renderQuestions() {
+    let n = 0;
+    document.getElementById('questions-container').innerHTML = data.questions.map(item => {
+        n++;
+        const type = item.type || 'tf', multi = type === 'multi';
+        const opts = type === 'tf' ? ['True', 'False'] : item.options;
+        const keys = opts.map((_, i) => multi ? String(i + 1) : 'ABCDEFGH'[i]);
+        const inputs = opts.map((o, i) => `<label class="option-label" data-k="${keys[i]}"><input type="${multi ? 'checkbox' : 'radio'}" name="${item.id}" value="${keys[i]}"><span>${keys[i]}) ${o}</span></label>`).join('');
+        return `${item.title ? `<div class="section-title">${item.title}</div>` : ''}
+        <div class="question-card">
+            ${item.q ? `<div class="question-text">${item.no ? item.no + ' ' : ''}${item.q}</div>` : ''}
+            ${multi ? '<div class="multi-hint">Bir neçə variant seçə bilərsən</div>' : ''}
+            <div class="options-list">${inputs}</div>
+            <div class="result-box" id="result-${item.id}">
+                <div class="feedback-title" id="feedback-${item.id}"></div>
+                <div class="correct-answer-text" id="correct-text-${item.id}" style="display:none;"></div>
+                ${item.explanation ? `<div class="explanation-text"><strong>İzah:</strong> ${item.explanation}</div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderVocab() {
+    const container = document.getElementById('vocab-list');
+    let html = '';
+    data.vocabulary.forEach(item => {
+        html += `<li class="vocab-item"><div class="vocab-en" onclick="speakWord('${item.en.replace(/'/g, "\\'")}')"><i class="fas fa-volume-up"></i> ${item.en}</div><div class="vocab-az">${item.az}</div></li>`;
+    });
+    container.innerHTML = html;
+}
+
+function speakWord(word) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(word);
+        u.lang = 'en-US';
+        window.speechSynthesis.speak(u);
+    }
+}
+
+function notice(m) {
+    const n = document.getElementById('notice');
+    n.textContent = m; n.style.display = 'block';
+    clearTimeout(n._t); n._t = setTimeout(() => n.style.display = 'none', 3000);
+}
+
+function checkAnswers() {
+    if (document.getElementById('check-btn').disabled) return;
+    const picks = data.questions.map(q => [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(i => i.value));
+    if (!picks.some(p => p.length)) { notice('Əvvəlcə ən azı bir suala cavab seç.'); return; }
+    document.getElementById('notice').style.display = 'none';
+    let ok = 0, bad = 0, skip = 0;
+    data.questions.forEach((q, i) => {
+        const sel = picks[i], multi = q.type === 'multi';
+        const cor = (Array.isArray(q.correct) ? q.correct : [q.correct]).map(String);
+        const box = document.getElementById('result-' + q.id), fb = document.getElementById('feedback-' + q.id), ct = document.getElementById('correct-text-' + q.id);
+        const card = box.closest('.question-card');
+        let cls = '';
+        if (!sel.length) { skip++; fb.innerText = 'Cavab seçilməyib!'; fb.className = 'feedback-title'; }
+        else if (sel.length === cor.length && cor.every(c => sel.includes(c))) { ok++; cls = ' correct'; fb.innerText = 'Düzdür!'; fb.className = 'feedback-title correct'; }
+        else { bad++; cls = ' wrong'; fb.innerText = 'Səhvdir!'; fb.className = 'feedback-title wrong'; }
+        ct.innerText = 'Düzgün cavab: ' + (multi ? cor.slice().sort((x, y) => x - y).join(', ') : cor.map(c => card.querySelector(`label[data-k="${c}"] span`).textContent).join(', '));
+        ct.style.display = 'block';
+        card.querySelectorAll('.option-label').forEach(l => {
+            if (cor.includes(l.dataset.k)) l.classList.add('opt-correct');
+            else if (sel.includes(l.dataset.k)) l.classList.add('opt-wrong');
+        });
+        card.querySelectorAll('input').forEach(inp => inp.disabled = true);
+        box.className = 'result-box show' + cls;
+    });
+    document.getElementById('check-btn').disabled = true;
+
+    const scoreBox = document.getElementById('score-box');
+    scoreBox.innerHTML = `
+        <div class="score-main">Nəticə: ${ok} / ${data.questions.length}</div>
+        <div class="score-row">
+            <span class="score-ok"><i class="fas fa-check-circle"></i> Düz: ${ok}</span>
+            <span class="score-bad"><i class="fas fa-times-circle"></i> Səhv: ${bad}</span>
+            <span class="score-skip"><i class="fas fa-minus-circle"></i> Cavabsız: ${skip}</span>
+        </div>
+        <button class="retry-btn" onclick="retryQuiz()"><i class="fas fa-rotate-right"></i> Yenidən cəhd et</button>`;
+    scoreBox.classList.add('show');
+    setLock(true);
+    saveHistory(ok, bad, skip);
+    scoreBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function saveHistory(ok, bad, skip) {
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HK)) || []; } catch(e) { hist = []; }
+    hist.push({ t: Date.now(), ok: ok, bad: bad, skip: skip, total: data.questions.length });
+    try { localStorage.setItem(HK, JSON.stringify(hist)); } catch(e) {}
+    renderResults();
+}
+
+function renderResults() {
+    const c = document.getElementById('results-container');
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HK)) || []; } catch(e) { hist = []; }
+    if(!hist.length) { c.innerHTML = '<div class="lock-box"><i class="fas fa-clipboard-list"></i> Hələ nəticə yoxdur.</div>'; return; }
+    
+    let html = '';
+    hist.slice().reverse().forEach((x, i) => {
+        const d = new Date(x.t);
+        const p = n => String(n).padStart(2, '0');
+        const dateStr = `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}, ${p(d.getHours())}:${p(d.getMinutes())}`;
+        html += `<div class="res-row"><div><div class="res-no">Cəhd ${hist.length - i}</div><div class="res-date"><i class="fas fa-clock"></i> ${dateStr}</div></div><div class="res-right"><div class="res-score">${x.ok} / ${x.total}</div><div class="res-detail">Düz: ${x.ok} · Səhv: ${x.bad} · Cavabsız: ${x.skip}</div></div></div>`;
+    });
+    c.innerHTML = html;
+}
+
+function retryQuiz() {
+    document.querySelectorAll('#questions-container input').forEach(r => { r.checked = false; r.disabled = false; });
+    document.querySelectorAll('.option-label').forEach(l => l.classList.remove('opt-correct', 'opt-wrong'));
+    document.querySelectorAll('.result-box').forEach(b => b.className = 'result-box');
+    document.querySelectorAll('.correct-answer-text').forEach(e => e.style.display = 'none');
+    const sb = document.getElementById('score-box');
+    sb.classList.remove('show'); sb.innerHTML = '';
+    document.getElementById('check-btn').disabled = false;
+    setLock(false);
+    sec().scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+const tc = document.getElementById('text-container');
+tc.addEventListener('click', e => {
+    const el = e.target.closest('.sentence-wrapper');
+    if (!el || !sec().classList.contains('unlocked') || (canHover && e.detail)) return;
+    if (tipActive === el && pinned) hideTip(); else { showTip(el); pinned = true; }
+});
+tc.addEventListener('mouseover', e => {
+    const el = canHover && e.target.closest('.sentence-wrapper');
+    if (el) { pinned = false; showTip(el); }
+});
+tc.addEventListener('mouseout', e => { if (canHover && !pinned && e.target.closest('.sentence-wrapper')) hideTip(); });
+tc.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); } });
+document.addEventListener('click', e => { if (!e.target.closest('.sentence-wrapper')) hideTip(); });
+sec().addEventListener('scroll', hideTip);
+addEventListener('resize', hideTip);
+
+renderText();
+renderQuestions();
+renderVocab();
+renderResults();
+</script>
+</body>
+</html>
