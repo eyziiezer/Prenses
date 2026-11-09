@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reading 23</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+    color-scheme: dark;
+    --bg-color: #1a1a2e; --text-color: #e0e0e0; --panel-bg: #16213e;
+    --primary-color: #0f3460; --border-color: #2a2a4a; --vocab-en-color: #60a5fa;
+    --highlight-bg: rgba(96,165,250,.2); --success-color: #4ade80;
+    --error-color: #f87171; --tooltip-bg: rgba(15,23,42,.95);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; transition: background-color .3s, color .3s; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color); color: var(--text-color); padding: 20px; }
+
+.tabs { display: flex; gap: 10px; margin: -8px 0 12px; padding: 8px 0; flex-wrap: wrap; position: sticky; top: 0; z-index: 30; background: var(--bg-color); }
+.tab-btn { padding: 10px 20px; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; color: var(--text-color); font-weight: 600; font-size: 1rem; }
+.tab-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+.tab-content { display: none; background: var(--panel-bg); padding: 20px; border-radius: 10px; }
+.tab-content.active { display: block; }
+
+.reading-layout { display: flex; gap: 20px; align-items: flex-start; }
+@media(max-width: 800px) { .reading-layout { flex-direction: column; } }
+
+.text-section { flex: 1; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+.text-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+.lock-btn { background: var(--border-color); border: none; padding: 8px 15px; border-radius: 8px; color: var(--text-color); cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+.lock-btn.unlocked { background: var(--success-color); color: #000; }
+.paragraph { line-height: 1.8; font-size: 1.05rem; }
+
+.sentence-wrapper { position: relative; cursor: default; border-bottom: 1px dashed transparent; }
+.unlocked .sentence-wrapper { cursor: pointer; border-bottom-color: var(--border-color); }
+.unlocked .sentence-wrapper:hover { background: var(--highlight-bg); border-bottom-color: var(--primary-color); }
+.unlocked .sentence-wrapper:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-5px); }
+
+.questions-section { flex: 1; }
+.question-card { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+.question-text { font-weight: bold; margin-bottom: 10px; }
+.option-label { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px; border-radius: 5px; margin-bottom: 5px; }
+.option-label:hover { background: var(--highlight-bg); }
+.option-label input[type="radio"] { cursor: pointer; width: 18px; height: 18px; }
+.result-box { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; border-left: 5px solid; }
+.result-box.show { display: block; animation: fadeIn .3s; }
+.result-box.correct { background: rgba(74,222,128,.1); border-color: var(--success-color); }
+.result-box.wrong { background: rgba(248,113,113,.1); border-color: var(--error-color); }
+.feedback-title { font-weight: bold; margin-bottom: 5px; }
+.feedback-title.correct { color: var(--success-color); }
+.feedback-title.wrong { color: var(--error-color); }
+.correct-answer-text { font-weight: bold; color: var(--success-color); margin-bottom: 10px; }
+.explanation-text { font-size: .95rem; opacity: .9; font-style: italic; }
+.check-all-btn { display: block; width: 100%; padding: 15px; background: var(--primary-color); color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
+.check-all-btn:hover { opacity: .9; }
+.score-box { display: none; margin-top: 20px; padding: 20px; border-radius: 10px; border: 2px solid var(--primary-color); background: var(--panel-bg); text-align: center; }
+.score-box.show { display: block; }
+.score-main { font-size: 1.4rem; font-weight: bold; margin-bottom: 12px; }
+.score-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; font-weight: 600; }
+.score-ok { color: var(--success-color); } .score-bad { color: var(--error-color); } .score-skip { opacity: .7; }
+.retry-btn { margin-top: 15px; padding: 10px 22px; background: var(--primary-color); color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+.retry-btn:hover { opacity: .9; }
+
+.vocab-list { list-style: none; }
+.vocab-item { display: flex; padding: 12px 10px; border-bottom: 1px solid var(--border-color); align-items: center; }
+.vocab-item:hover { background: var(--highlight-bg); }
+.vocab-en { font-weight: bold; width: 50%; cursor: pointer; color: var(--vocab-en-color); display: flex; align-items: center; gap: 10px; }
+.vocab-az { width: 50%; }
+
+.res-row { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 14px 16px; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 10px; flex-wrap: wrap; }
+.res-no { font-weight: bold; font-size: 1.05rem; }
+.res-date { opacity: .8; font-size: .9rem; margin-top: 3px; }
+.res-right { text-align: right; }
+.res-score { font-weight: bold; font-size: 1.2rem; color: var(--success-color); }
+.res-detail { opacity: .75; font-size: .85rem; margin-top: 3px; }
+.lock-box { text-align: center; padding: 40px 20px; opacity: .85; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+html{-webkit-text-size-adjust:100%}
+button,label,.sentence-wrapper{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.text-section{position:relative}
+.text-section.is-sticky{position:sticky;top:var(--stick-top,76px)}
+.sentence-wrapper.active{background:var(--highlight-bg);border-bottom-color:var(--primary-color)}
+.tr-hint{display:none;font-size:.85rem;opacity:.7;margin:-5px 0 12px}
+.tip{display:none;position:absolute;z-index:20;width:max-content;max-width:calc(100% - 16px);background:var(--tooltip-bg);color:#fff;text-align:center;border-radius:8px;padding:10px 14px;font-size:.95rem;line-height:1.5;box-shadow:0 10px 25px -5px rgba(0,0,0,.5);border:1px solid var(--border-color);pointer-events:none}
+.tip::after{content:"";position:absolute;left:var(--ax,50%);top:100%;margin-left:-6px;border:6px solid transparent;border-top-color:var(--tooltip-bg)}
+.tip.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--tooltip-bg)}
+.section-title{font-weight:bold;margin:0 0 15px;padding-bottom:10px;border-bottom:1px solid var(--border-color)}
+.multi-hint{font-size:.85rem;opacity:.7;margin-bottom:8px}
+.option-label{border:1px solid var(--border-color);min-height:44px;padding:10px;margin-bottom:6px;align-items:center}
+.option-label input{cursor:pointer;width:20px;height:20px;flex:none}
+.option-label input:disabled{cursor:default}
+.option-label.opt-correct{background:rgba(74,222,128,.15);border-color:var(--success-color)}
+.option-label.opt-wrong{background:rgba(248,113,113,.15);border-color:var(--error-color)}
+.check-all-btn:disabled{opacity:.4;cursor:not-allowed}
+.notice{display:none;margin-top:10px;padding:10px 14px;border-radius:8px;background:rgba(248,113,113,.12);border-left:4px solid var(--error-color)}
+@media(max-width:800px){
+ body{padding:12px}
+ .tab-content{padding:14px}
+ .tabs{flex-wrap:nowrap;overflow-x:auto;gap:8px}
+ .tab-btn{padding:10px 14px;font-size:.9rem;white-space:nowrap;flex:1 0 auto}
+ .text-section{position:relative;max-height:none;overflow:visible;padding:14px}
+ .text-controls{flex-wrap:wrap;gap:8px}
+ .paragraph{font-size:1.02rem;line-height:1.85}
+ .vocab-item{padding:10px 4px;font-size:.95rem;gap:8px}
+ .check-all-btn{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="openTab('questions', this)">1. Suallar və Mətn</button>
+    <button class="tab-btn" onclick="openTab('vocabulary', this)">2. Lüğət</button>
+    <button class="tab-btn" onclick="openTab('results', this)">3. Nəticələr</button>
+</div>
+
+<div id="questions" class="tab-content active">
+    <div class="reading-layout">
+        <div class="text-section" id="text-section">
+            <div class="text-controls">
+                <span style="font-weight:bold;">Mətn</span>
+                <button id="lock-btn" class="lock-btn" onclick="toggleLock()"><i class="fas fa-lock"></i> Tərcümə: Qıfıllı</button>
+            </div>
+            <div id="tr-hint" class="tr-hint"></div>
+            <div id="text-container" class="paragraph"></div>
+            <div id="tip" class="tip" role="tooltip"></div>
+        </div>
+        <div class="questions-section">
+            <div id="questions-container"></div>
+            <button id="check-btn" class="check-all-btn" onclick="checkAnswers()">Cavabları Yoxla</button>
+            <div class="notice" id="notice"></div>
+            <div class="score-box" id="score-box"></div>
+        </div>
+    </div>
+</div>
+
+<div id="vocabulary" class="tab-content">
+    <ul id="vocab-list" class="vocab-list"></ul>
+</div>
+
+<div id="results" class="tab-content">
+    <div id="results-container"></div>
+</div>
+
+<script>
+const data = {
+    text: [
+        { en: "For recent graduates, internships may become a stepping stone to full-time, paid employment.", az: "Yeni məzunlar üçün təcrübə proqramları tamştatlı, ödənişli işə doğru bir tramplin ola bilər." },
+        { en: "Before accepting an offer to work as an intern, you should get some information about the company's reputation of procuring their interns and decide accordingly.", az: "Təcrübəçi kimi işləmək təklifini qəbul etməzdən əvvəl, şirkətin təcrübəçilərini işə götürmə reputasiyası haqqında bir az məlumat almalı və ona uyğun qərar verməlisiniz." },
+        { en: "If they usually hire one intern, but have tens of employees working day and night, it is better to look for other companies.", az: "Əgər onlar adətən bir təcrübəçi işə götürürlərsə, lakin gecə-gündüz işləyən onlarla işçisi varsa, başqa şirkətlər axtarmaq daha yaxşıdır." },
+        { en: "The best place to have an internship position is an organization that gives you an opportunity to gain real work experience and develop your skills instead of using you as a cheap worker.", az: "Təcrübə keçmək üçün ən yaxşı yer sizi ucuz işçi kimi istifadə etmək əvəzinə, sizə real iş təcrübəsi qazanmaq və bacarıqlarınızı inkişaf etdirmək imkanı verən bir təşkilatdır." },
+        { en: "Another thing that should be considered is the size of the company.", az: "Nəzərə alınmalı olan başqa bir şey şirkətin ölçüsüdür." },
+        { en: "Sometimes bigger and more established organizations are better as they have a clear hierarchy and therefore, it gives you a clear idea of your position and the job description and most importantly, it will be easier to get a mentor.", az: "Bəzən daha böyük və daha köklü təşkilatlar daha yaxşıdır, çünki onların aydın iyerarxiyası var və buna görə də bu, sizə mövqeyiniz və iş təsviriniz haqqında aydın bir təsəvvür verir və ən əsası, mentor tapmaq daha asan olacaq." },
+        { en: "Start-ups with only five employees are usually more flexible in terms of job responsibilities and therefore, it makes it harder to define your position and get mentors.", az: "Yalnız beş işçisi olan startaplar adətən iş məsuliyyətləri baxımından daha çevikdirlər və buna görə də mövqeyinizi müəyyənləşdirməyi və mentor tapmağı çətinləşdirir." },
+        { en: "After you choose a company, do a little research on the company including the people who work there.", az: "Bir şirkət seçdikdən sonra, şirkət haqqında, o cümlədən orada işləyən insanlar haqqında bir az araşdırma aparın." },
+        { en: "You can do a Google search and comb social media such as LinkedIn, Facebook, and Twitter to dig deeply about the company's hiring managers and what they expect from a new employee.", az: "Şirkətin işə qəbul menecerləri və onların yeni bir işçidən nə gözlədikləri barədə dərindən araşdırmaq üçün Google axtarışı edə və LinkedIn, Facebook və Twitter kimi sosial mediada axtarış apara bilərsiniz." },
+        { en: "Social media is also very useful to keep in touch with as many people as you can and build your network.", az: "Sosial media həm də bacardığınız qədər çox insanla əlaqə saxlamaq və öz şəbəkənizi qurmaq üçün çox faydalıdır." },
+        { en: "Do not hesitate to maintain any personal connection you have because those connections could be the first ones who inform you about new job opportunities or any vacant positions you can apply for.", az: "Sahib olduğunuz hər hansı bir şəxsi əlaqəni saxlamaqdan çəkinməyin, çünki o əlaqələr sizə yeni iş imkanları və ya müraciət edə biləcəyiniz hər hansı bir vakant yerlər haqqında ilk məlumat verənlər ola bilər." },
+        { en: "If you aim for a dream job, do not overlook an entry-level position just because it offers mediocre salary.", az: "Əgər arzuladığınız bir işi hədəfləyirsinizsə, sadəcə orta səviyyəli maaş təklif etdiyi üçün başlanğıc səviyyəli bir vəzifəyə göz yummayın." },
+        { en: "Entry-level employees are more likely to be given room to grow and learn from their mistakes.", az: "Başlanğıc səviyyəli işçilərə böyümək və səhvlərindən öyrənmək üçün daha çox imkan verilməsi ehtimalı var." },
+        { en: "They will also be able to figure out the job routines and get used to them when they actually get the position they have been dreaming about.", az: "Onlar həmçinin arzuladıqları vəzifəni həqiqətən əldə etdikdə iş rejimlərini anlaya və onlara vərdiş edə biləcəklər." },
+        { en: "Your first few jobs might be very demanding yet less rewarding.", az: "Sizin ilk bir neçə işiniz çox tələbkar, lakin daha az mükafatlandırıcı ola bilər." },
+        { en: "Remember to have fun and enjoy your life.", az: "Əylənməyi və həyatdan zövq almağı unutmayın." },
+        { en: "Working overtime may not always be a good idea to accelerate your career, especially if you have to be more stressed than your seniors who earn bigger salaries.", az: "Artıq işləmək karyeranızı sürətləndirmək üçün həmişə yaxşı bir fikir olmaya bilər, xüsusən də daha yüksək maaş alan yuxarı vəzifəlilərdən daha çox stressli olmalısınızsa." },
+        { en: "Setting the time for exercise and social life will make your life more balanced and stress-free.", az: "İdman və sosial həyat üçün vaxt ayırmaq həyatınızı daha tarazlı və stressiz edəcək." }
+    ],
+    questions: [
+        {
+            id: "q1", title: "1. Decide whether the statements are true or false.", no: "1.1.",
+            q: "Knowing people who you are going to work with is not necessary.",
+            correct: "B",
+            explanation: "Mətn bunun əksini tövsiyə edir: “...do a little research on the company including the people who work there.”"
+        },
+        {
+            id: "q2", no: "1.2.",
+            q: "Working long hours is not always a good idea in stepping up the career ladder.",
+            correct: "A",
+            explanation: "Mətndə deyilir: “Working overtime may not always be a good idea to accelerate your career...”"
+        },
+        {
+            id: "q3", no: "1.3.",
+            q: "Entry-level employees should not be satisfied with mediocre salary.",
+            correct: "B",
+            explanation: "Mətn bunun əksini məsləhət görür: “...do not overlook an entry-level position just because it offers mediocre salary.”"
+        },
+        {
+            id: "q4", no: "1.4.",
+            q: "Working overtime will help employees to earn bigger salaries.",
+            correct: "B",
+            explanation: "Mətndə artıq işləməyin yuxarı vəzifəlilərdən daha çox stressə səbəb ola biləcəyi qeyd olunur, lakin birbaşa daha yüksək maaşa səbəb olduğu deyilmir. Həmçinin, bunun karyeranı sürətləndirmək üçün həmişə yaxşı fikir olmadığı vurğulanır."
+        },
+        {
+            id: "q5",
+            title: "2. The word “<u><i>room</i></u>” in the passage is closest in meaning to:",
+            q: "",
+            type: "single",
+            options: [
+                "an area or expanse which is unoccupied",
+                "empty space that can be used for a particular purpose",
+                "a part of a building that has its own walls, floor, and ceiling",
+                "a place where somebody has been put",
+                "the opportunity to do something"
+            ],
+            correct: "E",
+            explanation: "Mətndəki “...given room to grow and learn from their mistakes” ifadəsi “böyümək və səhvlərindən öyrənmək üçün imkan verilməsi” deməkdir."
+        },
+        {
+            id: "q6",
+            title: "3. Complete the sentence according to the passage.",
+            q: "If you aim for a dream job,...",
+            type: "single",
+            options: [
+                "avoid entry-level positions with low income",
+                "disregard the company's reputation",
+                "ignore common beliefs and follow your dreams",
+                "first think about taking up a position with full payment",
+                "consider applying for a position with an average salary"
+            ],
+            correct: "E",
+            explanation: "Mətndə deyilir: “...do not overlook an entry-level position just because it offers mediocre salary.” (“Mediocre salary” orta, qənaətbəxş maaş deməkdir)."
+        },
+        {
+            id: "q7",
+            title: "4. The sentence “<u><i>Your first few jobs might be very demanding yet less rewarding</i></u>” implies that ...",
+            q: "",
+            type: "single",
+            options: [
+                "in your first jobs you have to demand the superiors to reward you",
+                "you have to put less effort to be rewarded",
+                "the more the effort, the better reward you get in your first job",
+                "first jobs might give equal opportunities for promotion",
+                "it is unlikely that you will be rewarded in your first few jobs which require much effort"
+            ],
+            correct: "E",
+            explanation: "“Demanding” (tələbkar) çox səy tələb edən, “less rewarding” (daha az mükafatlandırıcı) isə qarşılığının az olması deməkdir. Bu variant cümlənin mənasını dəqiq ifadə edir."
+        },
+        {
+            id: "q8",
+            title: "5. Which of the following questions does not the passage answer?",
+            q: "",
+            type: "multi",
+            options: [
+                "When should an intern apply for a rise in salary?",
+                "Which organizations offer real work experience?",
+                "What do bigger companies expect from a new employee?",
+                "Why is it important to keep personal connections via social media?",
+                "What is the expected salary for senior employees?"
+            ],
+            correct: [1, 2, 3, 5],
+            explanation: "1) Cavab yoxdur — maaş artımı üçün nə vaxt müraciət edilməli olduğu deyilmir. 2) Cavab yoxdur — məhz hansı təşkilatların real iş təcrübəsi təklif etdiyi bildirilmir. 3) Cavab yoxdur — böyük şirkətlərin yeni işçidən gözləntiləri sadalanmır. 4) Cavab var: “...those connections could be the first ones who inform you about new job opportunities...” 5) Cavab yoxdur — maaşın miqdarı göstərilmir."
+        }
+    ],
+    vocabulary: [
+        { en: "Accordingly", az: "buna uyğun olaraq" },
+        { en: "Balanced", az: "tarazlı" },
+        { en: "Demanding", az: "tələbkar" },
+        { en: "Employment", az: "məşğulluq, iş" },
+        { en: "Entry-level", az: "başlanğıc səviyyəli" },
+        { en: "Established", az: "köklü, möhkəm qurulmuş" },
+        { en: "Flexible", az: "çevik" },
+        { en: "Hierarchy", az: "iyerarxiya" },
+        { en: "Internship", az: "təcrübə proqramı" },
+        { en: "Job description", az: "iş təsviri" },
+        { en: "Mediocre", az: "orta səviyyəli, qənaətbəxş" },
+        { en: "Mentor", az: "mentor, rəhbər" },
+        { en: "Network", az: "şəbəkə (insanlar arasında)" },
+        { en: "Recent graduate", az: "yeni məzun" },
+        { en: "Reputation", az: "reputasiya, şöhrət" },
+        { en: "Rewarding", az: "mükafatlandırıcı, məmnunedici" },
+        { en: "Senior", az: "yuxarı vəzifəli işçi" },
+        { en: "Stepping stone", az: "tramplin, irəliləyiş üçün vasitə" },
+        { en: "Stress-free", az: "stressiz" },
+        { en: "To accelerate", az: "sürətləndirmək" },
+        { en: "To comb", az: "axtarmaq, daramaq" },
+        { en: "To dig deeply", az: "dərindən araşdırmaq" },
+        { en: "To gain experience", az: "təcrübə qazanmaq" },
+        { en: "To hesitate", az: "tərəddüd etmək" },
+        { en: "To keep in touch", az: "əlaqə saxlamaq" },
+        { en: "To overlook", az: "göz yummaq, nəzərdən qaçırmaq" },
+        { en: "Vacant position", az: "vakant yer, boş vəzifə" }
+    ]
+};
+
+const HK = 'sa:reading23:history';
+
+function openTab(tabId, btn) {
+    hideTip();
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    if(btn) btn.classList.add('active');
+    fitSticky(); sendHeight();
+}
+
+const canHover = matchMedia('(hover:hover)').matches;
+
+function fitSticky() {
+    const s = document.getElementById('text-section'), t = document.querySelector('.tabs');
+    const th = t ? t.offsetHeight : 0;
+    document.documentElement.style.setProperty('--stick-top', (th + 12) + 'px');
+    if (!s || !s.offsetHeight) return;
+    s.classList.toggle('is-sticky', innerWidth > 800 && s.offsetHeight < innerHeight - th - 32);
+}
+function sendHeight() {
+    try { parent.postMessage({ type: 'iframe-height', h: document.body.offsetHeight }, '*'); } catch(e) {}
+}
+addEventListener('resize', () => { fitSticky(); sendHeight(); });
+addEventListener('load', () => { fitSticky(); sendHeight(); });
+if (window.ResizeObserver) new ResizeObserver(() => { fitSticky(); sendHeight(); }).observe(document.body);
+let tipActive = null, pinned = false;
+const sec = () => document.getElementById('text-section');
+
+function setLock(open) {
+    const b = document.getElementById('lock-btn');
+    sec().classList.toggle('unlocked', open);
+    b.classList.toggle('unlocked', open);
+    b.innerHTML = open ? '<i class="fas fa-lock-open"></i> Tərcümə: Açıq' : '<i class="fas fa-lock"></i> Tərcümə: Qıfıllı';
+    document.getElementById('tr-hint').style.display = open ? 'block' : 'none';
+    hideTip();
+}
+function toggleLock() { setLock(!sec().classList.contains('unlocked')); }
+
+function renderText() {
+    document.getElementById('tr-hint').textContent = canHover ? 'Tərcümə üçün cümlənin üzərinə gətir.' : 'Tərcümə üçün cümləyə toxun.';
+    document.getElementById('text-container').innerHTML = data.text.map((t, i) =>
+        `${t.br ? '<br>' : ''}<span class="sentence-wrapper" data-i="${i}" tabindex="0">${t.en}</span> `
+    ).join('');
+}
+
+function showTip(el) {
+    const s = sec(), tip = document.getElementById('tip');
+    if (!s.classList.contains('unlocked')) return;
+    if (tipActive) tipActive.classList.remove('active');
+    tipActive = el; el.classList.add('active');
+    tip.textContent = data.text[el.dataset.i].az;
+    tip.style.visibility = 'hidden'; tip.style.display = 'block';
+    const sr = s.getBoundingClientRect(), rs = el.getClientRects(), first = rs[0], last = rs[rs.length - 1];
+    const w = tip.offsetWidth, h = tip.offsetHeight, cw = s.clientWidth, pad = 8;
+    const cx = first.left + first.width / 2 - sr.left - s.clientLeft;
+    const left = Math.min(Math.max(cx - w / 2, pad), cw - w - pad);
+    let top = first.top - sr.top - s.clientTop + s.scrollTop - h - 8, below = false;
+    if (top < s.scrollTop + pad) { top = last.bottom - sr.top - s.clientTop + s.scrollTop + 8; below = true; }
+    tip.style.left = left + 'px'; tip.style.top = top + 'px';
+    tip.style.setProperty('--ax', Math.min(Math.max(cx - left, 14), w - 14) + 'px');
+    tip.classList.toggle('below', below);
+    tip.style.visibility = 'visible';
+}
+function hideTip() {
+    const t = document.getElementById('tip');
+    if (t) t.style.display = 'none';
+    if (tipActive) tipActive.classList.remove('active');
+    tipActive = null; pinned = false;
+}
+
+function renderQuestions() {
+    let n = 0;
+    document.getElementById('questions-container').innerHTML = data.questions.map(item => {
+        n++;
+        const type = item.type || 'tf', multi = type === 'multi';
+        const opts = type === 'tf' ? ['True', 'False'] : item.options;
+        const keys = opts.map((_, i) => multi ? String(i + 1) : 'ABCDEFGH'[i]);
+        const inputs = opts.map((o, i) => `<label class="option-label" data-k="${keys[i]}"><input type="${multi ? 'checkbox' : 'radio'}" name="${item.id}" value="${keys[i]}"><span>${keys[i]}) ${o}</span></label>`).join('');
+        return `${item.title ? `<div class="section-title">${item.title}</div>` : ''}
+        <div class="question-card">
+            ${item.q ? `<div class="question-text">${item.no ? item.no + ' ' : ''}${item.q}</div>` : ''}
+            ${multi ? '<div class="multi-hint">Bir neçə variant seçə bilərsən</div>' : ''}
+            <div class="options-list">${inputs}</div>
+            <div class="result-box" id="result-${item.id}">
+                <div class="feedback-title" id="feedback-${item.id}"></div>
+                <div class="correct-answer-text" id="correct-text-${item.id}" style="display:none;"></div>
+                ${item.explanation ? `<div class="explanation-text"><strong>İzah:</strong> ${item.explanation}</div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderVocab() {
+    const container = document.getElementById('vocab-list');
+    let html = '';
+    data.vocabulary.forEach(item => {
+        html += `<li class="vocab-item"><div class="vocab-en" onclick="speakWord('${item.en.replace(/'/g, "\\'")}')"><i class="fas fa-volume-up"></i> ${item.en}</div><div class="vocab-az">${item.az}</div></li>`;
+    });
+    container.innerHTML = html;
+}
+
+function speakWord(word) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(word);
+        u.lang = 'en-US';
+        window.speechSynthesis.speak(u);
+    }
+}
+
+function notice(m) {
+    const n = document.getElementById('notice');
+    n.textContent = m; n.style.display = 'block';
+    clearTimeout(n._t); n._t = setTimeout(() => n.style.display = 'none', 3000);
+}
+
+function checkAnswers() {
+    if (document.getElementById('check-btn').disabled) return;
+    const picks = data.questions.map(q => [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(i => i.value));
+    if (!picks.some(p => p.length)) { notice('Əvvəlcə ən azı bir suala cavab seç.'); return; }
+    document.getElementById('notice').style.display = 'none';
+    let ok = 0, bad = 0, skip = 0;
+    data.questions.forEach((q, i) => {
+        const sel = picks[i], multi = q.type === 'multi';
+        const cor = (Array.isArray(q.correct) ? q.correct : [q.correct]).map(String);
+        const box = document.getElementById('result-' + q.id), fb = document.getElementById('feedback-' + q.id), ct = document.getElementById('correct-text-' + q.id);
+        const card = box.closest('.question-card');
+        let cls = '';
+        if (!sel.length) { skip++; fb.innerText = 'Cavab seçilməyib!'; fb.className = 'feedback-title'; }
+        else if (sel.length === cor.length && cor.every(c => sel.includes(c))) { ok++; cls = ' correct'; fb.innerText = 'Düzdür!'; fb.className = 'feedback-title correct'; }
+        else { bad++; cls = ' wrong'; fb.innerText = 'Səhvdir!'; fb.className = 'feedback-title wrong'; }
+        ct.innerText = 'Düzgün cavab: ' + (multi ? cor.slice().sort((x, y) => x - y).join(', ') : cor.map(c => card.querySelector(`label[data-k="${c}"] span`).textContent).join(', '));
+        ct.style.display = 'block';
+        card.querySelectorAll('.option-label').forEach(l => {
+            if (cor.includes(l.dataset.k)) l.classList.add('opt-correct');
+            else if (sel.includes(l.dataset.k)) l.classList.add('opt-wrong');
+        });
+        card.querySelectorAll('input').forEach(inp => inp.disabled = true);
+        box.className = 'result-box show' + cls;
+    });
+    document.getElementById('check-btn').disabled = true;
+
+    const scoreBox = document.getElementById('score-box');
+    scoreBox.innerHTML = `
+        <div class="score-main">Nəticə: ${ok} / ${data.questions.length}</div>
+        <div class="score-row">
+            <span class="score-ok"><i class="fas fa-check-circle"></i> Düz: ${ok}</span>
+            <span class="score-bad"><i class="fas fa-times-circle"></i> Səhv: ${bad}</span>
+            <span class="score-skip"><i class="fas fa-minus-circle"></i> Cavabsız: ${skip}</span>
+        </div>
+        <button class="retry-btn" onclick="retryQuiz()"><i class="fas fa-rotate-right"></i> Yenidən cəhd et</button>`;
+    scoreBox.classList.add('show');
+    setLock(true);
+    saveHistory(ok, bad, skip);
+    scoreBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function saveHistory(ok, bad, skip) {
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HK)) || []; } catch(e) { hist = []; }
+    hist.push({ t: Date.now(), ok: ok, bad: bad, skip: skip, total: data.questions.length });
+    try { localStorage.setItem(HK, JSON.stringify(hist)); } catch(e) {}
+    renderResults();
+}
+
+function renderResults() {
+    const c = document.getElementById('results-container');
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HK)) || []; } catch(e) { hist = []; }
+    if(!hist.length) { c.innerHTML = '<div class="lock-box"><i class="fas fa-clipboard-list"></i> Hələ nəticə yoxdur.</div>'; return; }
+    
+    let html = '';
+    hist.slice().reverse().forEach((x, i) => {
+        const d = new Date(x.t);
+        const p = n => String(n).padStart(2, '0');
+        const dateStr = `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}, ${p(d.getHours())}:${p(d.getMinutes())}`;
+        html += `<div class="res-row"><div><div class="res-no">Cəhd ${hist.length - i}</div><div class="res-date"><i class="fas fa-clock"></i> ${dateStr}</div></div><div class="res-right"><div class="res-score">${x.ok} / ${x.total}</div><div class="res-detail">Düz: ${x.ok} · Səhv: ${x.bad} · Cavabsız: ${x.skip}</div></div></div>`;
+    });
+    c.innerHTML = html;
+}
+
+function retryQuiz() {
+    document.querySelectorAll('#questions-container input').forEach(r => { r.checked = false; r.disabled = false; });
+    document.querySelectorAll('.option-label').forEach(l => l.classList.remove('opt-correct', 'opt-wrong'));
+    document.querySelectorAll('.result-box').forEach(b => b.className = 'result-box');
+    document.querySelectorAll('.correct-answer-text').forEach(e => e.style.display = 'none');
+    const sb = document.getElementById('score-box');
+    sb.classList.remove('show'); sb.innerHTML = '';
+    document.getElementById('check-btn').disabled = false;
+    setLock(false);
+    sec().scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+const tc = document.getElementById('text-container');
+tc.addEventListener('click', e => {
+    const el = e.target.closest('.sentence-wrapper');
+    if (!el || !sec().classList.contains('unlocked') || (canHover && e.detail)) return;
+    if (tipActive === el && pinned) hideTip(); else { showTip(el); pinned = true; }
+});
+tc.addEventListener('mouseover', e => {
+    const el = canHover && e.target.closest('.sentence-wrapper');
+    if (el) { pinned = false; showTip(el); }
+});
+tc.addEventListener('mouseout', e => { if (canHover && !pinned && e.target.closest('.sentence-wrapper')) hideTip(); });
+tc.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); } });
+document.addEventListener('click', e => { if (!e.target.closest('.sentence-wrapper')) hideTip(); });
+sec().addEventListener('scroll', hideTip);
+addEventListener('resize', hideTip);
+
+renderText();
+renderQuestions();
+renderVocab();
+renderResults();
+</script>
+</body>
+</html>
